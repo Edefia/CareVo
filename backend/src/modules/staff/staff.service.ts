@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
+import mongoose from 'mongoose';
 import { UserModel } from '../auth/auth.model.js';
 import { InvitationModel } from '../auth/auth.model.js';
 import { LaboratoryModel } from '../laboratories/laboratory.model.js';
 import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
-import { QueueManager } from '../../jobs/queue.js';
+import { notificationService } from '../notifications/notification.service.js';
+import { env } from '../../config/env.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
 import type { Role } from '../../shared/constants/roles.js';
 
@@ -42,27 +44,24 @@ export const staffService = {
       email: email.toLowerCase(),
       role,
       laboratoryId: laboratoryId || null,
-      inviterId,
-      token: hashedToken,
+      invitedBy: new mongoose.Types.ObjectId(inviterId),
+      tokenHash: hashedToken,
       expiresAt,
     });
 
-    // Queue email
-    const emailQueue = QueueManager.getQueue('email');
-    if (emailQueue) {
-      await emailQueue.add('send-invitation', {
-        to: email.toLowerCase(),
-        inviteToken: token,
-        role,
-      });
-    }
+    // Send email
+    await notificationService.sendEmail(
+      email.toLowerCase(),
+      'CareVo Staff Invitation',
+      `<p>You have been invited to join CareVo as a ${role}. Click <a href="${env.FRONTEND_URL}/accept-invite?token=${token}">here</a> to accept your invitation.</p>`
+    );
   },
 
   async acceptInvite(token: string, password: string, firstName: string, lastName: string) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     
     const invitation = await InvitationModel.findOne({
-      token: hashedToken,
+      tokenHash: hashedToken,
       expiresAt: { $gt: new Date() },
     });
 
@@ -99,7 +98,7 @@ export const staffService = {
     limit: number,
     laboratoryIdFilter?: string,
     callerLaboratoryId?: string | null,
-    callerRole?: string
+    _callerRole?: string
   ) {
     const { skip, limit: limitNum } = getPaginationOptions(page, limit);
 

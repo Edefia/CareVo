@@ -7,21 +7,21 @@ import { DataTable } from "@/components/shared/DataTable"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 
-const mockBookings = [
-  { id: "BK-1029", patient: "Kwame Mensah", package: "Basic Wellness", date: "2023-10-25", time: "09:00 AM", lab: "Accra Central", status: "SCHEDULED" },
-  { id: "BK-1030", patient: "Ama Osei", package: "Comprehensive", date: "2023-10-25", time: "10:30 AM", lab: "Kumasi Diagnostic", status: "PENDING" },
-  { id: "BK-1031", patient: "John Doe", package: "Lipid Profile", date: "2023-10-24", time: "08:00 AM", lab: "Accra Central", status: "ATTENDED" },
-  { id: "BK-1032", patient: "Jane Smith", package: "Basic Wellness", date: "2023-10-24", time: "09:15 AM", lab: "Tema General Hub", status: "CANCELLED" },
-]
+import { useBookings } from "@/hooks/useBookings"
+
+
 
 export function BookingList() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredBookings = mockBookings.filter(b => 
-    b.patient.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    b.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const { data: bookingsData, isLoading } = useBookings()
+  const bookings = bookingsData?.items || bookingsData || []
+
+  const filteredBookings = Array.isArray(bookings) ? bookings.filter((b: any) => 
+    (b.patientId?.userId?.firstName + " " + b.patientId?.userId?.lastName).toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (b._id || b.id || "").toLowerCase().includes(searchTerm.toLowerCase())
+  ) : []
 
   return (
     <div className="space-y-6">
@@ -61,21 +61,21 @@ export function BookingList() {
         <CardContent>
           <DataTable 
             columns={[
-              { header: "Booking ID", accessorKey: "id" },
-              { header: "Patient", accessorKey: "patient" },
-              { header: "Package", accessorKey: "package" },
-              { header: "Laboratory", accessorKey: "lab" },
+              { header: "Booking ID", cell: (row) => row._id || row.id },
+              { header: "Patient", cell: (row) => row.patientId?.userId ? `${row.patientId.userId.firstName} ${row.patientId.userId.lastName}` : "Unknown" },
+              { header: "Reason/Package", cell: (row) => row.reason || "N/A" },
+              { header: "Laboratory", cell: (row) => row.staffId?.laboratoryId?.name || "N/A" },
               { 
                 header: "Schedule", 
                 cell: (row) => (
                   <div className="space-y-1">
                     <div className="flex items-center text-sm font-medium">
                       <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {row.date}
+                      {new Date(row.scheduledAt).toLocaleDateString()}
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="mr-2 h-3 w-3" />
-                      {row.time}
+                      {new Date(row.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 )
@@ -94,6 +94,7 @@ export function BookingList() {
               },
             ]}
             data={filteredBookings}
+            isLoading={isLoading}
           />
         </CardContent>
       </Card>

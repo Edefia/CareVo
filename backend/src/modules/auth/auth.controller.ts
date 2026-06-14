@@ -22,21 +22,21 @@ export class AuthController {
     const result = await AuthService.login(req.body, req.ip ?? 'unknown', req.headers['user-agent'] ?? 'unknown');
 
     if (result.mfaRequired) {
-      sendSuccess(res, { mfaRequired: true, token: result.token });
+      sendSuccess(res, { mfaRequired: true, token: (result as any).token });
       return;
     }
 
-    res.cookie('accessToken', result.accessToken, {
+    res.cookie('accessToken', (result as any).accessToken, {
       ...COOKIE_OPTIONS,
       maxAge: 15 * 60 * 1000, // 15 mins
     });
 
-    res.cookie('refreshToken', result.refreshToken, {
+    res.cookie('refreshToken', (result as any).refreshToken, {
       ...COOKIE_OPTIONS,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    sendSuccess(res, { user: result.user });
+    sendSuccess(res, { user: (result as any).user });
   }
 
   static async refresh(req: Request, res: Response): Promise<void> {
@@ -101,17 +101,17 @@ export class AuthController {
       req.headers['user-agent'] ?? 'unknown'
     );
 
-    res.cookie('accessToken', result.accessToken, {
+    res.cookie('accessToken', (result as any).accessToken, {
       ...COOKIE_OPTIONS,
       maxAge: 15 * 60 * 1000, // 15 mins
     });
 
-    res.cookie('refreshToken', result.refreshToken, {
+    res.cookie('refreshToken', (result as any).refreshToken, {
       ...COOKIE_OPTIONS,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    sendSuccess(res, { user: result.user });
+    sendSuccess(res, { user: (result as any).user });
   }
 
   // --- Password Reset ---

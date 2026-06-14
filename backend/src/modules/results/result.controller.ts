@@ -47,7 +47,7 @@ export const resultController = {
     try {
       const userLabId = req.user!.role !== 'SUPER_ADMIN' && req.user!.role !== 'PLATFORM_ADMIN' ? req.user!.laboratoryId : null;
       const result = await resultService.getResultById(
-        req.params.id,
+        req.params.id as string,
         req.user!.role,
         req.user!.id,
         userLabId
@@ -61,7 +61,7 @@ export const resultController = {
   async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await resultService.updateStatus(
-        req.params.id,
+        req.params.id as string,
         req.body.status,
         req.user!.id,
         req.user!.laboratoryId!,

@@ -1,5 +1,5 @@
-import { SendGridEmailService } from './email.adapter.js';
-import { TermiiSmsService } from './sms.adapter.js';
+import { ResendEmailService } from './email.adapter.js';
+import { MoolreSmsService } from './sms.adapter.js';
 import type { IEmailService, ISmsService, INotificationPayload } from './notification.interfaces.js';
 import { logger } from '../../utils/logger.js';
 
@@ -8,8 +8,8 @@ export class NotificationService {
   private readonly smsService: ISmsService;
 
   constructor() {
-    this.emailService = new SendGridEmailService();
-    this.smsService = new TermiiSmsService();
+    this.emailService = new ResendEmailService();
+    this.smsService = new MoolreSmsService();
   }
 
   async sendEmail(

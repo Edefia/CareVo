@@ -21,3 +21,6 @@ billingRoutes.get('/invoices/:id', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PER
 
 // Update status (Staff only, or Webhook later)
 billingRoutes.patch('/invoices/:id/status', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), validate(updateInvoiceStatusSchema), billingController.updateInvoiceStatus);
+
+// Initiate payment via Moolre
+billingRoutes.post('/invoices/:id/pay', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PERMISSIONS.PAYMENTS_READ_ALL]), billingController.initiatePayment);

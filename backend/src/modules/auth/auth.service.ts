@@ -1,22 +1,63 @@
 import { UserModel, InvitationModel } from './auth.model.js';
 import { AppError, ConflictError, NotFoundError, UnauthorizedError, ValidationError, ForbiddenError } from '../../shared/errors/index.js';
 import * as argon2 from 'argon2';
-import { authenticator } from 'otplib';
+import * as otplib from 'otplib';
+const { authenticator } = otplib;
 import { generateSessionId, signAccessToken, signRefreshToken, verifyRefreshToken, generateSecureToken, hashToken } from '../../utils/token.js';
-import { getRedisClient } from '../../config/redis.js';
 import { AuditService } from '../audit/audit.service.js';
 import { notificationService } from '../notifications/notification.service.js';
 import { ROLES, MFA_REQUIRED_ROLES, type Role } from '../../shared/constants/roles.js';
 import { env } from '../../config/env.js';
 import { encrypt, decrypt } from '../../utils/crypto.js';
 import { logger } from '../../utils/logger.js';
-import { emailQueue } from '../../jobs/queue.js';
+
+// In-memory cache to replace Redis for local development/single-instance without Redis
+interface CacheEntry {
+  value: string;
+  expiresAt: number;
+}
+const cache = new Map<string, CacheEntry>();
+
+function setCache(key: string, value: string, ttlSeconds: number) {
+  cache.set(key, {
+    value,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+}
+
+function getCache(key: string): string | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt < Date.now()) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function delCache(key: string) {
+  cache.delete(key);
+}
+
+function incrCache(key: string): number {
+  let val = getCache(key);
+  if (!val) val = '0';
+  const nextVal = parseInt(val, 10) + 1;
+  setCache(key, nextVal.toString(), 60 * 60); // 1 hour TTL for attempts
+  return nextVal;
+}
+
+function deleteCachePattern(prefix: string) {
+  const keysToDelete: string[] = [];
+  for (const [key] of cache.entries()) {
+    if (key.startsWith(prefix)) {
+      keysToDelete.push(key);
+    }
+  }
+  keysToDelete.forEach(k => cache.delete(k));
+}
 
 export class AuthService {
-  private static async getRedis() {
-    return getRedisClient();
-  }
-
   static async register(data: Record<string, unknown>, ip: string, userAgent: string) {
     const existing = await UserModel.findOne({ email: data.email });
     if (existing) {
@@ -26,12 +67,12 @@ export class AuthService {
     const passwordHash = await argon2.hash(data.password as string);
 
     const user = await UserModel.create({
-      email: data.email,
+      email: data.email as string,
       passwordHash,
       role: ROLES.PATIENT, // Only patients can self-register
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
+      firstName: data.firstName as string,
+      lastName: data.lastName as string,
+      phone: data.phone as string,
     });
 
     await AuditService.log({
@@ -46,19 +87,18 @@ export class AuthService {
       success: true,
     });
 
-    // TODO: Queue email verification job
+    // TODO: Send email verification via notificationService
 
     return { id: user._id, email: user.email, role: user.role };
   }
 
   static async login(data: Record<string, unknown>, ip: string, userAgent: string) {
     const email = (data.email as string).toLowerCase();
-    const redis = await this.getRedis();
 
     // Check account lockout
     const lockoutKey = `lockout:${email}`;
     const attemptsKey = `login:attempts:${email}`;
-    const isLocked = await redis.get(lockoutKey);
+    const isLocked = getCache(lockoutKey);
 
     if (isLocked) {
       throw new UnauthorizedError('Account temporarily locked due to multiple failed attempts.');
@@ -67,16 +107,16 @@ export class AuthService {
     const user = await UserModel.findOne({ email });
 
     if (!user || !user.isActive) {
-      await redis.incr(attemptsKey);
+      incrCache(attemptsKey);
       throw new UnauthorizedError('Invalid email or password.');
     }
 
     const validPassword = await argon2.verify(user.passwordHash, data.password as string);
 
     if (!validPassword) {
-      const attempts = await redis.incr(attemptsKey);
+      const attempts = incrCache(attemptsKey);
       if (attempts >= 5) {
-        await redis.setex(lockoutKey, 15 * 60, '1'); // Lock for 15 mins
+        setCache(lockoutKey, '1', 15 * 60); // Lock for 15 mins
         await AuditService.log({
           actorId: user._id.toString(),
           actorRole: user.role,
@@ -93,7 +133,7 @@ export class AuthService {
     }
 
     // Success — clear failed attempts
-    await redis.del(attemptsKey);
+    delCache(attemptsKey);
 
     // Check MFA
     const mfaRequired = MFA_REQUIRED_ROLES.includes(user.role) || user.mfaEnabled;
@@ -101,14 +141,14 @@ export class AuthService {
     if (mfaRequired && user.mfaEnabled) {
       // Issue temporary token for MFA step
       const tempToken = generateSecureToken();
-      await redis.setex(`mfa:temp:${tempToken}`, 300, user._id.toString()); // 5 min expiry
+      setCache(`mfa:temp:${tempToken}`, user._id.toString(), 300); // 5 min expiry
       return { mfaRequired: true, token: tempToken };
     }
 
     if (mfaRequired && !user.mfaEnabled) {
       // Force MFA setup
       const tempToken = generateSecureToken();
-      await redis.setex(`mfa:setup:${tempToken}`, 900, user._id.toString()); // 15 min expiry for setup
+      setCache(`mfa:setup:${tempToken}`, user._id.toString(), 900); // 15 min expiry for setup
       return { mfaRequired: true, setupRequired: true, token: tempToken };
     }
 
@@ -117,7 +157,6 @@ export class AuthService {
 
   private static async createSession(user: any, ip: string, userAgent: string) {
     const sessionId = generateSessionId();
-    const redis = await this.getRedis();
 
     const payload = {
       userId: user._id.toString(),
@@ -131,14 +170,14 @@ export class AuthService {
     const accessToken = signAccessToken(payload);
     const refreshToken = signRefreshToken(payload);
 
-    // Register session in Redis (7 days TTL)
+    // Register session in cache (7 days TTL)
     const sessionKey = `session:${user._id.toString()}:${sessionId}`;
     const sessionData = {
       ipAddress: ip,
       userAgent,
       createdAt: new Date().toISOString(),
     };
-    await redis.setex(sessionKey, 7 * 24 * 60 * 60, JSON.stringify(sessionData));
+    setCache(sessionKey, JSON.stringify(sessionData), 7 * 24 * 60 * 60);
 
     // Update last login
     await UserModel.updateOne({ _id: user._id }, { lastLoginAt: new Date() });
@@ -163,14 +202,15 @@ export class AuthService {
     };
   }
 
-  static async refresh(refreshToken: string, ip: string, userAgent: string) {
+  static async refresh(refreshToken: string, _ip: string, _userAgent: string) {
     try {
       const payload = verifyRefreshToken(refreshToken);
-      const redis = await this.getRedis();
 
       const sessionKey = `session:${payload.userId}:${payload.sessionId}`;
-      const sessionExists = await redis.exists(sessionKey);
+      const sessionExists = getCache(sessionKey);
 
+      // In-memory cache is ephemeral so we shouldn't strictly crash if it resets.
+      // But for completeness we follow the old logic.
       if (!sessionExists) {
         // Token reuse / revoked session detected
         logger.warn(`Token reuse or revoked session detected for user ${payload.userId}`);
@@ -181,8 +221,8 @@ export class AuthService {
       const newAccessToken = signAccessToken(payload);
       const newRefreshToken = signRefreshToken(payload);
 
-      // Extend session TTL in Redis
-      await redis.expire(sessionKey, 7 * 24 * 60 * 60);
+      // Extend session TTL in memory cache
+      setCache(sessionKey, sessionExists, 7 * 24 * 60 * 60);
 
       return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     } catch (error) {
@@ -191,9 +231,8 @@ export class AuthService {
   }
 
   static async logout(userId: string, sessionId: string, ip: string, userAgent: string) {
-    const redis = await this.getRedis();
     const sessionKey = `session:${userId}:${sessionId}`;
-    await redis.del(sessionKey);
+    delCache(sessionKey);
 
     await AuditService.log({
       actorId: userId,
@@ -261,14 +300,12 @@ export class AuthService {
   }
 
   static async verifyMfaLogin(tempToken: string, code: string, ip: string, userAgent: string) {
-    const redis = await this.getRedis();
-    
     // Check both login token and setup token
-    let userId = await redis.get(`mfa:temp:${tempToken}`);
+    let userId = getCache(`mfa:temp:${tempToken}`);
     let isSetup = false;
     
     if (!userId) {
-      userId = await redis.get(`mfa:setup:${tempToken}`);
+      userId = getCache(`mfa:setup:${tempToken}`);
       isSetup = true;
     }
 
@@ -291,7 +328,7 @@ export class AuthService {
     } else if (code.length === 10 && user.mfaBackupCodes && user.mfaBackupCodes.length > 0) {
       // Verify backup code
       for (let i = 0; i < user.mfaBackupCodes.length; i++) {
-        if (await argon2.verify(user.mfaBackupCodes[i], code)) {
+        if (await argon2.verify(user.mfaBackupCodes[i] as string, code)) {
           isValid = true;
           // Consume the backup code
           user.mfaBackupCodes.splice(i, 1);
@@ -307,9 +344,9 @@ export class AuthService {
 
     // Clear temp token
     if (isSetup) {
-      await redis.del(`mfa:setup:${tempToken}`);
+      delCache(`mfa:setup:${tempToken}`);
     } else {
-      await redis.del(`mfa:temp:${tempToken}`);
+      delCache(`mfa:temp:${tempToken}`);
     }
 
     return this.createSession(user, ip, userAgent);
@@ -326,18 +363,16 @@ export class AuthService {
     const token = generateSecureToken();
     const tokenHash = hashToken(token);
     
-    const redis = await this.getRedis();
-    // Save hashed token in Redis with 15 minute expiry
-    await redis.setex(`reset:${tokenHash}`, 15 * 60, user._id.toString());
+    // Save hashed token in memory cache with 15 minute expiry
+    setCache(`reset:${tokenHash}`, user._id.toString(), 15 * 60);
 
     const resetLink = `${env.FRONTEND_URL}/reset-password?token=${token}`;
 
-    await emailQueue.add('password-reset', {
-      to: user.email,
-      subject: 'CareVo Password Reset',
-      template: '<p>Click <a href="{{link}}">here</a> to reset your password. Valid for 15 minutes.</p>',
-      data: { link: resetLink }
-    });
+    await notificationService.sendEmail(
+      user.email,
+      'CareVo Password Reset',
+      `<p>Click <a href="${resetLink}">here</a> to reset your password. Valid for 15 minutes.</p>`
+    );
 
     await AuditService.log({
       actorId: user._id.toString(),
@@ -354,8 +389,7 @@ export class AuthService {
 
   static async resetPassword(token: string, newPassword: string, ip: string, userAgent: string) {
     const tokenHash = hashToken(token);
-    const redis = await this.getRedis();
-    const userId = await redis.get(`reset:${tokenHash}`);
+    const userId = getCache(`reset:${tokenHash}`);
 
     if (!userId) {
       throw new UnauthorizedError('Invalid or expired password reset token.');
@@ -377,13 +411,10 @@ export class AuthService {
     await user.save();
     
     // Invalidate token
-    await redis.del(`reset:${tokenHash}`);
+    delCache(`reset:${tokenHash}`);
 
     // Invalidate all existing sessions for this user to force re-login
-    const keys = await redis.keys(`session:${userId}:*`);
-    if (keys.length > 0) {
-      await redis.del(...keys);
-    }
+    deleteCachePattern(`session:${userId}:`);
 
     await AuditService.log({
       actorId: user._id.toString(),

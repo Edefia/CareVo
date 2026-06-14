@@ -7,20 +7,21 @@ import { DataTable } from "@/components/shared/DataTable"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 
-const mockQueue = [
-  { id: "INT-1029", patient: "Kwame Mensah", package: "Basic Wellness", submitted: "2 hours ago", status: "SUBMITTED", priority: "URGENT" },
-  { id: "INT-1030", patient: "Ama Osei", package: "Comprehensive", submitted: "1 day ago", status: "IN_PROGRESS", priority: "NORMAL" },
-  { id: "INT-1031", patient: "John Doe", package: "Lipid Profile", submitted: "2 days ago", status: "DRAFT", priority: "NORMAL" },
-]
+import { useInterpretations } from "@/hooks/useInterpretations"
+
+
 
 export function InterpretationsQueue() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredQueue = mockQueue.filter(item => 
-    item.patient.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const { data: queueData, isLoading } = useInterpretations()
+  const queue = queueData?.items || queueData || []
+
+  const filteredQueue = Array.isArray(queue) ? queue.filter((item: any) => 
+    (item.patientId || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (item._id || item.id || "").toLowerCase().includes(searchTerm.toLowerCase())
+  ) : []
 
   return (
     <div className="space-y-6">
@@ -54,16 +55,16 @@ export function InterpretationsQueue() {
         <CardContent>
           <DataTable 
             columns={[
-              { header: "ID", accessorKey: "id" },
-              { header: "Patient Name", accessorKey: "patient" },
-              { header: "Package", accessorKey: "package" },
-              { header: "Submitted", accessorKey: "submitted" },
+              { header: "ID", cell: (row) => row._id || row.id },
+              { header: "Patient ID", cell: (row) => row.patientId || "Unknown" },
+              { header: "Package/Result", cell: (row) => row.resultId || "Unknown" },
+              { header: "Submitted", cell: (row) => new Date(row.createdAt).toLocaleDateString() },
               { 
                 header: "Priority", 
                 cell: (row) => (
                   <div className="flex items-center gap-2">
                     {row.priority === "URGENT" && <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
-                    <StatusBadge status={row.priority} />
+                    <StatusBadge status={row.priority || "NORMAL"} />
                   </div>
                 )
               },
@@ -74,13 +75,14 @@ export function InterpretationsQueue() {
               { 
                 header: "Actions", 
                 cell: (row) => (
-                  <Button size="sm" onClick={() => navigate(`/interpretations/${row.id}`)}>
-                    {row.status === "DRAFT" || row.status === "IN_PROGRESS" ? "Continue" : "Start"}
+                  <Button size="sm" onClick={() => navigate(`/interpretations/${row._id || row.id}`)}>
+                    {row.status === "DRAFT" || row.status === "IN_PROGRESS" ? "Continue" : "View"}
                   </Button>
                 )
               },
             ]}
             data={filteredQueue}
+            isLoading={isLoading}
           />
         </CardContent>
       </Card>

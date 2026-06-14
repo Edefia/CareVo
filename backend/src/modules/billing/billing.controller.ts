@@ -42,7 +42,7 @@ export const billingController = {
   async getInvoiceById(req: Request, res: Response, next: NextFunction) {
     try {
       const invoice = await billingService.getInvoiceById(
-        req.params.id,
+        req.params.id as string,
         req.user!.role,
         req.user!.id
       );
@@ -55,7 +55,7 @@ export const billingController = {
   async updateInvoiceStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const invoice = await billingService.updateInvoiceStatus(
-        req.params.id,
+        req.params.id as string,
         req.body,
         req.user!.id,
         req.user!.role,
@@ -63,6 +63,23 @@ export const billingController = {
         req.headers['user-agent'] || 'Unknown'
       );
       sendSuccess(res, invoice);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async initiatePayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { customerPhone } = req.body;
+      const response = await billingService.initiateMoolrePayment(
+        req.params.id as string,
+        customerPhone,
+        req.user!.id,
+        req.user!.role,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
+      );
+      sendSuccess(res, response);
     } catch (error) {
       next(error);
     }

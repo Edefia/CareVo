@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document, type Types } from 'mongoose';
+import mongoose, { Schema, type Document } from 'mongoose';
 
 export interface ILaboratory extends Document {
   name: string;

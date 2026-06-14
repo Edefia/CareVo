@@ -7,21 +7,21 @@ import { DataTable } from "@/components/shared/DataTable"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 
-const mockInvoices = [
-  { id: "INV-2023-001", patient: "Kwame Mensah", date: "2023-10-25", amount: "GHS 150.00", status: "PENDING" },
-  { id: "INV-2023-002", patient: "Ama Osei", date: "2023-10-25", amount: "GHS 350.00", status: "PAID" },
-  { id: "INV-2023-003", patient: "John Doe", date: "2023-10-24", amount: "GHS 80.00", status: "PAID" },
-  { id: "INV-2023-004", patient: "Jane Smith", date: "2023-10-24", amount: "GHS 150.00", status: "OVERDUE" },
-]
+import { useInvoices } from "@/hooks/useBilling"
+
+
 
 export function InvoiceList() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredInvoices = mockInvoices.filter(i => 
-    i.patient.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    i.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const { data: invoicesData, isLoading } = useInvoices({ search: searchTerm })
+  const invoices = invoicesData?.items || invoicesData || []
+
+  const filteredInvoices = Array.isArray(invoices) ? invoices.filter((i: any) => 
+    (i.patient?.firstName + " " + i.patient?.lastName).toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (i._id || i.id || "").toLowerCase().includes(searchTerm.toLowerCase())
+  ) : []
 
   return (
     <div className="space-y-6">
@@ -85,10 +85,10 @@ export function InvoiceList() {
         <CardContent>
           <DataTable 
             columns={[
-              { header: "Invoice ID", accessorKey: "id" },
-              { header: "Patient", accessorKey: "patient" },
-              { header: "Date", accessorKey: "date" },
-              { header: "Amount", accessorKey: "amount" },
+              { header: "Invoice ID", cell: (row) => row._id || row.id },
+              { header: "Patient", cell: (row) => row.patient ? `${row.patient.firstName} ${row.patient.lastName}` : "Unknown" },
+              { header: "Date", cell: (row) => new Date(row.createdAt || row.date).toLocaleDateString() },
+              { header: "Amount", cell: (row) => `GHS ${row.totalAmount?.toFixed(2) || row.amount}` },
               { 
                 header: "Status", 
                 cell: (row) => <StatusBadge status={row.status} />
@@ -98,7 +98,7 @@ export function InvoiceList() {
                 cell: (row) => (
                   <div className="flex gap-2">
                     {row.status === "PENDING" && (
-                      <Button size="sm" onClick={() => navigate(`/billing/pay/${row.id}`)}>
+                      <Button size="sm" onClick={() => navigate(`/billing/pay/${row._id || row.id}`)}>
                         Process Payment
                       </Button>
                     )}
@@ -110,6 +110,7 @@ export function InvoiceList() {
               },
             ]}
             data={filteredInvoices}
+            isLoading={isLoading}
           />
         </CardContent>
       </Card>

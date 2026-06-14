@@ -3,7 +3,8 @@ import { AppError } from '../shared/errors/index.js';
 import { logger } from '../utils/logger.js';
 import mongoose from 'mongoose';
 import { ZodError } from 'zod';
-import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+const { JsonWebTokenError, TokenExpiredError } = jwt;
 
 export function globalErrorHandler(
   err: Error,
@@ -78,7 +79,7 @@ export function globalErrorHandler(
   }
 
   // Mongoose duplicate key error
-  if (err.name === 'MongoServerError' && (err as Record<string, unknown>).code === 11000) {
+  if (err.name === 'MongoServerError' && (err as unknown as Record<string, unknown>).code === 11000) {
     res.status(409).json({
       success: false,
       error: {

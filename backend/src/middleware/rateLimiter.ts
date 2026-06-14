@@ -1,24 +1,4 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
-import { getRedisClient } from '../config/redis.js';
-import { env } from '../config/env.js';
-
-function createRedisStore(prefix: string) {
-  if (env.NODE_ENV === 'test') {
-    return undefined; // Uses default memory store
-  }
-
-  return new RedisStore({
-    // Use ioredis sendCommand
-    sendCommand: async (...args: string[]) => {
-      const client = getRedisClient();
-      // rate-limit-redis expects a sendCommand function
-      // @ts-expect-error — rate-limit-redis types don't perfectly match ioredis
-      return client.call(...args);
-    },
-    prefix: `rl:${prefix}:`,
-  });
-}
 
 /**
  * Auth routes: 10 requests per 15 minutes per IP
@@ -29,7 +9,6 @@ export const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  store: createRedisStore('auth'),
   message: {
     success: false,
     error: {
@@ -48,7 +27,6 @@ export const inviteLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  store: createRedisStore('invite'),
   message: {
     success: false,
     error: {
@@ -67,8 +45,7 @@ export const uploadLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  store: createRedisStore('upload'),
-  keyGenerator: (req, res) => req.user?.id ?? ipKeyGenerator(req, res),
+  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req, res),
   message: {
     success: false,
     error: {
@@ -87,8 +64,7 @@ export const generalLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  store: createRedisStore('general'),
-  keyGenerator: (req, res) => req.user?.id ?? ipKeyGenerator(req, res),
+  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req, res),
   message: {
     success: false,
     error: {

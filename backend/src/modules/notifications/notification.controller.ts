@@ -89,7 +89,7 @@ export const notificationController = {
 
   async deleteSubscription(req: Request, res: Response, next: NextFunction) {
     try {
-      const subId = req.params.id;
+      const subId = req.params.id as string;
       const subscription = await SubscriptionModel.findOneAndDelete({ _id: subId, subscriberId: req.user!.id });
       if (!subscription) {
         throw new NotFoundError('Subscription not found');

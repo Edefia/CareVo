@@ -1,4 +1,8 @@
 import { useState } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { useBooking } from "@/hooks/useBookings"
+import { useCreateResult } from "@/hooks/useResults"
+import toast from "react-hot-toast"
 import { ArrowLeft, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -6,20 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from "@/components/ui/label"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { FileUpload } from "@/components/shared/FileUpload"
-import { useNavigate } from "react-router-dom"
 
-const mockBookingData = {
-  patientName: "Kwame Mensah",
-  patientId: "PAT-001",
-  dob: "1980-05-15 (43 yrs)",
-  package: "Basic Wellness Package",
-  bookingId: "BK-1029",
-  date: "2023-10-25",
-  status: "ATTENDED"
-}
 
 export function ResultsEntry() {
   const navigate = useNavigate()
+  const { bookingId } = useParams<{ bookingId: string }>()
+  
+  const { data: bookingData, isLoading } = useBooking(bookingId as string)
+  const booking = bookingData?.data || bookingData
+  
+  const createResult = useCreateResult()
   const [formData, setFormData] = useState({
     fastingBloodSugar: "",
     hba1c: "",
@@ -34,11 +34,33 @@ export function ResultsEntry() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Validation and save logic here
-    console.log("Submitting results:", formData)
+    try {
+      const biomarkers = [
+        { name: "Fasting Blood Sugar", value: formData.fastingBloodSugar, unit: "mg/dL", referenceRange: "70-99" },
+        { name: "HbA1c", value: formData.hba1c, unit: "%", referenceRange: "< 5.7" },
+        { name: "Total Cholesterol", value: formData.totalCholesterol, unit: "mg/dL", referenceRange: "< 200" },
+        { name: "HDL", value: formData.hdl, unit: "mg/dL", referenceRange: "> 40" },
+        { name: "LDL", value: formData.ldl, unit: "mg/dL", referenceRange: "< 100" },
+        { name: "Triglycerides", value: formData.triglycerides, unit: "mg/dL", referenceRange: "< 150" }
+      ].filter(b => b.value !== "")
+
+      await createResult.mutateAsync({
+        bookingId,
+        patientId: booking.patientId._id || booking.patientId,
+        biomarkers,
+        notes: formData.notes
+      })
+      toast.success("Results submitted successfully!")
+      navigate('/results')
+    } catch (error) {
+      toast.error("Failed to submit results")
+    }
   }
+
+  if (isLoading) return <div>Loading...</div>
+  if (!booking) return <div>Booking not found</div>
 
   return (
     <div className="space-y-6">
@@ -52,11 +74,11 @@ export function ResultsEntry() {
             <h2 className="text-2xl font-bold tracking-tight">Results Entry</h2>
             <StatusBadge status="DRAFT" />
           </div>
-          <p className="text-muted-foreground">{mockBookingData.package} • {mockBookingData.patientName}</p>
+          <p className="text-muted-foreground">{booking.reason || "Basic Wellness Package"} • {booking.patientId?.userId ? `${booking.patientId.userId.firstName} ${booking.patientId.userId.lastName}` : "Unknown"}</p>
         </div>
         <div>
           <Button variant="outline" className="mr-2">Save Draft</Button>
-          <Button onClick={handleSubmit} className="flex items-center gap-2">
+          <Button onClick={handleSubmit} className="flex items-center gap-2" disabled={createResult.isPending}>
             <Save className="h-4 w-4" />
             Submit Results
           </Button>
@@ -73,17 +95,17 @@ export function ResultsEntry() {
             <CardContent className="space-y-4">
               <div>
                 <div className="text-sm text-muted-foreground">Patient</div>
-                <div className="font-medium">{mockBookingData.patientName}</div>
-                <div className="text-sm">{mockBookingData.patientId}</div>
+                <div className="font-medium">{booking.patientId?.userId ? `${booking.patientId.userId.firstName} ${booking.patientId.userId.lastName}` : "Unknown"}</div>
+                <div className="text-sm">{booking.patientId?._id || booking.patientId}</div>
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Booking Ref</div>
-                <div className="font-medium">{mockBookingData.bookingId}</div>
-                <div className="text-sm">{mockBookingData.date}</div>
+                <div className="font-medium">{booking._id || booking.id}</div>
+                <div className="text-sm">{new Date(booking.scheduledAt).toLocaleDateString()}</div>
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Package</div>
-                <div className="font-medium">{mockBookingData.package}</div>
+                <div className="font-medium">{booking.reason || "N/A"}</div>
               </div>
             </CardContent>
           </Card>
@@ -203,8 +225,8 @@ export function ResultsEntry() {
               </form>
             </CardContent>
             <CardFooter className="bg-muted/50 flex justify-between p-4 border-t mt-4">
-              <Button variant="outline">Discard Changes</Button>
-              <Button>Validate & Submit</Button>
+              <Button variant="outline" onClick={() => navigate(-1)}>Discard Changes</Button>
+              <Button onClick={handleSubmit} disabled={createResult.isPending}>Validate & Submit</Button>
             </CardFooter>
           </Card>
         </div>

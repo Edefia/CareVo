@@ -2,9 +2,9 @@ import { ResultRecordModel, type IResultRecord } from './result.model.js';
 import { PatientModel } from '../patients/patient.model.js';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
-import { encryptSymmetric, decryptSymmetric } from '../../utils/crypto.js';
-import { auditService } from '../audit/audit.service.js';
-import { notificationQueue } from '../notifications/notification.service.js';
+import { encrypt, decrypt } from '../../utils/crypto.js';
+import { AuditService } from '../audit/audit.service.js';
+import { notificationService } from '../notifications/notification.service.js';
 import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
 import { SubscriptionModel } from '../notifications/subscription.model.js';
 import { UserModel } from '../auth/auth.model.js';
@@ -31,7 +31,7 @@ export const resultService = {
 
     let encryptedNotes: string | null = null;
     if (data.notes) {
-      encryptedNotes = encryptSymmetric(data.notes);
+      encryptedNotes = encrypt(data.notes);
     }
 
     const result = new ResultRecordModel({
@@ -43,7 +43,7 @@ export const resultService = {
 
     const savedResult = await result.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: staffUserId,
       actorRole: staffRole,
       action: 'RESULT_CREATED',
@@ -61,7 +61,7 @@ export const resultService = {
     // Decrypt notes before returning
     if (resultObj.notes) {
       try {
-        resultObj.notes = decryptSymmetric(resultObj.notes);
+        resultObj.notes = decrypt(resultObj.notes);
       } catch (error) {
         resultObj.notes = '[Decryption Failed]';
       }
@@ -115,7 +115,7 @@ export const resultService = {
       const resultObj = result.toObject();
       if (resultObj.notes) {
         try {
-          resultObj.notes = decryptSymmetric(resultObj.notes);
+          resultObj.notes = decrypt(resultObj.notes);
         } catch (error) {
           resultObj.notes = '[Decryption Failed]';
         }
@@ -151,7 +151,7 @@ export const resultService = {
     const resultObj = result.toObject();
     if (resultObj.notes) {
       try {
-        resultObj.notes = decryptSymmetric(resultObj.notes);
+        resultObj.notes = decrypt(resultObj.notes);
       } catch (error) {
         resultObj.notes = '[Decryption Failed]';
       }
@@ -188,7 +188,7 @@ export const resultService = {
     result.status = status;
     const savedResult = await result.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: staffUserId,
       actorRole: staffRole,
       action: 'RESULT_STATUS_UPDATED',
@@ -212,12 +212,13 @@ export const resultService = {
             prefs = { emailEnabled: true, smsEnabled: false } as any;
           }
 
-          if (prefs.emailEnabled) {
-            await notificationQueue.add('sendEmail', {
-              to: patientUser.email,
-              subject: 'Your Test Results are Ready',
-              body: `Hello ${patientUser.firstName},<br><br>Your test results for ${savedResult.panelName} are now finalized and available in your patient portal.`,
-            });
+          if (prefs!.emailEnabled) {
+            await notificationService.sendEmail(
+              patientUser.email,
+              'Your Test Results are Ready',
+              'result_ready',
+              { firstName: patientUser.firstName, panelName: savedResult.panelName }
+            );
           }
 
           // In real app, we would check prefs.smsEnabled and enqueue SMS here
@@ -228,11 +229,12 @@ export const resultService = {
         for (const sub of subscriptions) {
           const subscriber = sub.subscriberId as any;
           if (subscriber && subscriber.email) {
-            await notificationQueue.add('sendEmail', {
-              to: subscriber.email,
-              subject: 'New Test Result Finalized',
-              body: `Hello ${subscriber.firstName},<br><br>A new test result for ${savedResult.panelName} has been finalized for a patient you monitor.`,
-            });
+            await notificationService.sendEmail(
+              subscriber.email,
+              'New Test Result Finalized',
+              'result_finalized',
+              { firstName: subscriber.firstName, panelName: savedResult.panelName }
+            );
           }
         }
       }
@@ -241,7 +243,7 @@ export const resultService = {
     const resultObj = savedResult.toObject();
     if (resultObj.notes) {
       try {
-        resultObj.notes = decryptSymmetric(resultObj.notes);
+        resultObj.notes = decrypt(resultObj.notes);
       } catch (error) {
         resultObj.notes = '[Decryption Failed]';
       }

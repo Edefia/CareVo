@@ -1,23 +1,26 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ForbiddenError, UnauthorizedError } from '../shared/errors/index.js';
-import { getRedisClient } from '../config/redis.js';
 import { logger } from '../utils/logger.js';
 import type { Role } from '../shared/constants/roles.js';
 
-// Permission cache TTL: 5 minutes
-const PERMISSION_CACHE_TTL = 300;
+// In-memory cache for permissions
+interface CacheEntry {
+  permissions: string[];
+  expiresAt: number;
+}
+const permissionCache = new Map<string, CacheEntry>();
+const PERMISSION_CACHE_TTL_MS = 300 * 1000; // 5 minutes
 
 /**
- * Loads permissions for a role, checking Redis cache first, then MongoDB.
+ * Loads permissions for a role, checking memory cache first, then MongoDB.
  */
 async function loadPermissions(role: string): Promise<string[]> {
-  const redis = getRedisClient();
-  const cacheKey = `permissions:${role}`;
+  const now = Date.now();
+  const cached = permissionCache.get(role);
 
   // Check cache first
-  const cached = await redis.get(cacheKey);
-  if (cached) {
-    return JSON.parse(cached) as string[];
+  if (cached && cached.expiresAt > now) {
+    return cached.permissions;
   }
 
   // Load from MongoDB — dynamic import to avoid circular dependency
@@ -31,8 +34,11 @@ async function loadPermissions(role: string): Promise<string[]> {
 
   const permissions = permDoc.permissions;
 
-  // Cache in Redis
-  await redis.setex(cacheKey, PERMISSION_CACHE_TTL, JSON.stringify(permissions));
+  // Update memory cache
+  permissionCache.set(role, {
+    permissions,
+    expiresAt: now + PERMISSION_CACHE_TTL_MS,
+  });
 
   return permissions;
 }
@@ -41,7 +47,7 @@ async function loadPermissions(role: string): Promise<string[]> {
  * Authorization middleware factory.
  * Checks if the authenticated user's role has the required permission(s).
  */
-export function authorize(...requiredPermissions: string[]) {
+export function authorize(requiredPermissions: string[]) {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     if (!req.user) {
       throw new UnauthorizedError('Authentication required.');

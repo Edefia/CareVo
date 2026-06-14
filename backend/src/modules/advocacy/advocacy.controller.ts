@@ -38,7 +38,7 @@ export const advocacyController = {
 
   async getTaskById(req: Request, res: Response, next: NextFunction) {
     try {
-      const task = await advocacyService.getTaskById(req.params.id);
+      const task = await advocacyService.getTaskById(req.params.id as string);
       sendSuccess(res, task);
     } catch (error) {
       next(error);
@@ -48,7 +48,7 @@ export const advocacyController = {
   async updateTaskStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const task = await advocacyService.updateTaskStatus(
-        req.params.id,
+        req.params.id as string,
         req.body.status,
         req.user!.id,
         req.user!.role,
@@ -64,7 +64,7 @@ export const advocacyController = {
   async addTaskNote(req: Request, res: Response, next: NextFunction) {
     try {
       const task = await advocacyService.addTaskNote(
-        req.params.id,
+        req.params.id as string,
         req.body.text,
         req.user!.id,
         req.user!.role,

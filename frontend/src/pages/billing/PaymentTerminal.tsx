@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowLeft, CreditCard, DollarSign, Smartphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -6,30 +6,38 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate, useParams } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { useInvoice, useInitiatePayment } from "@/hooks/useBilling"
+import toast from "react-hot-toast"
 
 export function PaymentTerminal() {
   const navigate = useNavigate()
   const { id } = useParams()
   
   const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY")
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState("")
+  
+  const { data: invoiceData, isLoading } = useInvoice(id as string)
+  const initiatePayment = useInitiatePayment()
 
-  const mockInvoice = {
-    id: id || "INV-2023-001",
-    patient: "Kwame Mensah",
-    package: "Basic Wellness Package",
-    date: "2023-10-25",
-    amount: "150.00",
-    status: "PENDING"
-  }
+  const invoice = invoiceData?.data || invoiceData
+  
+  const handlePayment = async () => {
+    if (paymentMethod === "MOBILE_MONEY" && !phoneNumber) {
+      toast.error("Please enter a phone number for Mobile Money")
+      return
+    }
 
-  const handlePayment = () => {
-    setIsProcessing(true)
-    setTimeout(() => {
-      setIsProcessing(false)
+    try {
+      await initiatePayment.mutateAsync({ id: id as string, customerPhone: phoneNumber || "0000000000" })
+      toast.success("Payment initiated successfully!")
       navigate('/billing')
-    }, 2000)
+    } catch (error) {
+      toast.error("Payment failed. Please try again.")
+    }
   }
+
+  if (isLoading) return <div>Loading...</div>
+  if (!invoice) return <div>Invoice not found</div>
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -39,7 +47,7 @@ export function PaymentTerminal() {
         </Button>
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Process Payment</h2>
-          <p className="text-muted-foreground">Invoice {mockInvoice.id}</p>
+          <p className="text-muted-foreground">Invoice {invoice._id || invoice.id}</p>
         </div>
       </div>
 
@@ -52,25 +60,25 @@ export function PaymentTerminal() {
           <CardContent className="space-y-6">
             <div>
               <div className="text-sm text-muted-foreground mb-1">Patient</div>
-              <div className="font-medium">{mockInvoice.patient}</div>
+              <div className="font-medium">{invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "Unknown"}</div>
             </div>
             
             <div className="flex justify-between items-center pb-4 border-b">
               <div>
-                <div className="font-medium">{mockInvoice.package}</div>
-                <div className="text-sm text-muted-foreground">Service Date: {mockInvoice.date}</div>
+                <div className="font-medium">Services</div>
+                <div className="text-sm text-muted-foreground">Service Date: {new Date(invoice.createdAt).toLocaleDateString()}</div>
               </div>
-              <div className="font-medium text-lg">GHS {mockInvoice.amount}</div>
+              <div className="font-medium text-lg">GHS {invoice.totalAmount?.toFixed(2)}</div>
             </div>
             
             <div className="flex justify-between items-center pt-2">
               <div className="font-bold text-lg">Total Due</div>
-              <div className="font-bold text-2xl text-primary">GHS {mockInvoice.amount}</div>
+              <div className="font-bold text-2xl text-primary">GHS {invoice.totalAmount?.toFixed(2)}</div>
             </div>
             
             <div className="pt-4">
               <div className="text-sm text-muted-foreground mb-2">Current Status</div>
-              <StatusBadge status={mockInvoice.status} />
+              <StatusBadge status={invoice.status} />
             </div>
           </CardContent>
         </Card>
@@ -119,7 +127,11 @@ export function PaymentTerminal() {
                 </div>
                 <div className="space-y-2">
                   <Label>Phone Number</Label>
-                  <Input placeholder="e.g. 024 123 4567" />
+                  <Input 
+                    placeholder="e.g. 024 123 4567" 
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
                 </div>
               </div>
             )}
@@ -128,7 +140,7 @@ export function PaymentTerminal() {
               <div className="space-y-4 animate-in fade-in-50">
                 <div className="space-y-2">
                   <Label>Amount Tendered (GHS)</Label>
-                  <Input type="number" placeholder="0.00" defaultValue={mockInvoice.amount} />
+                  <Input type="number" placeholder="0.00" defaultValue={invoice.totalAmount} />
                 </div>
               </div>
             )}
@@ -139,9 +151,9 @@ export function PaymentTerminal() {
               className="w-full" 
               size="lg" 
               onClick={handlePayment}
-              disabled={isProcessing}
+              disabled={initiatePayment.isPending}
             >
-              {isProcessing ? "Processing..." : `Confirm Payment of GHS ${mockInvoice.amount}`}
+              {initiatePayment.isPending ? "Processing..." : `Confirm Payment of GHS ${invoice.totalAmount?.toFixed(2)}`}
             </Button>
           </CardFooter>
         </Card>

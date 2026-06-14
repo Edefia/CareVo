@@ -1,4 +1,6 @@
 import { StatCard } from "@/components/shared/StatCard"
+import { useInterpretations } from "@/hooks/useInterpretations"
+import { useNavigate } from "react-router-dom"
 import { FileText, CheckCircle, AlertTriangle, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/shared/DataTable"
@@ -6,10 +8,12 @@ import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 
 export function InterpreterDashboard() {
-  const queueData = [
-    { patient: "Kwame Mensah", lab: "Accra Central", testDate: "Oct 12, 2023", submitted: "2 days ago", priority: "URGENT", riskLevel: "HIGH", status: "IN_PROGRESS" },
-    { patient: "Ama Osei", lab: "Kumasi Diagnostic", testDate: "Oct 14, 2023", submitted: "1 day ago", priority: "NORMAL", riskLevel: "PENDING", status: "SUBMITTED" },
-  ]
+  const navigate = useNavigate()
+  const { data: queueDataObj, isLoading } = useInterpretations()
+  const queueData = queueDataObj?.items || queueDataObj || []
+
+  const inDraft = Array.isArray(queueData) ? queueData.filter((i: any) => i.status === "DRAFT").length : 0
+  const published = Array.isArray(queueData) ? queueData.filter((i: any) => i.status === "FINALIZED").length : 0
 
   return (
     <div className="space-y-6">
@@ -19,10 +23,10 @@ export function InterpreterDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Assigned to Me" value="12" icon={FileText} color="blue" />
-        <StatCard title="In Draft" value="3" icon={Clock} color="amber" />
-        <StatCard title="Published Today" value="8" icon={CheckCircle} color="green" />
-        <StatCard title="Critical Risk" value="1" icon={AlertTriangle} color="red" />
+        <StatCard title="Assigned to Me" value={queueData.length.toString()} icon={FileText} color="blue" />
+        <StatCard title="In Draft" value={inDraft.toString()} icon={Clock} color="amber" />
+        <StatCard title="Published Today" value={published.toString()} icon={CheckCircle} color="green" />
+        <StatCard title="Critical Risk" value="0" icon={AlertTriangle} color="red" />
       </div>
 
       <Card>
@@ -32,10 +36,10 @@ export function InterpreterDashboard() {
         <CardContent>
           <DataTable 
             columns={[
-              { header: "Patient", accessorKey: "patient" },
-              { header: "Lab", accessorKey: "lab" },
-              { header: "Test Date", accessorKey: "testDate" },
-              { header: "Submitted", accessorKey: "submitted" },
+              { header: "Patient", cell: (row) => row.patientId || "Unknown" },
+              { header: "Result ID", cell: (row) => row.resultId || "Unknown" },
+              { header: "Assigned Date", cell: (row) => new Date(row.createdAt).toLocaleDateString() },
+              { header: "Last Updated", cell: (row) => new Date(row.updatedAt).toLocaleDateString() },
               { 
                 header: "Priority", 
                 cell: (row) => (
@@ -49,7 +53,7 @@ export function InterpreterDashboard() {
               },
               { 
                 header: "Risk Level", 
-                cell: (row) => row.riskLevel !== "PENDING" ? <StatusBadge status={row.riskLevel} /> : <span className="text-muted-foreground text-xs">-</span>
+                cell: (row) => <span className="text-muted-foreground text-xs">-</span>
               },
               { 
                 header: "Status", 
@@ -57,10 +61,11 @@ export function InterpreterDashboard() {
               },
               { 
                 header: "Action", 
-                cell: () => <Button size="sm">Open & Interpret</Button>
+                cell: (row) => <Button size="sm" onClick={() => navigate(`/interpretations/${row._id || row.id}`)}>Open & Interpret</Button>
               },
             ]}
             data={queueData}
+            isLoading={isLoading}
           />
         </CardContent>
       </Card>

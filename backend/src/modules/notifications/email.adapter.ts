@@ -1,11 +1,11 @@
-import sgMail from '@sendgrid/mail';
+import { Resend } from 'resend';
 import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 import type { IEmailService } from './notification.interfaces.js';
 
-sgMail.setApiKey(env.SENDGRID_API_KEY);
+const resend = new Resend(env.RESEND_API_KEY);
 
-export class SendGridEmailService implements IEmailService {
+export class ResendEmailService implements IEmailService {
   async send(
     to: string,
     subject: string,
@@ -13,15 +13,20 @@ export class SendGridEmailService implements IEmailService {
     data: Record<string, unknown>,
   ): Promise<void> {
     try {
-      await sgMail.send({
-        to,
+      const { error } = await resend.emails.send({
+        to: [to],
         from: env.EMAIL_FROM,
         subject,
         html: this.renderTemplate(template, data),
       });
-      logger.info('Email sent successfully', { to, subject });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      logger.info('Email sent successfully via Resend', { to, subject });
     } catch (error) {
-      logger.error('Failed to send email', {
+      logger.error('Failed to send email via Resend', {
         to,
         subject,
         error: (error as Error).message,
@@ -31,7 +36,6 @@ export class SendGridEmailService implements IEmailService {
   }
 
   private renderTemplate(template: string, data: Record<string, unknown>): string {
-    // Simple template rendering — replace {{key}} with values
     let rendered = template;
     for (const [key, value] of Object.entries(data)) {
       rendered = rendered.replaceAll(`{{${key}}}`, String(value));

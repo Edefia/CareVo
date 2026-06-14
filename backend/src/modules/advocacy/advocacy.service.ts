@@ -1,10 +1,10 @@
 import { AdvocacyTaskModel } from './advocacy-task.model.js';
 import { PatientModel } from '../patients/patient.model.js';
 import { UserModel } from '../auth/auth.model.js';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../shared/errors/index.js';
+import { NotFoundError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
-import { encryptSymmetric, decryptSymmetric } from '../../utils/crypto.js';
-import { auditService } from '../audit/audit.service.js';
+import { encrypt, decrypt } from '../../utils/crypto.js';
+import { AuditService } from '../audit/audit.service.js';
 
 export const advocacyService = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,7 +30,7 @@ export const advocacyService = {
 
     const saved = await task.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: creatorId,
       actorRole: creatorRole,
       action: 'ADVOCACY_TASK_CREATED',
@@ -64,7 +64,7 @@ export const advocacyService = {
       const obj = task.toObject();
       obj.notes = obj.notes.map(note => {
         try {
-          note.text = decryptSymmetric(note.text);
+          note.text = decrypt(note.text);
         } catch {
           note.text = '[Decryption Failed]';
         }
@@ -83,7 +83,7 @@ export const advocacyService = {
     const obj = task.toObject();
     obj.notes = obj.notes.map(note => {
       try {
-        note.text = decryptSymmetric(note.text);
+        note.text = decrypt(note.text);
       } catch {
         note.text = '[Decryption Failed]';
       }
@@ -101,7 +101,7 @@ export const advocacyService = {
     task.status = status;
     await task.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: userId,
       actorRole: userRole,
       action: 'ADVOCACY_TASK_STATUS_UPDATED',
@@ -122,7 +122,7 @@ export const advocacyService = {
     const task = await AdvocacyTaskModel.findById(id);
     if (!task) throw new NotFoundError('Task not found.');
 
-    const encryptedText = encryptSymmetric(text);
+    const encryptedText = encrypt(text);
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     task.notes.push({
@@ -133,7 +133,7 @@ export const advocacyService = {
 
     await task.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: authorId,
       actorRole: userRole,
       action: 'ADVOCACY_TASK_NOTE_ADDED',

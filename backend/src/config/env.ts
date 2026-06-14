@@ -21,24 +21,19 @@ const envSchema = z.object({
   // Field-level encryption — 64-char hex string (32 bytes for AES-256-GCM)
   FIELD_ENCRYPTION_KEY: z.string().length(64).regex(/^[0-9a-fA-F]+$/),
 
-  // AWS S3
-  AWS_ACCESS_KEY_ID: z.string().min(1),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1),
-  AWS_REGION: z.string().default('us-east-1'),
-  AWS_S3_BUCKET: z.string().min(1),
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
 
   // Email
-  SENDGRID_API_KEY: z.string().min(1),
+  RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().email(),
 
-  // SMS
-  TERMII_API_KEY: z.string().min(1),
-
-  // Payments
-  PAYSTACK_SECRET_KEY: z.string().min(1),
-  FLUTTERWAVE_SECRET_KEY: z.string().min(1),
-  HUBTEL_CLIENT_ID: z.string().min(1),
-  HUBTEL_CLIENT_SECRET: z.string().min(1),
+  // SMS and Payments (Moolre)
+  MOOLRE_API_USER: z.string().min(1),
+  MOOLRE_API_KEY: z.string().min(1),
+  MOOLRE_VASKEY: z.string().min(1),
 
   // Seed
   SEED_ADMIN_EMAIL: z.string().email(),

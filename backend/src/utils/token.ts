@@ -5,14 +5,14 @@ import type { ITokenPayload } from '../shared/types/index.js';
 
 export function signAccessToken(payload: ITokenPayload): string {
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-    expiresIn: env.JWT_ACCESS_EXPIRES,
+    expiresIn: env.JWT_ACCESS_EXPIRES as any,
     algorithm: 'HS256',
   });
 }
 
 export function signRefreshToken(payload: ITokenPayload): string {
   return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
-    expiresIn: env.JWT_REFRESH_EXPIRES,
+    expiresIn: env.JWT_REFRESH_EXPIRES as any,
     algorithm: 'HS256',
   });
 }

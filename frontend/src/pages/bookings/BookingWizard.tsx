@@ -1,4 +1,8 @@
 import { useState } from "react"
+import { usePatients } from "@/hooks/usePatients"
+import { useLaboratories } from "@/hooks/useLaboratories"
+import { useCreateBooking } from "@/hooks/useBookings"
+import toast from "react-hot-toast"
 import { ArrowLeft, CheckCircle, ChevronRight, MapPin, Calendar as CalendarIcon, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -11,16 +15,19 @@ export function BookingWizard() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   
-  // Mock data for selections
+  const { data: patientsData } = usePatients()
+  const patients = patientsData?.items || patientsData || []
+
+  const { data: labsData } = useLaboratories()
+  const labs = labsData?.items || labsData || []
+
+  const createBooking = useCreateBooking()
+
+  // Packages aren't in DB, kept as static choices
   const packages = [
     { id: "pkg-1", name: "Basic Wellness", price: "GHS 150" },
     { id: "pkg-2", name: "Comprehensive", price: "GHS 350" },
     { id: "pkg-3", name: "Lipid Profile", price: "GHS 80" },
-  ]
-
-  const labs = [
-    { id: "lab-1", name: "Accra Central Laboratory", location: "Ridge, Accra" },
-    { id: "lab-2", name: "Kumasi Diagnostic Center", location: "Bantama, Kumasi" },
   ]
 
   const timeSlots = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM"]
@@ -36,9 +43,24 @@ export function BookingWizard() {
   const handleNext = () => setStep(s => Math.min(4, s + 1))
   const handleBack = () => setStep(s => Math.max(1, s - 1))
   
-  const handleSubmit = () => {
-    console.log("Booking created:", formData)
-    setStep(4) // Move to success step
+  const handleSubmit = async () => {
+    try {
+      // Backend expects: patientId, staffId, scheduledAt, reason
+      // If we don't have staffId, we will omit or find a default.
+      // Usually lab booking needs laboratoryId or staffId in this system.
+      // We pass what we have.
+      const scheduledAt = new Date(`${formData.date} ${formData.time}`).toISOString()
+      await createBooking.mutateAsync({
+        patientId: formData.patientId,
+        scheduledAt,
+        reason: packages.find(p => p.id === formData.packageId)?.name,
+        notes: `Selected Lab: ${formData.labId}`
+      })
+      toast.success("Booking created successfully")
+      setStep(4) // Move to success step
+    } catch (e) {
+      toast.error("Failed to create booking")
+    }
   }
 
   return (
@@ -86,8 +108,11 @@ export function BookingWizard() {
                     <SelectValue placeholder="Select an existing patient..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PAT-001">Kwame Mensah (PAT-001)</SelectItem>
-                    <SelectItem value="PAT-002">Ama Osei (PAT-002)</SelectItem>
+                    {patients.map((p: any) => (
+                      <SelectItem key={p._id || p.id} value={p._id || p.id}>
+                        {p.userId?.firstName} {p.userId?.lastName} ({p._id || p.id})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <div className="text-right">
@@ -121,16 +146,16 @@ export function BookingWizard() {
               </div>
 
               <div className="grid gap-3">
-                {labs.map(lab => (
+                {labs.map((lab: any) => (
                   <div 
-                    key={lab.id} 
-                    className={`flex flex-col p-4 border rounded-lg cursor-pointer transition-colors ${formData.labId === lab.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'}`}
-                    onClick={() => setFormData({...formData, labId: lab.id})}
+                    key={lab._id || lab.id} 
+                    className={`flex flex-col p-4 border rounded-lg cursor-pointer transition-colors ${formData.labId === (lab._id || lab.id) ? 'border-primary bg-primary/5' : 'hover:border-primary/50'}`}
+                    onClick={() => setFormData({...formData, labId: lab._id || lab.id})}
                   >
                     <div className="font-medium">{lab.name}</div>
                     <div className="text-sm text-muted-foreground mt-1 flex items-center">
                       <MapPin className="mr-1 h-3 w-3" />
-                      {lab.location}
+                      {lab.location?.address || "No address provided"}
                     </div>
                   </div>
                 ))}
@@ -188,7 +213,7 @@ export function BookingWizard() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Location:</span>
-                  <span className="font-medium">{labs.find(l => l.id === formData.labId)?.name || "Not selected"}</span>
+                  <span className="font-medium">{labs.find((l: any) => (l._id || l.id) === formData.labId)?.name || "Not selected"}</span>
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t mt-2">
                   <span className="text-muted-foreground">Total:</span>
@@ -225,7 +250,7 @@ export function BookingWizard() {
                 Next Step <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={!formData.date || !formData.time}>
+              <Button onClick={handleSubmit} disabled={!formData.date || !formData.time || createBooking.isPending}>
                 Confirm Booking
               </Button>
             )}

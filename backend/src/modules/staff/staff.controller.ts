@@ -55,7 +55,7 @@ export const staffController = {
 
   async deactivateStaff(req: Request, res: Response, next: NextFunction) {
     try {
-      await staffService.deactivateStaff(req.params.userId, req.user!.laboratoryId);
+      await staffService.deactivateStaff(req.params.userId as string, req.user!.laboratoryId);
       res.status(204).send();
     } catch (error) {
       next(error);

@@ -6,7 +6,7 @@ import { InvoiceModel } from '../billing/invoice.model.js';
 import { InterpretationModel } from '../interpretations/interpretation.model.js';
 
 export const analyticsController = {
-  async getDashboardMetrics(req: Request, res: Response, next: NextFunction) {
+  async getDashboardMetrics(_req: Request, res: Response, next: NextFunction) {
     try {
       const [
         totalPatients,

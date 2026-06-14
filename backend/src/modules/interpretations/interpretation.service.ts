@@ -1,12 +1,12 @@
-import { InterpretationModel, type IInterpretation } from './interpretation.model.js';
+import { InterpretationModel } from './interpretation.model.js';
 import { ResultRecordModel } from '../results/result.model.js';
 import { PatientModel } from '../patients/patient.model.js';
 import { UserModel } from '../auth/auth.model.js';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
-import { encryptSymmetric, decryptSymmetric } from '../../utils/crypto.js';
-import { auditService } from '../audit/audit.service.js';
-import { notificationQueue } from '../notifications/notification.service.js';
+import { encrypt, decrypt } from '../../utils/crypto.js';
+import { AuditService } from '../audit/audit.service.js';
+import { notificationService } from '../notifications/notification.service.js';
 import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
 
 export const interpretationService = {
@@ -37,10 +37,10 @@ export const interpretationService = {
     let encryptedRecs: string | null = null;
 
     if (data.clinicalNotes) {
-      encryptedNotes = encryptSymmetric(data.clinicalNotes);
+      encryptedNotes = encrypt(data.clinicalNotes);
     }
     if (data.recommendations) {
-      encryptedRecs = encryptSymmetric(data.recommendations);
+      encryptedRecs = encrypt(data.recommendations);
     }
 
     const interpretation = new InterpretationModel({
@@ -55,7 +55,7 @@ export const interpretationService = {
 
     const saved = await interpretation.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: interpreterUserId,
       actorRole: interpreterRole,
       action: 'INTERPRETATION_CREATED',
@@ -71,14 +71,14 @@ export const interpretationService = {
     const interpObj = saved.toObject();
     if (interpObj.clinicalNotes) {
       try {
-        interpObj.clinicalNotes = decryptSymmetric(interpObj.clinicalNotes);
+        interpObj.clinicalNotes = decrypt(interpObj.clinicalNotes);
       } catch (e) {
         interpObj.clinicalNotes = '[Decryption Failed]';
       }
     }
     if (interpObj.recommendations) {
       try {
-        interpObj.recommendations = decryptSymmetric(interpObj.recommendations);
+        interpObj.recommendations = decrypt(interpObj.recommendations);
       } catch (e) {
         interpObj.recommendations = '[Decryption Failed]';
       }
@@ -111,10 +111,10 @@ export const interpretationService = {
     const decrypted = interpretations.map((interp) => {
       const obj = interp.toObject();
       if (obj.clinicalNotes) {
-        try { obj.clinicalNotes = decryptSymmetric(obj.clinicalNotes); } catch { obj.clinicalNotes = '[Decryption Failed]'; }
+        try { obj.clinicalNotes = decrypt(obj.clinicalNotes); } catch { obj.clinicalNotes = '[Decryption Failed]'; }
       }
       if (obj.recommendations) {
-        try { obj.recommendations = decryptSymmetric(obj.recommendations); } catch { obj.recommendations = '[Decryption Failed]'; }
+        try { obj.recommendations = decrypt(obj.recommendations); } catch { obj.recommendations = '[Decryption Failed]'; }
       }
       return obj;
     });
@@ -138,17 +138,17 @@ export const interpretationService = {
 
     const obj = interpretation.toObject();
     if (obj.clinicalNotes) {
-      try { obj.clinicalNotes = decryptSymmetric(obj.clinicalNotes); } catch { obj.clinicalNotes = '[Decryption Failed]'; }
+      try { obj.clinicalNotes = decrypt(obj.clinicalNotes); } catch { obj.clinicalNotes = '[Decryption Failed]'; }
     }
     if (obj.recommendations) {
-      try { obj.recommendations = decryptSymmetric(obj.recommendations); } catch { obj.recommendations = '[Decryption Failed]'; }
+      try { obj.recommendations = decrypt(obj.recommendations); } catch { obj.recommendations = '[Decryption Failed]'; }
     }
 
     return obj;
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async updateInterpretation(id: string, data: any, userId: string, userRole: string, ipAddress: string, userAgent: string) {
+  async updateInterpretation(id: string, data: any, userId: string, userRole: string, _ipAddress: string, _userAgent: string) {
     const interpretation = await InterpretationModel.findById(id);
     if (!interpretation) throw new NotFoundError('Interpretation not found.');
 
@@ -163,10 +163,10 @@ export const interpretationService = {
     if (data.summary !== undefined) interpretation.summary = data.summary;
     
     if (data.clinicalNotes !== undefined) {
-      interpretation.clinicalNotes = data.clinicalNotes ? encryptSymmetric(data.clinicalNotes) : null;
+      interpretation.clinicalNotes = data.clinicalNotes ? encrypt(data.clinicalNotes) : null;
     }
     if (data.recommendations !== undefined) {
-      interpretation.recommendations = data.recommendations ? encryptSymmetric(data.recommendations) : null;
+      interpretation.recommendations = data.recommendations ? encrypt(data.recommendations) : null;
     }
 
     await interpretation.save();
@@ -184,7 +184,7 @@ export const interpretationService = {
     interpretation.status = 'PUBLISHED';
     await interpretation.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: userId,
       actorRole: userRole,
       action: 'INTERPRETATION_PUBLISHED',
@@ -203,11 +203,12 @@ export const interpretationService = {
       if (patientUser) {
         const prefs = await NotificationPreferenceModel.findOne({ userId: patientUser._id });
         if (!prefs || prefs.emailEnabled) {
-          await notificationQueue.add('sendEmail', {
-            to: patientUser.email,
-            subject: 'Clinical Interpretation Available',
-            body: `Hello ${patientUser.firstName},<br><br>A clinical interpretation for your recent test results has been published and is now available in your portal.`,
-          });
+          await notificationService.sendEmail(
+            patientUser.email,
+            'Clinical Interpretation Available',
+            'interpretation_available',
+            { firstName: patientUser.firstName }
+          );
         }
       }
     }

@@ -25,7 +25,7 @@ export const laboratoryController = {
 
   async getLaboratoryById(req: Request, res: Response, next: NextFunction) {
     try {
-      const laboratory = await laboratoryService.getLaboratoryById(req.params.id);
+      const laboratory = await laboratoryService.getLaboratoryById(req.params.id as string);
       sendSuccess(res, laboratory);
     } catch (error) {
       next(error);
@@ -34,7 +34,7 @@ export const laboratoryController = {
 
   async updateLaboratory(req: Request, res: Response, next: NextFunction) {
     try {
-      const laboratory = await laboratoryService.updateLaboratory(req.params.id, req.body);
+      const laboratory = await laboratoryService.updateLaboratory(req.params.id as string, req.body);
       sendSuccess(res, laboratory);
     } catch (error) {
       next(error);
@@ -43,7 +43,7 @@ export const laboratoryController = {
 
   async deleteLaboratory(req: Request, res: Response, next: NextFunction) {
     try {
-      await laboratoryService.deleteLaboratory(req.params.id);
+      await laboratoryService.deleteLaboratory(req.params.id as string);
       res.status(204).send();
     } catch (error) {
       next(error);

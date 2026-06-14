@@ -7,21 +7,21 @@ import { DataTable } from "@/components/shared/DataTable"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 
-const mockPatients = [
-  { id: "PAT-001", name: "Kwame Mensah", gender: "Male", dob: "1980-05-15", phone: "+233 24 123 4567", riskLevel: "HIGH", lastVisit: "2023-10-12" },
-  { id: "PAT-002", name: "Ama Osei", gender: "Female", dob: "1992-11-20", phone: "+233 20 987 6543", riskLevel: "LOW", lastVisit: "2023-10-14" },
-  { id: "PAT-003", name: "John Doe", gender: "Male", dob: "1975-03-08", phone: "+233 55 555 5555", riskLevel: "MODERATE", lastVisit: "2023-09-28" },
-  { id: "PAT-004", name: "Jane Smith", gender: "Female", dob: "1988-07-22", phone: "+233 24 444 4444", riskLevel: "PENDING", lastVisit: "2023-10-18" },
-]
+import { usePatients } from "@/hooks/usePatients"
+
 
 export function PatientList() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredPatients = mockPatients.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const { data: patientsData, isLoading } = usePatients({ search: searchTerm })
+  const patients = patientsData?.items || patientsData || []
+
+  // Ensure it's an array before filtering (if filtering is done client-side, though the API also supports search)
+  const filteredPatients = Array.isArray(patients) ? patients.filter((p: any) => 
+    `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (p.id || '').toLowerCase().includes(searchTerm.toLowerCase())
+  ) : []
 
   return (
     <div className="space-y-6">
@@ -64,21 +64,24 @@ export function PatientList() {
               { header: "Patient ID", accessorKey: "id" },
               { 
                 header: "Name", 
-                cell: (row) => <span className="font-medium text-primary hover:underline cursor-pointer" onClick={() => navigate(`/patients/${row.id}`)}>{row.name}</span>
+                cell: (row) => <span className="font-medium text-primary hover:underline cursor-pointer" onClick={() => navigate(`/patients/${row._id || row.id}`)}>{row.firstName} {row.lastName}</span>
               },
               { header: "Gender", accessorKey: "gender" },
-              { header: "Date of Birth", accessorKey: "dob" },
+              { 
+                header: "Date of Birth", 
+                cell: (row) => row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString() : "-"
+              },
               { header: "Phone", accessorKey: "phone" },
               { 
                 header: "Risk Level", 
-                cell: (row) => row.riskLevel !== "PENDING" ? <StatusBadge status={row.riskLevel} /> : <span className="text-muted-foreground">-</span>
+                cell: (row) => row.riskLevel && row.riskLevel !== "PENDING" ? <StatusBadge status={row.riskLevel} /> : <span className="text-muted-foreground">-</span>
               },
               { header: "Last Visit", accessorKey: "lastVisit" },
               { 
                 header: "Actions", 
                 cell: (row) => (
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" title="View Profile" onClick={() => navigate(`/patients/${row.id}`)}>
+                    <Button variant="ghost" size="icon" title="View Profile" onClick={() => navigate(`/patients/${row._id || row.id}`)}>
                       <Activity className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button variant="ghost" size="icon" title="View Results">
@@ -89,6 +92,7 @@ export function PatientList() {
               },
             ]}
             data={filteredPatients}
+            isLoading={isLoading}
           />
         </CardContent>
       </Card>

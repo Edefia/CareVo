@@ -1,7 +1,6 @@
 import { app } from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
-import { disconnectRedis } from './config/redis.js';
 import { logger } from './utils/logger.js';
 
 let server: import('http').Server;
@@ -35,7 +34,6 @@ async function shutdown(signal: string) {
     server.close(async () => {
       logger.info('HTTP server closed');
       await disconnectDatabase();
-      await disconnectRedis();
       process.exit(0);
     });
 
@@ -46,7 +44,6 @@ async function shutdown(signal: string) {
     }, 10000);
   } else {
     await disconnectDatabase();
-    await disconnectRedis();
     process.exit(0);
   }
 }

@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import hpp from 'hpp';
 import { env } from './config/env.js';
 import { morganStream } from './utils/logger.js';
 import { mongoSanitize } from './middleware/mongoSanitize.js';
@@ -55,6 +56,9 @@ app.use(cookieParser());
 
 // Security (NoSQL injection prevention)
 app.use(mongoSanitize());
+
+// Security (HTTP Parameter Pollution prevention)
+app.use(hpp());
 
 // --- Global Rate Limit ---
 app.use('/api', generalLimiter);

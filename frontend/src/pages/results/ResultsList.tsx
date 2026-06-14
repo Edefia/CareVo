@@ -7,20 +7,21 @@ import { DataTable } from "@/components/shared/DataTable"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 
-const mockResults = [
-  { id: "RES-2023-1029", patient: "Kwame Mensah", package: "Basic Wellness", date: "2023-10-12", status: "FINALIZED", lab: "Accra Central", risk: "HIGH" },
-  { id: "RES-2023-1030", patient: "Ama Osei", package: "Comprehensive", date: "2023-10-14", status: "SUBMITTED", lab: "Kumasi Diagnostic", risk: "PENDING" },
-  { id: "RES-2023-1031", patient: "John Doe", package: "Lipid Profile", date: "2023-10-15", status: "DRAFT", lab: "Accra Central", risk: "PENDING" },
-]
+import { useResults } from "@/hooks/useResults"
+
+
 
 export function ResultsList() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredResults = mockResults.filter(res => 
-    res.patient.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    res.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const { data: resultsData, isLoading } = useResults()
+  const results = resultsData?.items || resultsData || []
+
+  const filteredResults = Array.isArray(results) ? results.filter((res: any) => 
+    (res.patientId || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (res._id || res.id || "").toLowerCase().includes(searchTerm.toLowerCase())
+  ) : []
 
   return (
     <div className="space-y-6">
@@ -54,24 +55,24 @@ export function ResultsList() {
         <CardContent>
           <DataTable 
             columns={[
-              { header: "Result ID", accessorKey: "id" },
-              { header: "Patient Name", accessorKey: "patient" },
-              { header: "Package", accessorKey: "package" },
-              { header: "Laboratory", accessorKey: "lab" },
-              { header: "Test Date", accessorKey: "date" },
+              { header: "Result ID", cell: (row) => row._id || row.id },
+              { header: "Patient ID", cell: (row) => row.patientId || "Unknown" },
+              { header: "Booking/Package", cell: (row) => row.bookingId || "Unknown" },
+              { header: "Laboratory", cell: (row) => row.laboratoryId || "Unknown" },
+              { header: "Test Date", cell: (row) => new Date(row.createdAt).toLocaleDateString() },
               { 
                 header: "Status", 
                 cell: (row) => <StatusBadge status={row.status} />
               },
               { 
-                header: "Risk", 
-                cell: (row) => row.risk !== "PENDING" ? <StatusBadge status={row.risk} /> : <span className="text-muted-foreground">-</span>
+                header: "Biomarkers", 
+                cell: (row) => <span>{row.biomarkers?.length || 0} entered</span>
               },
               { 
                 header: "Actions", 
                 cell: (row) => (
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" title="View Details" onClick={() => navigate(`/results/${row.id}`)}>
+                    <Button variant="ghost" size="icon" title="View Details" onClick={() => navigate(`/results/${row._id || row.id}`)}>
                       <FileText className="h-4 w-4 text-blue-600" />
                     </Button>
                     {row.status === "FINALIZED" && (
@@ -84,6 +85,7 @@ export function ResultsList() {
               },
             ]}
             data={filteredResults}
+            isLoading={isLoading}
           />
         </CardContent>
       </Card>

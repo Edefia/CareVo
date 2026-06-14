@@ -40,7 +40,7 @@ export const interpretationController = {
   async getInterpretationById(req: Request, res: Response, next: NextFunction) {
     try {
       const interpretation = await interpretationService.getInterpretationById(
-        req.params.id,
+        req.params.id as string,
         req.user!.role,
         req.user!.id
       );
@@ -53,7 +53,7 @@ export const interpretationController = {
   async updateInterpretation(req: Request, res: Response, next: NextFunction) {
     try {
       const interpretation = await interpretationService.updateInterpretation(
-        req.params.id,
+        req.params.id as string,
         req.body,
         req.user!.id,
         req.user!.role,
@@ -69,7 +69,7 @@ export const interpretationController = {
   async publishInterpretation(req: Request, res: Response, next: NextFunction) {
     try {
       const interpretation = await interpretationService.publishInterpretation(
-        req.params.id,
+        req.params.id as string,
         req.user!.id,
         req.user!.role,
         req.ip || '127.0.0.1',

@@ -42,7 +42,7 @@ export const bookingController = {
   async getBookingById(req: Request, res: Response, next: NextFunction) {
     try {
       const booking = await bookingService.getBookingById(
-        req.params.id,
+        req.params.id as string,
         req.user!.role,
         req.user!.id
       );
@@ -55,7 +55,7 @@ export const bookingController = {
   async updateBookingStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const booking = await bookingService.updateBookingStatus(
-        req.params.id,
+        req.params.id as string,
         req.body.status,
         req.body.meetingLink,
         req.user!.id,
@@ -72,7 +72,7 @@ export const bookingController = {
   async updateInternalNotes(req: Request, res: Response, next: NextFunction) {
     try {
       const booking = await bookingService.updateInternalNotes(
-        req.params.id,
+        req.params.id as string,
         req.body.internalNotes,
         req.user!.id,
         req.user!.role,

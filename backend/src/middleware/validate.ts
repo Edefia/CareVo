@@ -18,7 +18,7 @@ export function validate(schema: z.ZodType, source: ValidationSource = 'body') {
     }
 
     // Replace the source with parsed (and transformed) data
-    (req as Record<string, unknown>)[source] = result.data;
+    (req as unknown as Record<string, unknown>)[source] = result.data;
     next();
   };
 }

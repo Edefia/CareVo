@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowLeft, FileText, CheckCircle, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -6,9 +6,22 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
+import { useParams } from "react-router-dom"
+import { useInterpretation, useUpdateInterpretation, usePublishInterpretation } from "@/hooks/useInterpretations"
+import { useResult } from "@/hooks/useResults"
+import toast from "react-hot-toast"
 export function InterpretationForm() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  
+  const { data: interpretationData, isLoading: interpLoading } = useInterpretation(id as string)
+  const interpretation = interpretationData?.data || interpretationData
+
+  const { data: resultData, isLoading: resultLoading } = useResult(interpretation?.resultId)
+  const result = resultData?.data || resultData
+
+  const updateInterp = useUpdateInterpretation()
+  const publishInterp = usePublishInterpretation()
   
   const [formData, setFormData] = useState({
     riskLevel: "",
@@ -16,21 +29,47 @@ export function InterpretationForm() {
     recommendations: "",
   })
 
-  const mockData = {
-    patient: "Kwame Mensah",
-    package: "Basic Wellness",
-    lab: "Accra Central",
-    biomarkers: [
-      { name: "Fasting Blood Sugar", value: "110", unit: "mg/dL", ref: "70-99", flag: "HIGH" },
-      { name: "HbA1c", value: "5.8", unit: "%", ref: "< 5.7", flag: "HIGH" },
-      { name: "Total Cholesterol", value: "180", unit: "mg/dL", ref: "< 200", flag: "NORMAL" },
-    ]
+  useEffect(() => {
+    if (interpretation) {
+      setFormData({
+        riskLevel: "LOW", // Mocking riskLevel as it's not in schema
+        summary: interpretation.summary || "",
+        recommendations: interpretation.recommendations || "",
+      })
+    }
+  }, [interpretation])
+
+  const handleSaveDraft = async () => {
+    try {
+      await updateInterp.mutateAsync({ 
+        id: id as string, 
+        summary: formData.summary, 
+        recommendations: formData.recommendations 
+      })
+      toast.success("Draft saved successfully")
+    } catch (e) {
+      toast.error("Failed to save draft")
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Submitting interpretation", formData)
+    try {
+      await updateInterp.mutateAsync({ 
+        id: id as string, 
+        summary: formData.summary, 
+        recommendations: formData.recommendations 
+      })
+      await publishInterp.mutateAsync(id as string)
+      toast.success("Interpretation published successfully")
+      navigate('/interpretations')
+    } catch (e) {
+      toast.error("Failed to publish interpretation")
+    }
   }
+
+  if (interpLoading || resultLoading) return <div>Loading...</div>
+  if (!interpretation || !result) return <div>Data not found</div>
 
   return (
     <div className="space-y-6">
@@ -41,13 +80,13 @@ export function InterpretationForm() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold tracking-tight">Clinical Interpretation</h2>
-            <StatusBadge status="IN_PROGRESS" />
+            <StatusBadge status={interpretation.status} />
           </div>
-          <p className="text-muted-foreground">{mockData.patient} • {mockData.package}</p>
+          <p className="text-muted-foreground">Patient ID: {interpretation.patientId}</p>
         </div>
         <div>
-          <Button variant="outline" className="mr-2">Save Draft</Button>
-          <Button onClick={handleSubmit} className="flex items-center gap-2">
+          <Button variant="outline" className="mr-2" onClick={handleSaveDraft} disabled={updateInterp.isPending}>Save Draft</Button>
+          <Button onClick={handleSubmit} className="flex items-center gap-2" disabled={publishInterp.isPending}>
             <CheckCircle className="h-4 w-4" />
             Publish
           </Button>
@@ -66,11 +105,11 @@ export function InterpretationForm() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockData.biomarkers.map((b, i) => (
+                {(result.biomarkers || []).map((b: any, i: number) => (
                   <div key={i} className="flex justify-between items-center border-b pb-2 last:border-0">
                     <div>
                       <div className="font-medium text-sm">{b.name}</div>
-                      <div className="text-xs text-muted-foreground">Ref: {b.ref} {b.unit}</div>
+                      <div className="text-xs text-muted-foreground">Ref: {b.referenceRange} {b.unit}</div>
                     </div>
                     <div className="text-right">
                       <div className={`font-bold ${b.flag === 'HIGH' ? 'text-red-600' : 'text-green-600'}`}>

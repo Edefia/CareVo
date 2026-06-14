@@ -5,7 +5,7 @@ export const inviteStaffSchema = z.object({
   body: z.object({
     email: z.string().email('Invalid email address').transform(v => v.toLowerCase()),
     role: z.enum(STAFF_ROLES as [string, ...string[]], {
-      errorMap: () => ({ message: 'Invalid staff role' }),
+      message: 'Invalid staff role',
     }),
     laboratoryId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid laboratory ID').optional(),
   }).refine((data) => {

@@ -1,11 +1,11 @@
 import { BookingModel } from './booking.model.js';
 import { PatientModel } from '../patients/patient.model.js';
 import { UserModel } from '../auth/auth.model.js';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../shared/errors/index.js';
+import { NotFoundError, ForbiddenError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
-import { encryptSymmetric, decryptSymmetric } from '../../utils/crypto.js';
-import { auditService } from '../audit/audit.service.js';
-import { notificationQueue } from '../notifications/notification.service.js';
+import { encrypt, decrypt } from '../../utils/crypto.js';
+import { AuditService } from '../audit/audit.service.js';
+import { notificationService } from '../notifications/notification.service.js';
 import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
 
 export const bookingService = {
@@ -34,7 +34,7 @@ export const bookingService = {
 
     const saved = await booking.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: creatorId,
       actorRole: creatorRole,
       action: 'BOOKING_CREATED',
@@ -72,10 +72,9 @@ export const bookingService = {
     const decrypted = bookings.map((b) => {
       const obj = b.toObject();
       if (userRole === 'PATIENT') {
-        // Hide internal notes from patient
-        delete obj.internalNotes;
+        delete (obj as any).internalNotes;
       } else if (obj.internalNotes) {
-        try { obj.internalNotes = decryptSymmetric(obj.internalNotes); } catch { obj.internalNotes = '[Decryption Failed]'; }
+        try { obj.internalNotes = decrypt(obj.internalNotes); } catch { obj.internalNotes = '[Decryption Failed]'; }
       }
       return obj;
     });
@@ -97,9 +96,9 @@ export const bookingService = {
 
     const obj = booking.toObject();
     if (userRole === 'PATIENT') {
-      delete obj.internalNotes;
+      delete (obj as any).internalNotes;
     } else if (obj.internalNotes) {
-      try { obj.internalNotes = decryptSymmetric(obj.internalNotes); } catch { obj.internalNotes = '[Decryption Failed]'; }
+      try { obj.internalNotes = decrypt(obj.internalNotes); } catch { obj.internalNotes = '[Decryption Failed]'; }
     }
 
     return obj;
@@ -117,7 +116,7 @@ export const bookingService = {
 
     await booking.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: userId,
       actorRole: userRole,
       action: 'BOOKING_STATUS_UPDATED',
@@ -148,11 +147,12 @@ export const bookingService = {
             } else if (status === 'CANCELLED') {
               body = `Hello ${patientUser.firstName},<br><br>Your appointment scheduled for ${booking.scheduledAt.toLocaleString()} has been cancelled. Please contact us to reschedule.`;
             }
-            await notificationQueue.add('sendEmail', {
-              to: patientUser.email,
-              subject: `Appointment ${status === 'CONFIRMED' ? 'Confirmed' : 'Cancelled'}`,
-              body,
-            });
+            await notificationService.sendEmail(
+              patientUser.email,
+              `Appointment ${status === 'CONFIRMED' ? 'Confirmed' : 'Cancelled'}`,
+              'appointment_status',
+              { firstName: patientUser.firstName, body }
+            );
           }
         }
       }
@@ -166,14 +166,14 @@ export const bookingService = {
     if (!booking) throw new NotFoundError('Booking not found.');
 
     if (internalNotes) {
-      booking.internalNotes = encryptSymmetric(internalNotes);
+      booking.internalNotes = encrypt(internalNotes);
     } else {
       booking.internalNotes = null;
     }
 
     await booking.save();
 
-    await auditService.log({
+    await AuditService.log({
       actorId: userId,
       actorRole: userRole,
       action: 'BOOKING_NOTES_UPDATED',

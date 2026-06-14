@@ -37,7 +37,7 @@ export const patientController = {
   async getPatientById(req: Request, res: Response, next: NextFunction) {
     try {
       const callerLabId = req.user!.role !== 'SUPER_ADMIN' && req.user!.role !== 'PLATFORM_ADMIN' ? req.user!.laboratoryId : null;
-      const patient = await patientService.getPatientById(req.params.id, callerLabId);
+      const patient = await patientService.getPatientById(req.params.id as string, callerLabId);
       sendSuccess(res, patient);
     } catch (error) {
       next(error);
@@ -47,7 +47,7 @@ export const patientController = {
   async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
       const callerLabId = req.user!.role !== 'SUPER_ADMIN' && req.user!.role !== 'PLATFORM_ADMIN' ? req.user!.laboratoryId : null;
-      const patient = await patientService.updateProfile(req.params.id, req.body, callerLabId);
+      const patient = await patientService.updateProfile(req.params.id as string, req.body, callerLabId);
       sendSuccess(res, patient);
     } catch (error) {
       next(error);
