@@ -7,7 +7,7 @@ describe('Staff Validation Schemas', () => {
     it('should validate a correct payload for non-lab roles without laboratoryId', () => {
       const payload = {
         email: 'admin@carevo.com',
-        role: ROLES.PLATFORM_ADMIN,
+        role: ROLES.ADMIN,
       };
 
       const result = inviteStaffSchema.safeParse({ body: payload });
@@ -17,7 +17,7 @@ describe('Staff Validation Schemas', () => {
     it('should validate a correct payload for lab-scoped roles with laboratoryId', () => {
       const payload = {
         email: 'staff@lab.com',
-        role: ROLES.LAB_STAFF,
+        role: ROLES.LABORATORY,
         laboratoryId: '60d21b4667d0d8992e610c85',
       };
 
@@ -28,7 +28,7 @@ describe('Staff Validation Schemas', () => {
     it('should reject payload for lab-scoped role without laboratoryId', () => {
       const payload = {
         email: 'staff@lab.com',
-        role: ROLES.LAB_STAFF,
+        role: ROLES.LABORATORY,
       };
 
       const result = inviteStaffSchema.safeParse({ body: payload });

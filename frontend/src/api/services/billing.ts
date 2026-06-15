@@ -9,8 +9,8 @@ export const billingService = {
     const { data } = await apiClient.get(`/billing/invoices/${id}`);
     return data.data;
   },
-  initiatePayment: async (id: string, customerPhone: string) => {
-    const { data } = await apiClient.post(`/billing/invoices/${id}/pay`, { customerPhone });
+  initiatePayment: async (id: string, customerPhone: string, channel: string) => {
+    const { data } = await apiClient.post(`/billing/invoices/${id}/pay`, { customerPhone, channel });
     return data.data;
   }
 };

@@ -34,10 +34,11 @@ const envSchema = z.object({
   MOOLRE_API_USER: z.string().min(1),
   MOOLRE_API_KEY: z.string().min(1),
   MOOLRE_VASKEY: z.string().min(1),
+  MOOLRE_ACCOUNT_NUMBER: z.string().min(1),
 
   // Seed
   SEED_ADMIN_EMAIL: z.string().email(),
-  SEED_ADMIN_PASSWORD: z.string().min(12),
+  SEED_ADMIN_PASSWORD: z.string().min(8),
 });
 
 export type Env = z.infer<typeof envSchema>;

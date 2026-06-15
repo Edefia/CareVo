@@ -15,3 +15,7 @@ export const changePasswordSchema = z.strictObject({
     .min(12, 'Password must be at least 12 characters')
     .regex(passwordRegex, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
 });
+
+export const uploadAvatarSchema = z.strictObject({
+  avatarBase64: z.string().startsWith('data:image/', 'Invalid image format'),
+});

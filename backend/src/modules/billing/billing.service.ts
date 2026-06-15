@@ -10,7 +10,7 @@ import { NotificationPreferenceModel } from '../notifications/notification-prefe
 import { paymentService } from './payment.service.js';
 
 export const billingService = {
-  async initiateMoolrePayment(invoiceId: string, customerPhone: string, userId: string, userRole: string, ipAddress: string, userAgent: string) {
+  async initiateMoolrePayment(invoiceId: string, customerPhone: string, channel: string, userId: string, userRole: string, ipAddress: string, userAgent: string) {
     const invoice = await InvoiceModel.findById(invoiceId).populate('patientId');
     if (!invoice) throw new NotFoundError('Invoice not found.');
     if (invoice.status === 'PAID') throw new ValidationError('Invoice is already paid.');
@@ -27,7 +27,8 @@ export const billingService = {
       invoice.currency,
       invoice.id,
       customerPhone,
-      customerName
+      customerName,
+      channel
     );
 
     await AuditService.log({

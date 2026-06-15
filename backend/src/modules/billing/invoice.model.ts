@@ -37,7 +37,7 @@ const invoiceSchema = new Schema<IInvoice>(
       required: true,
       uppercase: true,
       trim: true,
-      default: 'USD',
+      default: 'GHS',
     },
     status: {
       type: String,

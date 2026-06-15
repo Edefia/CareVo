@@ -1,29 +1,12 @@
 
-import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 type StatusType =
-  | "DRAFT"
-  | "PENDING"
-  | "CONFIRMED"
-  | "ATTENDED"
-  | "SUBMITTED"
-  | "IN_PROGRESS"
-  | "PUBLISHED"
-  | "FINALIZED"
-  | "RELEASED"
-  | "NORMAL"
-  | "LOW"
-  | "MODERATE"
-  | "HIGH"
-  | "CRITICAL"
-  | "ACTIVE"
-  | "INACTIVE"
-  | "GENERATED"
-  | "ACCEPTED"
-  | "SCHEDULED"
-  | "VISITED"
-  | "COMPLETED"
-  | "CLOSED"
+  | "DRAFT" | "PENDING" | "CONFIRMED" | "ATTENDED" | "SUBMITTED"
+  | "IN_PROGRESS" | "PUBLISHED" | "FINALIZED" | "RELEASED" | "NORMAL"
+  | "LOW" | "MODERATE" | "HIGH" | "CRITICAL" | "ACTIVE" | "INACTIVE"
+  | "GENERATED" | "ACCEPTED" | "SCHEDULED" | "VISITED" | "COMPLETED" | "CLOSED"
+  | "CANCELLED"
 
 interface StatusBadgeProps {
   status: StatusType | string
@@ -31,61 +14,73 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  let variant: "default" | "secondary" | "destructive" | "outline" = "default"
-  let colorClass = ""
+  let bgColor = "bg-[#F1F5F9]"
+  let textColor = "text-[#475569]"
+  let dotColor = "bg-[#94A3B8]"
 
   const normalized = status.toUpperCase()
 
   switch (normalized) {
+    case "ACTIVE":
+    case "SUCCESS":
+    case "CONFIRMED":
+    case "LOW":
     case "NORMAL":
     case "PUBLISHED":
-    case "RELEASED":
-    case "ACTIVE":
     case "COMPLETED":
     case "ATTENDED":
-    case "LOW":
-      colorClass = "bg-green-100 text-green-800 hover:bg-green-200 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
-      variant = "outline"
+      bgColor = "bg-[#DCFCE7]"
+      textColor = "text-[#15803D]"
+      dotColor = "bg-[#16A34A]"
       break
-    case "SUBMITTED":
+    case "WARNING":
     case "PENDING":
     case "MODERATE":
-    case "GENERATED":
-    case "ACCEPTED":
     case "SCHEDULED":
-      colorClass = "bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-      variant = "outline"
+    case "ACCEPTED":
+      bgColor = "bg-[#FEF9C3]"
+      textColor = "text-[#A16207]"
+      dotColor = "bg-[#CA8A04]"
+      break
+    case "DANGER":
+    case "CANCELLED":
+    case "CRITICAL":
+    case "CLOSED":
+      bgColor = "bg-[#FEE2E2]"
+      textColor = "text-[#B91C1C]"
+      dotColor = "bg-[#DC2626]"
+      break
+    case "INFO":
+    case "DRAFT":
+    case "SUBMITTED":
+    case "IN_PROGRESS":
+    case "GENERATED":
+    case "VISITED":
+      bgColor = "bg-[#DBEAFE]"
+      textColor = "text-[#1D4ED8]"
+      dotColor = "bg-[#3B82F6]"
       break
     case "HIGH":
-      colorClass = "bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800"
-      variant = "outline"
+      bgColor = "bg-[#FFEDD5]"
+      textColor = "text-[#C2410C]"
+      dotColor = "bg-[#EA580C]"
       break
-    case "CRITICAL":
-    case "INACTIVE":
-    case "CLOSED":
-      colorClass = "bg-red-100 text-red-800 hover:bg-red-200 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
-      variant = "outline"
-      break
-    case "IN_PROGRESS":
-    case "CONFIRMED":
-    case "VISITED":
-      colorClass = "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
-      variant = "outline"
-      break
-    case "DRAFT":
-    case "FINALIZED":
     default:
-      colorClass = "bg-slate-100 text-slate-800 hover:bg-slate-200 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
-      variant = "outline"
+      // Neutral / Inactive is default
       break
   }
 
   return (
-    <Badge 
-      variant={variant} 
-      className={`${colorClass} ${className || ""}`}
+    <span
+      className={cn(
+        "inline-flex h-[24px] items-center gap-[5px] rounded-full px-[10px] font-sans text-[12px] font-semibold whitespace-nowrap",
+        bgColor,
+        textColor,
+        className
+      )}
     >
-      {status.replace(/_/g, ' ')}
-    </Badge>
+      <span className={cn("h-[6px] w-[6px] rounded-full", dotColor)} />
+      {status.replace(/_/g, " ")}
+    </span>
   )
 }

@@ -15,6 +15,7 @@ export function PaymentTerminal() {
   
   const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY")
   const [phoneNumber, setPhoneNumber] = useState("")
+  const [channel, setChannel] = useState("13")
   
   const { data: invoiceData, isLoading } = useInvoice(id as string)
   const initiatePayment = useInitiatePayment()
@@ -28,7 +29,11 @@ export function PaymentTerminal() {
     }
 
     try {
-      await initiatePayment.mutateAsync({ id: id as string, customerPhone: phoneNumber || "0000000000" })
+      await initiatePayment.mutateAsync({ 
+        id: id as string, 
+        customerPhone: phoneNumber || "0000000000",
+        channel: paymentMethod === "MOBILE_MONEY" ? channel : "13"
+      })
       toast.success("Payment initiated successfully!")
       navigate('/billing')
     } catch (error) {
@@ -119,10 +124,14 @@ export function PaymentTerminal() {
               <div className="space-y-4 animate-in fade-in-50">
                 <div className="space-y-2">
                   <Label>Network Provider</Label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                    <option>MTN MoMo</option>
-                    <option>Telecel Cash</option>
-                    <option>AT Money</option>
+                  <select 
+                    value={channel}
+                    onChange={(e) => setChannel(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="13">MTN MoMo</option>
+                    <option value="6">Telecel Cash</option>
+                    <option value="7">AT Money</option>
                   </select>
                 </div>
                 <div className="space-y-2">

@@ -70,10 +70,13 @@ export const billingController = {
 
   async initiatePayment(req: Request, res: Response, next: NextFunction) {
     try {
-      const { customerPhone } = req.body;
+      const { customerPhone, channel } = req.body;
+      if (!channel) throw new Error('Channel is required (e.g., 13 for MTN).');
+
       const response = await billingService.initiateMoolrePayment(
         req.params.id as string,
         customerPhone,
+        channel,
         req.user!.id,
         req.user!.role,
         req.ip || '127.0.0.1',

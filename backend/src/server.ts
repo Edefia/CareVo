@@ -2,6 +2,7 @@ import { app } from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
 import { logger } from './utils/logger.js';
+import mongoose from 'mongoose';
 
 let server: import('http').Server;
 
@@ -10,6 +11,10 @@ async function bootstrap() {
     logger.info(`Starting CareVo backend in ${env.NODE_ENV} mode...`);
 
     await connectDatabase();
+    
+    // Sync indexes to clear out old obsolete unique indexes (e.g., phone)
+    await mongoose.syncIndexes();
+    logger.info('MongoDB indexes synchronized');
     
     // Workers would be started here in production, or in a separate process
     // if (env.NODE_ENV === 'production') { ... }

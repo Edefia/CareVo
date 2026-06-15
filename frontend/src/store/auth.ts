@@ -2,14 +2,10 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 export type UserRole =
-  | "SUPER_ADMIN"
-  | "PLATFORM_ADMIN"
-  | "LAB_ADMIN"
-  | "LAB_STAFF"
+  | "ADMIN"
+  | "LABORATORY"
   | "INTERPRETER"
-  | "HEALTH_ADVOCATE"
-  | "REFERRAL_PARTNER"
-  | "PATIENT"
+  | "CLIENT"
 
 export interface User {
   id: string

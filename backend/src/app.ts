@@ -25,6 +25,7 @@ import { bookingRoutes } from './modules/bookings/booking.routes.js';
 import { billingRoutes } from './modules/billing/billing.routes.js';
 import { auditRoutes } from './modules/audit/audit.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
+import { packageRoutes } from './modules/packages/package.routes.js';
 
 export const app = express();
 
@@ -78,6 +79,7 @@ app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/packages', packageRoutes);
 
 // --- 404 Handler ---
 app.use((req, res) => {

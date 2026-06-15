@@ -11,7 +11,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-[48px] w-full rounded-[var(--radius-md)] border-[1.5px] border-[var(--color-border)] bg-[var(--color-white)] px-[16px] text-[15px] font-sans text-[var(--color-text-primary)] transition-all duration-150 ease-in-out placeholder:text-[var(--color-text-muted)] focus-visible:outline-none focus-visible:border-[var(--color-forest)] focus-visible:ring-[3px] focus-visible:ring-[rgba(26,58,42,0.08)] disabled:cursor-not-allowed disabled:opacity-50 data-[error=true]:border-[var(--color-danger)] data-[error=true]:focus-visible:ring-[rgba(220,38,38,0.08)]",
           className
         )}
         ref={ref}
@@ -29,7 +29,7 @@ const Label = React.forwardRef<
   <label
     ref={ref}
     className={cn(
-      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      "block text-[13px] font-medium font-sans text-[var(--color-text-secondary)] mb-[6px] peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       className
     )}
     {...props}

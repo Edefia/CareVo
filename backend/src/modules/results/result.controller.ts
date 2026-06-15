@@ -26,7 +26,7 @@ export const resultController = {
       const patientIdFilter = req.query.patientId as string | undefined;
       const statusFilter = req.query.status as string | undefined;
 
-      const userLabId = req.user!.role !== 'SUPER_ADMIN' && req.user!.role !== 'PLATFORM_ADMIN' ? req.user!.laboratoryId : null;
+      const userLabId = req.user!.role !== 'ADMIN' ? req.user!.laboratoryId : null;
 
       const paginatedData = await resultService.getResults(
         page,
@@ -45,7 +45,7 @@ export const resultController = {
 
   async getResultById(req: Request, res: Response, next: NextFunction) {
     try {
-      const userLabId = req.user!.role !== 'SUPER_ADMIN' && req.user!.role !== 'PLATFORM_ADMIN' ? req.user!.laboratoryId : null;
+      const userLabId = req.user!.role !== 'ADMIN' ? req.user!.laboratoryId : null;
       const result = await resultService.getResultById(
         req.params.id as string,
         req.user!.role,

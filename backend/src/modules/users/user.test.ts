@@ -26,7 +26,7 @@ describe('User Validation Schemas', () => {
     it('should reject extra fields', () => {
       const payload = {
         firstName: 'Jane',
-        role: 'SUPER_ADMIN',
+        role: 'ADMIN',
       };
 
       const result = updateProfileSchema.safeParse(payload);

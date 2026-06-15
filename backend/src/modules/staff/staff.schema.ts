@@ -10,7 +10,7 @@ export const inviteStaffSchema = z.object({
     laboratoryId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid laboratory ID').optional(),
   }).refine((data) => {
     // If it's a lab-scoped role, laboratoryId must be provided
-    const labScopedRoles = ['LAB_ADMIN', 'LAB_STAFF'];
+    const labScopedRoles = ['LABORATORY'];
     if (labScopedRoles.includes(data.role) && !data.laboratoryId) {
       return false;
     }

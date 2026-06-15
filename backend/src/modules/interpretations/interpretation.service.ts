@@ -92,7 +92,7 @@ export const interpretationService = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
 
-    if (userRole === 'PATIENT') {
+    if (userRole === 'CLIENT') {
       const patient = await PatientModel.findOne({ userId });
       if (!patient) throw new NotFoundError('Patient profile not found.');
       query.patientId = patient._id;
@@ -126,7 +126,7 @@ export const interpretationService = {
     const interpretation = await InterpretationModel.findById(id).populate('interpreterId', 'firstName lastName role');
     if (!interpretation) throw new NotFoundError('Interpretation not found.');
 
-    if (userRole === 'PATIENT') {
+    if (userRole === 'CLIENT') {
       const patient = await PatientModel.findOne({ userId });
       if (!patient || interpretation.patientId.toString() !== patient._id.toString()) {
         throw new ForbiddenError('Access denied.');
@@ -152,7 +152,7 @@ export const interpretationService = {
     const interpretation = await InterpretationModel.findById(id);
     if (!interpretation) throw new NotFoundError('Interpretation not found.');
 
-    if (interpretation.interpreterId.toString() !== userId.toString() && userRole !== 'SUPER_ADMIN') {
+    if (interpretation.interpreterId.toString() !== userId.toString() && userRole !== 'ADMIN') {
       throw new ForbiddenError('Only the original interpreter can modify this draft.');
     }
 

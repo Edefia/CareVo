@@ -52,7 +52,7 @@ export const notificationController = {
       }
 
       // Check if subscriber is lab staff and patient belongs to their lab
-      if (req.user!.role !== 'SUPER_ADMIN' && req.user!.role !== 'PLATFORM_ADMIN') {
+      if (req.user!.role !== 'ADMIN') {
         const isLinked = patient.laboratoryIds.some((id) => id.toString() === req.user!.laboratoryId?.toString());
         if (!isLinked) {
           throw new ForbiddenError('You do not have access to this patient.');

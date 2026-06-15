@@ -3,10 +3,12 @@ import { z } from 'zod';
 export const createBookingSchema = z.object({
   body: z.object({
     patientId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid patient ID'),
+    packageId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid package ID'),
+    locationType: z.enum(['HOME', 'CLINIC']),
     staffId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID').optional().nullable(),
     scheduledAt: z.string().datetime(),
     durationMinutes: z.number().int().min(15).max(120).default(30),
-    reason: z.string().min(5).max(500),
+    reason: z.string().max(500).optional().default('Screening Booking'),
   }),
 });
 

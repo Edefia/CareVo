@@ -4,36 +4,31 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { DataTable } from "@/components/shared/DataTable"
+import { EmptyState } from "@/components/shared/EmptyState"
+import { useLaboratories } from "@/hooks/useLaboratories"
 
 export function LabProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
-
-  // Mock data for the specific lab
-  const lab = {
-    id: id || "LAB-001",
-    name: "Accra Central Laboratory",
-    location: "Accra, Greater Accra",
-    address: "Plot 12 Independence Avenue, Ridge, Accra",
-    phone: "024 111 1111",
-    email: "contact@accracentral.lab",
+  
+  const { data: laboratoriesData, isLoading } = useLaboratories()
+  
+  // Real app would fetch the specific lab by ID using another hook, 
+  // but for now we'll find it in the list if available
+  const labs = laboratoriesData?.data || []
+  const labData = labs.find((l: any) => l._id === id) || {
+    _id: id || "Unknown",
+    name: "Loading...",
+    code: "...",
     status: "ACTIVE",
-    type: "Main Branch",
-    registeredAt: "2023-01-10",
-    manager: "Dr. Emmanuel Osei",
+    address: { street: "", city: "", state: "" },
+    contactPhone: "",
+    contactEmail: "",
   }
 
-  const mockStaff = [
-    { name: "Sarah Jones", role: "Lab Admin", status: "ACTIVE" },
-    { name: "Michael Smith", role: "Lab Tech", status: "ACTIVE" },
-    { name: "Jessica Barnes", role: "Lab Tech", status: "INACTIVE" },
-  ]
-
-  const mockServices = [
-    { name: "Basic Wellness Package", price: "GHS 150.00", status: "ACTIVE" },
-    { name: "Comprehensive Wellness", price: "GHS 350.00", status: "ACTIVE" },
-    { name: "Lipid Profile", price: "GHS 80.00", status: "ACTIVE" },
-  ]
+  // Real app would fetch staff and services from API
+  const staff: any[] = []
+  const services: any[] = []
 
   return (
     <div className="space-y-6">
@@ -45,10 +40,10 @@ export function LabProfile() {
         <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold tracking-tight">{lab.name}</h2>
-              <StatusBadge status={lab.status} />
+              <h2 className="text-2xl font-bold tracking-tight">{labData.name}</h2>
+              <StatusBadge status={labData.status} />
             </div>
-            <p className="text-muted-foreground">ID: {lab.id} • {lab.type}</p>
+            <p className="text-muted-foreground">Code: {labData.code}</p>
           </div>
           <div className="mt-4 md:mt-0 flex gap-2">
             <Button variant="outline" className="flex items-center gap-2">
@@ -76,44 +71,24 @@ export function LabProfile() {
                   <MapPin className="h-4 w-4 mr-2" />
                   Address
                 </div>
-                <div className="font-medium text-sm pl-6">{lab.address}</div>
+                <div className="font-medium text-sm pl-6">
+                  {labData.address?.street}<br />
+                  {labData.address?.city}, {labData.address?.state}
+                </div>
               </div>
               <div>
                 <div className="flex items-center text-muted-foreground mb-1 text-sm">
                   <Phone className="h-4 w-4 mr-2" />
                   Phone
                 </div>
-                <div className="font-medium text-sm pl-6">{lab.phone}</div>
+                <div className="font-medium text-sm pl-6">{labData.contactPhone || "-"}</div>
               </div>
               <div>
                 <div className="flex items-center text-muted-foreground mb-1 text-sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </div>
-                <div className="font-medium text-sm pl-6">{lab.email}</div>
-              </div>
-              <div className="pt-4 border-t">
-                <div className="flex items-center text-muted-foreground mb-1 text-sm">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Branch Manager
-                </div>
-                <div className="font-medium text-sm pl-6">{lab.manager}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/10 rounded-full text-primary">
-                  <Activity className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-primary">Performance</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    This lab has processed <span className="font-semibold text-foreground">1,245</span> tests this month with an average TAT of <span className="font-semibold text-foreground">1.2 days</span>.
-                  </p>
-                </div>
+                <div className="font-medium text-sm pl-6">{labData.contactEmail || "-"}</div>
               </div>
             </CardContent>
           </Card>
@@ -130,21 +105,29 @@ export function LabProfile() {
               </Button>
             </CardHeader>
             <CardContent>
-              <DataTable 
-                columns={[
-                  { header: "Name", accessorKey: "name" },
-                  { header: "Role", accessorKey: "role" },
-                  { 
-                    header: "Status", 
-                    cell: (row) => <StatusBadge status={row.status} />
-                  },
-                  { 
-                    header: "Actions", 
-                    cell: () => <Button variant="ghost" size="sm">Edit</Button>
-                  },
-                ]}
-                data={mockStaff}
-              />
+              {staff.length > 0 ? (
+                <DataTable 
+                  columns={[
+                    { header: "Name", accessorKey: "name" },
+                    { header: "Role", accessorKey: "role" },
+                    { 
+                      header: "Status", 
+                      cell: (row) => <StatusBadge status={row.status} />
+                    },
+                    { 
+                      header: "Actions", 
+                      cell: () => <Button variant="ghost" size="sm">Edit</Button>
+                    },
+                  ]}
+                  data={staff}
+                />
+              ) : (
+                <EmptyState 
+                  icon={<Users className="h-10 w-10 text-muted-foreground" />}
+                  title="No staff members"
+                  description="Add staff members to manage this laboratory."
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -157,17 +140,25 @@ export function LabProfile() {
               <Button variant="outline" size="sm">Manage Services</Button>
             </CardHeader>
             <CardContent>
-              <DataTable 
-                columns={[
-                  { header: "Package Name", accessorKey: "name" },
-                  { header: "Price", accessorKey: "price" },
-                  { 
-                    header: "Status", 
-                    cell: (row) => <StatusBadge status={row.status} />
-                  },
-                ]}
-                data={mockServices}
-              />
+              {services.length > 0 ? (
+                <DataTable 
+                  columns={[
+                    { header: "Package Name", accessorKey: "name" },
+                    { header: "Price", accessorKey: "price" },
+                    { 
+                      header: "Status", 
+                      cell: (row) => <StatusBadge status={row.status} />
+                    },
+                  ]}
+                  data={services}
+                />
+              ) : (
+                <EmptyState 
+                  icon={<Activity className="h-10 w-10 text-muted-foreground" />}
+                  title="No services configured"
+                  description="Configure test packages and pricing for this laboratory."
+                />
+              )}
             </CardContent>
           </Card>
         </div>

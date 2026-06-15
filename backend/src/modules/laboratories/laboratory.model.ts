@@ -64,8 +64,7 @@ const laboratorySchema = new Schema<ILaboratory>(
   }
 );
 
-// Indexes
-laboratorySchema.index({ code: 1 });
+// Indexes (code index is already created by unique: true above)
 laboratorySchema.index({ 'address.city': 1 });
 
 export const LaboratoryModel = mongoose.model<ILaboratory>('Laboratory', laboratorySchema);

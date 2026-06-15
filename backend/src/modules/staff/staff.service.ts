@@ -114,7 +114,7 @@ export const staffService = {
     }
 
     // Only return staff roles, maybe exclude patients (patients don't have laboratoryId but good to be safe)
-    query.role = { $ne: 'PATIENT' };
+    query.role = { $ne: 'CLIENT' };
 
     const [staff, total] = await Promise.all([
       UserModel.find(query).select('-password -mfaSecret -recoveryCodes -passwordResetToken -passwordResetExpires').skip(skip).limit(limitNum).sort({ createdAt: -1 }),
@@ -130,8 +130,8 @@ export const staffService = {
       throw new NotFoundError('User not found.');
     }
 
-    if (user.role === 'SUPER_ADMIN') {
-      throw new ConflictError('Cannot deactivate Super Admins through this endpoint.');
+    if (user.role === 'ADMIN') {
+      throw new ConflictError('Cannot deactivate Admins through this endpoint.');
     }
 
     if (callerLaboratoryId && user.laboratoryId?.toString() !== callerLaboratoryId.toString()) {

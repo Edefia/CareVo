@@ -1,12 +1,23 @@
 import { BookingModel } from './booking.model.js';
 import { PatientModel } from '../patients/patient.model.js';
 import { UserModel } from '../auth/auth.model.js';
+import { PackageModel } from '../packages/package.model.js';
+import { InvoiceModel } from '../billing/invoice.model.js';
 import { NotFoundError, ForbiddenError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
 import { encrypt, decrypt } from '../../utils/crypto.js';
 import { AuditService } from '../audit/audit.service.js';
 import { notificationService } from '../notifications/notification.service.js';
 import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
+
+function generateReferralCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `CRV-${new Date().getFullYear()}-${result}`;
+}
 
 export const bookingService = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,16 +34,35 @@ export const bookingService = {
       if (!staff) throw new NotFoundError('Staff not found.');
     }
 
+    const pkg = await PackageModel.findById(data.packageId);
+    if (!pkg || !pkg.isActive) throw new NotFoundError('Package not found or inactive.');
+
+    const referralCode = generateReferralCode();
+
     const booking = new BookingModel({
       patientId: data.patientId,
+      packageId: pkg._id,
+      locationType: data.locationType,
+      referralCode: referralCode,
       staffId: data.staffId || null,
       status: 'PENDING',
       scheduledAt: new Date(data.scheduledAt),
       durationMinutes: data.durationMinutes || 30,
-      reason: data.reason,
+      reason: data.reason || 'Screening Booking',
     });
 
     const saved = await booking.save();
+
+    // Automatically generate an invoice
+    await InvoiceModel.create({
+      patientId: patient._id,
+      issuedBy: creatorId, // System or whoever created it
+      amount: pkg.price * 100, // Storing in pesewas (smallest unit)
+      currency: 'GHS',
+      status: 'PENDING',
+      description: `Payment for ${pkg.name} (${data.locationType === 'HOME' ? 'Home Collection' : 'In-Clinic'})`,
+      referenceId: referralCode,
+    });
 
     await AuditService.log({
       actorId: creatorId,

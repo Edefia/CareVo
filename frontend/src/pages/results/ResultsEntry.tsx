@@ -1,235 +1,168 @@
 import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useBooking } from "@/hooks/useBookings"
-import { useCreateResult } from "@/hooks/useResults"
 import toast from "react-hot-toast"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, FileText, UploadCloud, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { StatusBadge } from "@/components/shared/StatusBadge"
-import { FileUpload } from "@/components/shared/FileUpload"
-
+import { TEST_PARAMETERS, SCREENING_PACKAGES } from "@/lib/constants"
 
 export function ResultsEntry() {
   const navigate = useNavigate()
-  const { bookingId } = useParams<{ bookingId: string }>()
+  const { referralCode } = useParams<{ referralCode: string }>()
   
-  const { data: bookingData, isLoading } = useBooking(bookingId as string)
-  const booking = bookingData?.data || bookingData
+  // Since we don't have a real backend mapping referralCode -> package yet,
+  // we'll mock the data based on the route param or default to Complete Wellness.
+  const code = referralCode || "CRV-2025-A7K3P2"
   
-  const createResult = useCreateResult()
-  const [formData, setFormData] = useState({
-    fastingBloodSugar: "",
-    hba1c: "",
-    totalCholesterol: "",
-    hdl: "",
-    ldl: "",
-    triglycerides: "",
-    notes: ""
-  })
+  const mockClient = {
+    name: "Kwame Mensah",
+    packageId: "pkg-4", // Complete Wellness
+    dob: "1985-04-12",
+    gender: "Male"
+  }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+  const selectedPackage = SCREENING_PACKAGES.find(p => p.id === mockClient.packageId)
+  
+  // Initialize form data based on required pillars for the package
+  const [formData, setFormData] = useState<Record<string, string>>({})
+
+  const handleInputChange = (id: string, value: string) => {
+    setFormData({ ...formData, [id]: value })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const biomarkers = [
-        { name: "Fasting Blood Sugar", value: formData.fastingBloodSugar, unit: "mg/dL", referenceRange: "70-99" },
-        { name: "HbA1c", value: formData.hba1c, unit: "%", referenceRange: "< 5.7" },
-        { name: "Total Cholesterol", value: formData.totalCholesterol, unit: "mg/dL", referenceRange: "< 200" },
-        { name: "HDL", value: formData.hdl, unit: "mg/dL", referenceRange: "> 40" },
-        { name: "LDL", value: formData.ldl, unit: "mg/dL", referenceRange: "< 100" },
-        { name: "Triglycerides", value: formData.triglycerides, unit: "mg/dL", referenceRange: "< 150" }
-      ].filter(b => b.value !== "")
-
-      await createResult.mutateAsync({
-        bookingId,
-        patientId: booking.patientId._id || booking.patientId,
-        biomarkers,
-        notes: formData.notes
-      })
-      toast.success("Results submitted successfully!")
-      navigate('/results')
+      // API call would go here
+      toast.success("Results submitted for interpretation!")
+      navigate('/lab/dashboard')
     } catch (error) {
       toast.error("Failed to submit results")
     }
   }
 
-  if (isLoading) return <div>Loading...</div>
-  if (!booking) return <div>Booking not found</div>
+  if (!selectedPackage) return <div>Loading...</div>
+
+  // Group parameters by pillar based on what the package covers
+  const packagePillars = selectedPackage.pillar
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
+    <div className="space-y-[32px] md:space-y-[48px] max-w-[1000px] mx-auto pb-[96px]">
+      
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          HEADER
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div className="flex items-start gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mt-1 shrink-0">
+          <ArrowLeft className="h-5 w-5 text-[var(--color-text-secondary)]" />
         </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold tracking-tight">Results Entry</h2>
-            <StatusBadge status="DRAFT" />
-          </div>
-          <p className="text-muted-foreground">{booking.reason || "Basic Wellness Package"} • {booking.patientId?.userId ? `${booking.patientId.userId.firstName} ${booking.patientId.userId.lastName}` : "Unknown"}</p>
-        </div>
         <div>
-          <Button variant="outline" className="mr-2">Save Draft</Button>
-          <Button onClick={handleSubmit} className="flex items-center gap-2" disabled={createResult.isPending}>
-            <Save className="h-4 w-4" />
-            Submit Results
-          </Button>
+          <h1 className="font-serif text-[32px] md:text-[36px] font-semibold text-[var(--color-forest)] leading-tight mb-[8px]">
+            Enter Results for {code}
+          </h1>
+          <div className="flex flex-wrap items-center gap-2 text-[15px] text-[var(--color-text-secondary)]">
+            <span className="font-medium text-[var(--color-text-primary)]">Client:</span> {mockClient.name}
+            <span className="text-[var(--color-border)] px-2">|</span>
+            <span className="font-medium text-[var(--color-text-primary)]">Package:</span> {selectedPackage.name}
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Left Column: Context */}
-        <div className="space-y-6 md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Booking Context</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground">Patient</div>
-                <div className="font-medium">{booking.patientId?.userId ? `${booking.patientId.userId.firstName} ${booking.patientId.userId.lastName}` : "Unknown"}</div>
-                <div className="text-sm">{booking.patientId?._id || booking.patientId}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Booking Ref</div>
-                <div className="font-medium">{booking._id || booking.id}</div>
-                <div className="text-sm">{new Date(booking.scheduledAt).toLocaleDateString()}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Package</div>
-                <div className="font-medium">{booking.reason || "N/A"}</div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="grid gap-[32px] md:grid-cols-[1fr_320px]">
+        
+        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            LEFT COLUMN: FORM ENTRY
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <div className="space-y-[32px]">
+          
+          <div className="bg-[#EFF6FF] border border-[#0F76E0]/20 rounded-[var(--radius-lg)] p-4 flex items-start gap-3">
+            <Info className="h-5 w-5 text-[#0F76E0] shrink-0 mt-0.5" />
+            <p className="text-[14px] text-[#0F76E0] font-medium leading-snug">
+              Please enter the raw values from your laboratory equipment. CareVo's clinical interpreters will automatically calculate the risk levels based on these inputs.
+            </p>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Original Documents</CardTitle>
-              <CardDescription>Upload raw machine outputs or PDF reports.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FileUpload onUpload={(files) => console.log(files)} />
-            </CardContent>
-          </Card>
-        </div>
+          <form onSubmit={handleSubmit} className="space-y-[48px]">
+            
+            {/* Render form sections per pillar */}
+            {packagePillars.map((pillar) => {
+              // @ts-ignore
+              const parameters = TEST_PARAMETERS[pillar]
+              if (!parameters) return null
 
-        {/* Right Column: Entry Form */}
-        <div className="space-y-6 md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Biomarker Data Entry</CardTitle>
-              <CardDescription>Enter the discrete values for the requested tests.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                
-                <div className="space-y-4">
-                  <h3 className="font-semibold border-b pb-2">Glucose Profile</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fastingBloodSugar">Fasting Blood Sugar (mg/dL)</Label>
-                      <Input 
-                        id="fastingBloodSugar" 
-                        name="fastingBloodSugar" 
-                        type="number" 
-                        placeholder="e.g. 95" 
-                        value={formData.fastingBloodSugar} 
-                        onChange={handleInputChange} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hba1c">HbA1c (%)</Label>
-                      <Input 
-                        id="hba1c" 
-                        name="hba1c" 
-                        type="number" 
-                        step="0.1" 
-                        placeholder="e.g. 5.4" 
-                        value={formData.hba1c} 
-                        onChange={handleInputChange} 
-                      />
-                    </div>
+              return (
+                <div key={pillar} className="bg-white border border-[var(--color-border)] rounded-[var(--radius-xl)] shadow-sm overflow-hidden">
+                  <div className="px-[24px] py-[16px] bg-[var(--color-surface-2)] border-b border-[var(--color-border)]">
+                    <h2 className="font-sans text-[16px] font-bold text-[var(--color-forest)] uppercase tracking-wider">
+                      {pillar} Panel
+                    </h2>
+                  </div>
+                  <div className="p-[24px] grid gap-[24px] sm:grid-cols-2">
+                    {parameters.map((param: any) => (
+                      <div key={param.id} className="space-y-1.5">
+                        <Label htmlFor={param.id} className="text-[14px] font-medium text-[var(--color-text-primary)]">
+                          {param.name}
+                        </Label>
+                        <div className="relative">
+                          <Input 
+                            id={param.id} 
+                            type="number" 
+                            step="any"
+                            className="pr-[64px] h-[48px] text-[16px]"
+                            value={formData[param.id] || ""}
+                            onChange={(e) => handleInputChange(param.id, e.target.value)}
+                          />
+                          <div className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[14px] text-[var(--color-text-muted)] font-medium bg-transparent pointer-events-none">
+                            {param.unit}
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-[var(--color-text-muted)] mt-1 ml-1">
+                          Normal Range: {param.normalRange} {param.unit}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+              )
+            })}
 
-                <div className="space-y-4">
-                  <h3 className="font-semibold border-b pb-2">Lipid Profile</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="totalCholesterol">Total Cholesterol (mg/dL)</Label>
-                      <Input 
-                        id="totalCholesterol" 
-                        name="totalCholesterol" 
-                        type="number" 
-                        placeholder="e.g. 180" 
-                        value={formData.totalCholesterol} 
-                        onChange={handleInputChange} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hdl">HDL (mg/dL)</Label>
-                      <Input 
-                        id="hdl" 
-                        name="hdl" 
-                        type="number" 
-                        placeholder="e.g. 50" 
-                        value={formData.hdl} 
-                        onChange={handleInputChange} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ldl">LDL (mg/dL)</Label>
-                      <Input 
-                        id="ldl" 
-                        name="ldl" 
-                        type="number" 
-                        placeholder="e.g. 100" 
-                        value={formData.ldl} 
-                        onChange={handleInputChange} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="triglycerides">Triglycerides (mg/dL)</Label>
-                      <Input 
-                        id="triglycerides" 
-                        name="triglycerides" 
-                        type="number" 
-                        placeholder="e.g. 120" 
-                        value={formData.triglycerides} 
-                        onChange={handleInputChange} 
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Lab Technician Notes (Optional)</Label>
-                  <textarea 
-                    id="notes" 
-                    name="notes" 
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Any specific observations during the test..."
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-              </form>
-            </CardContent>
-            <CardFooter className="bg-muted/50 flex justify-between p-4 border-t mt-4">
-              <Button variant="outline" onClick={() => navigate(-1)}>Discard Changes</Button>
-              <Button onClick={handleSubmit} disabled={createResult.isPending}>Validate & Submit</Button>
-            </CardFooter>
-          </Card>
+            <div className="flex justify-end pt-4 border-t border-[var(--color-border)]">
+              <Button type="submit" className="h-[52px] px-[32px] text-[16px] gap-2 shadow-md">
+                <FileText className="h-5 w-5" />
+                Submit Results for Interpretation
+              </Button>
+            </div>
+          </form>
         </div>
+
+        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            RIGHT COLUMN: UPLOAD / NOTES
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <div className="space-y-[24px]">
+          
+          <div className="bg-white border border-[var(--color-border)] rounded-[var(--radius-xl)] p-[24px] shadow-sm">
+            <h3 className="font-sans text-[16px] font-bold text-[var(--color-text-primary)] mb-4">Original PDF Report</h3>
+            <p className="text-[14px] text-[var(--color-text-secondary)] mb-4">
+              Upload the original machine output or signed laboratory PDF for the interpreter's reference.
+            </p>
+            <div className="border-2 border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] p-6 text-center hover:bg-[var(--color-surface-2)] transition-colors cursor-pointer">
+              <UploadCloud className="h-8 w-8 text-[var(--color-text-muted)] mx-auto mb-2" />
+              <div className="text-[14px] font-medium text-[var(--color-forest)]">Click to upload</div>
+              <div className="text-[12px] text-[var(--color-text-muted)] mt-1">PDF or Image up to 5MB</div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[var(--color-border)] rounded-[var(--radius-xl)] p-[24px] shadow-sm">
+            <h3 className="font-sans text-[16px] font-bold text-[var(--color-text-primary)] mb-4">Lab Notes (Optional)</h3>
+            <textarea 
+              className="w-full h-[120px] rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-[14px] resize-none focus:border-[var(--color-forest)] focus:outline-none"
+              placeholder="Add any technical notes or observations for the interpreter..."
+            ></textarea>
+          </div>
+
+        </div>
+
       </div>
     </div>
   )

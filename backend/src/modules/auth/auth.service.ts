@@ -69,7 +69,7 @@ export class AuthService {
     const user = await UserModel.create({
       email: data.email as string,
       passwordHash,
-      role: ROLES.PATIENT, // Only patients can self-register
+      role: ROLES.CLIENT, // Only clients can self-register
       firstName: data.firstName as string,
       lastName: data.lastName as string,
       phone: data.phone as string,
@@ -77,7 +77,7 @@ export class AuthService {
 
     await AuditService.log({
       actorId: user._id.toString(),
-      actorRole: ROLES.PATIENT,
+      actorRole: ROLES.CLIENT,
       action: 'user.registered',
       resourceType: 'User',
       resourceId: user._id.toString(),

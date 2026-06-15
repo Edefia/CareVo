@@ -29,4 +29,15 @@ export class UserController {
     );
     sendSuccess(res, { message: 'Password changed successfully.' });
   }
+
+  static async uploadAvatar(req: Request, res: Response): Promise<void> {
+    const { avatarBase64 } = req.body;
+    const result = await UserService.uploadAvatar(
+      req.user!.id,
+      avatarBase64,
+      req.ip ?? 'unknown',
+      req.headers['user-agent'] ?? 'unknown'
+    );
+    sendSuccess(res, result);
+  }
 }

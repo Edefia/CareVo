@@ -3,7 +3,7 @@ import { logger } from '../../utils/logger.js';
 import axios from 'axios';
 
 export class PaymentService {
-  private readonly baseUrl = 'https://api.moolre.com/open/payments';
+  private readonly baseUrl = 'https://api.moolre.com/open';
   private readonly apiUser: string;
   private readonly apiKey: string;
 
@@ -17,17 +17,21 @@ export class PaymentService {
     currency: string,
     referenceId: string,
     customerPhone: string,
-    customerName: string
+    customerName: string,
+    channel: string
   ): Promise<any> {
     try {
       const response = await axios.post(
-        `${this.baseUrl}/initiate`,
+        `${this.baseUrl}/transact/payment`,
         {
-          amount,
+          type: 1,
+          channel: channel.toString(),
           currency,
-          reference: referenceId,
-          customer_phone: customerPhone,
-          customer_name: customerName,
+          amount: amount.toString(),
+          payer: customerPhone,
+          externalref: referenceId,
+          accountnumber: env.MOOLRE_ACCOUNT_NUMBER,
+          reference: `Invoice ${referenceId} - ${customerName}`
         },
         {
           headers: {
@@ -51,12 +55,21 @@ export class PaymentService {
 
   async verifyPayment(referenceId: string): Promise<any> {
     try {
-      const response = await axios.get(`${this.baseUrl}/verify/${referenceId}`, {
-        headers: {
-          'X-API-USER': this.apiUser,
-          'X-API-KEY': this.apiKey,
+      const response = await axios.post(
+        `${this.baseUrl}/transact/status`,
+        {
+          type: 1,
+          idtype: 1, // 1 = Unique externalref
+          id: referenceId,
+          accountnumber: env.MOOLRE_ACCOUNT_NUMBER
         },
-      });
+        {
+          headers: {
+            'X-API-USER': this.apiUser,
+            'X-API-KEY': this.apiKey, // Moolre API Key supports both Public and Private here, but we use Private
+          },
+        }
+      );
 
       return response.data;
     } catch (error) {

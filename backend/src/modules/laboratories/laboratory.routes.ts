@@ -9,7 +9,7 @@ import { ROLES } from '../../shared/constants/roles.js';
 export const laboratoryRoutes = Router();
 
 laboratoryRoutes.use(authenticate);
-laboratoryRoutes.use(authorize([ROLES.SUPER_ADMIN, ROLES.PLATFORM_ADMIN]));
+laboratoryRoutes.use(authorize([ROLES.ADMIN]));
 
 laboratoryRoutes.post('/', validate(createLaboratorySchema), laboratoryController.createLaboratory);
 laboratoryRoutes.get('/', laboratoryController.getLaboratories);

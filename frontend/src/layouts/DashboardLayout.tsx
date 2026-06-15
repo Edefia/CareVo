@@ -1,6 +1,7 @@
 import * as React from "react"
-import { Outlet, NavLink, useNavigate } from "react-router-dom"
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom"
 import { useAuthStore } from "@/store/auth"
+import { cn } from "@/lib/utils"
 import { 
   LayoutDashboard, 
   Users, 
@@ -9,114 +10,269 @@ import {
   Receipt, 
   LogOut, 
   Menu,
-  X,
   Activity,
-  CalendarCheck
+  CalendarCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ChevronUp,
+  Search,
+  Bell,
+  ChevronRight,
+  Settings,
+  User as UserIcon
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+
+type NavItem = { href: string; label: string; icon: any; badge?: number }
+type NavGroup = { title: string; items: NavItem[] }
 
 export function DashboardLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
+  
+  const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(true)
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false)
 
-  // This would typically come from a route config based on user.role
-  const navItems = getNavItemsForRole(user?.role || "PATIENT")
+  const navGroups = getNavGroupsForRole(user?.role || "CLIENT")
+
+  // Generate simple breadcrumbs from path
+  const pathSegments = location.pathname.split('/').filter(Boolean)
+  const breadcrumbs = ["Home", ...pathSegments.map(p => p.charAt(0).toUpperCase() + p.slice(1).replace(/-/g, ' '))]
 
   const handleLogout = () => {
     logout()
     navigate("/login")
   }
 
+  // Close user menu on outside click
+  React.useEffect(() => {
+    const handleClick = () => setIsUserMenuOpen(false)
+    if (isUserMenuOpen) {
+      window.addEventListener('click', handleClick)
+    }
+    return () => window.removeEventListener('click', handleClick)
+  }, [isUserMenuOpen])
+
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-[var(--color-off-white)] font-sans">
+      
       {/* Mobile sidebar backdrop */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-[var(--color-forest)]/50 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          SIDEBAR
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <aside 
-        className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-card border-r shadow-sm transform transition-transform duration-200 ease-in-out lg:static lg:translate-x-0
-          ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex h-screen flex-col bg-[var(--color-forest)] shadow-[var(--shadow-sidebar)] transition-all duration-250 ease-in-out lg:static",
+          isMobileOpen ? "translate-x-0 w-[256px]" : "-translate-x-full lg:translate-x-0",
+          !isMobileOpen && isSidebarExpanded ? "lg:w-[256px]" : "",
+          !isMobileOpen && !isSidebarExpanded ? "lg:w-[72px]" : ""
+        )}
       >
-        <div className="flex h-16 items-center px-6 border-b">
-          <div className="h-8 w-8 rounded bg-primary flex items-center justify-center mr-3">
-             <span className="text-primary-foreground font-bold text-sm">CH</span>
-          </div>
-          <span className="text-lg font-bold tracking-tight">CareVo Health</span>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="ml-auto lg:hidden" 
-            onClick={() => setIsMobileOpen(false)}
+        {/* Sidebar Top */}
+        <div className="flex shrink-0 items-center justify-between px-[20px] py-[24px]">
+          {isSidebarExpanded || isMobileOpen ? (
+            <div className="flex items-center gap-1">
+              <span className="font-serif text-[20px] font-semibold text-white">CareVo</span>
+              <sup className="mt-1 text-[10px] font-bold text-[var(--color-lime)]">®</sup>
+            </div>
+          ) : (
+            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded bg-white/10">
+              <span className="font-serif text-[16px] font-bold text-white">C</span>
+            </div>
+          )}
+          
+          <button 
+            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+            className="hidden lg:flex text-white/60 hover:text-white transition-colors"
           >
-            <X className="h-5 w-5" />
-          </Button>
+            {isSidebarExpanded ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.href}
-              to={item.href}
-              className={({ isActive }) =>
-                `flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`
-              }
-              onClick={() => setIsMobileOpen(false)}
-            >
-              <item.icon className="mr-3 h-5 w-5" />
-              {item.label}
-            </NavLink>
+        {/* Sidebar Nav */}
+        <nav className="flex-1 overflow-y-auto px-[12px] py-[8px] space-y-[24px] scrollbar-hide">
+          {navGroups.map((group, groupIdx) => (
+            <div key={groupIdx} className="flex flex-col gap-[2px]">
+              {(isSidebarExpanded || isMobileOpen) && (
+                <div className="px-[8px] pb-[6px] pt-[16px] font-sans text-[10px] font-bold uppercase tracking-[0.1em] text-white/35">
+                  {group.title}
+                </div>
+              )}
+              
+              {group.items.map((item, itemIdx) => (
+                <NavLink
+                  key={itemIdx}
+                  to={item.href}
+                  onClick={() => setIsMobileOpen(false)}
+                  title={!isSidebarExpanded && !isMobileOpen ? item.label : undefined}
+                  className={({ isActive }) => cn(
+                    "relative flex h-[42px] cursor-pointer items-center gap-[12px] rounded-[var(--radius-md)] px-[12px] transition-colors duration-150 group",
+                    isActive 
+                      ? "bg-[rgba(126,232,162,0.15)] text-white font-semibold" 
+                      : "text-white/75 font-medium hover:bg-white/5"
+                  )}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <div className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--color-lime)]" />
+                      )}
+                      
+                      <div className={cn(
+                        "flex items-center justify-center",
+                        !isSidebarExpanded && !isMobileOpen && "mx-auto"
+                      )}>
+                        <item.icon className={cn(
+                          "h-[18px] w-[18px] transition-colors",
+                          isActive ? "text-[var(--color-lime)]" : "text-white/55 group-hover:text-white/80"
+                        )} />
+                      </div>
+
+                      {(isSidebarExpanded || isMobileOpen) && (
+                        <>
+                          <span className={cn("text-[14px]", isActive ? "text-white" : "text-white/75 group-hover:text-white/95")}>
+                            {item.label}
+                          </span>
+                          
+                          {item.badge && (
+                            <div className="ml-auto flex min-w-[20px] items-center justify-center rounded-full bg-[var(--color-lime)] px-[7px] py-[1px] font-sans text-[11px] font-bold text-[var(--color-forest)]">
+                              {item.badge}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 
-        <div className="p-4 border-t">
-          <div className="flex items-center px-3 py-2 mb-4">
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
+        {/* Sidebar Bottom (User Profile) */}
+        <div className="relative mt-auto border-t border-white/10 p-[16px] px-[12px]">
+          {/* Popover Menu */}
+          {isUserMenuOpen && (
+            <div 
+              className="absolute bottom-[calc(100%+8px)] left-[12px] right-[12px] rounded-[var(--radius-md)] bg-white p-[8px] shadow-[var(--shadow-modal)] z-50 animate-in slide-in-from-bottom-2 fade-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-[12px] py-[8px] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]">
+                <Settings className="h-4 w-4 text-[var(--color-text-secondary)]" /> Settings
+              </div>
+              <div className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-[12px] py-[8px] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]">
+                <UserIcon className="h-4 w-4 text-[var(--color-text-secondary)]" /> My Profile
+              </div>
+              <div className="my-[4px] h-[1px] w-full bg-[var(--color-border)]"></div>
+              <div 
+                onClick={handleLogout}
+                className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-[12px] py-[8px] text-[13px] font-medium text-[var(--color-danger)] hover:bg-[#FEF2F2]"
+              >
+                <LogOut className="h-4 w-4" /> Sign Out
+              </div>
             </div>
-            <div className="ml-3 overflow-hidden">
-              <p className="text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.role.replace("_", " ")}</p>
+          )}
+
+          <div 
+            className="flex cursor-pointer items-center gap-[12px] rounded-[var(--radius-md)] p-[8px] transition-colors hover:bg-white/5"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsUserMenuOpen(!isUserMenuOpen)
+            }}
+          >
+            <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[rgba(126,232,162,0.2)]">
+              <span className="font-sans text-[14px] font-semibold text-white">
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
+              </span>
             </div>
+            
+            {(isSidebarExpanded || isMobileOpen) && (
+              <>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="truncate font-sans text-[13px] font-semibold text-white">
+                    {user?.firstName} {user?.lastName}
+                  </span>
+                  <span className="truncate font-sans text-[11px] font-medium text-white/50 capitalize">
+                    {user?.role.toLowerCase().replace("_", " ")}
+                  </span>
+                </div>
+                <ChevronUp className="ml-auto h-4 w-4 text-white/50" />
+              </>
+            )}
           </div>
-          <Button variant="outline" className="w-full justify-start text-muted-foreground" onClick={handleLogout}>
-            <LogOut className="mr-3 h-4 w-4" />
-            Sign Out
-          </Button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          MAIN CONTENT AREA
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <main className="flex min-w-0 flex-1 flex-col">
+        
         {/* Topbar */}
-        <header className="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 bg-card border-b z-10 shadow-sm">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="lg:hidden" 
-            onClick={() => setIsMobileOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="ml-auto flex items-center space-x-4">
-            {/* Additional topbar items like notifications can go here */}
+        <header className="sticky top-0 z-40 flex h-[64px] shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-white px-[24px] md:px-[32px]">
+          
+          <div className="flex items-center gap-4">
+            <button 
+              className="lg:hidden text-[var(--color-text-secondary)]" 
+              onClick={() => setIsMobileOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            
+            {/* Breadcrumbs */}
+            <div className="hidden sm:flex items-center gap-[8px] font-sans text-[14px]">
+              {breadcrumbs.map((crumb, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <ChevronRight className="h-[14px] w-[14px] text-[var(--color-text-muted)]" />}
+                  <span className={cn(
+                    "capitalize",
+                    i === breadcrumbs.length - 1 
+                      ? "font-medium text-[var(--color-text-primary)]" 
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer"
+                  )}>
+                    {crumb}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-[16px]">
+            {/* Search */}
+            <button className="flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)]">
+              <Search className="h-[18px] w-[18px]" />
+            </button>
+            
+            {/* Notifications */}
+            <div className="relative">
+              <button className="flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)]">
+                <Bell className="h-[18px] w-[18px]" />
+              </button>
+              <div className="absolute right-0 top-0 h-[8px] w-[8px] rounded-full border-2 border-white bg-[var(--color-danger)]"></div>
+            </div>
+
+            <div className="h-[24px] w-[1px] bg-[var(--color-border)] mx-1"></div>
+
+            {/* Mobile User Avatar (duplicates sidebar bottom functionality for mobile convenience) */}
+            <div className="flex h-[36px] w-[36px] cursor-pointer items-center justify-center rounded-full bg-[rgba(26,58,42,0.1)] lg:hidden">
+              <span className="font-sans text-[14px] font-semibold text-[var(--color-forest)]">
+                {user?.firstName?.[0]}
+              </span>
+            </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl animate-in fade-in-50 duration-500">
+        <div className="flex-1 overflow-y-auto p-[24px] md:p-[32px]">
+          <div className="mx-auto w-full max-w-[1280px]">
             <Outlet />
           </div>
         </div>
@@ -125,63 +281,72 @@ export function DashboardLayout() {
   )
 }
 
-function getNavItemsForRole(role: string) {
-  const common = [
-    { href: "/patients", label: "Patients", icon: Users },
-  ]
-  
+function getNavGroupsForRole(role: string): NavGroup[] {
   switch (role) {
-    case "SUPER_ADMIN":
+    case "ADMIN":
       return [
-        { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        ...common,
-        { href: "/laboratories", label: "Laboratories", icon: Building2 },
-        { href: "/bookings", label: "Bookings", icon: CalendarCheck },
-        { href: "/billing", label: "Billing", icon: Receipt },
-        { href: "/audit", label: "Audit Logs", icon: Activity },
+        {
+          title: "SYSTEM",
+          items: [
+            { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/audit", label: "Audit Logs", icon: Activity },
+          ]
+        },
+        {
+          title: "CLINICAL",
+          items: [
+            { href: "/patients", label: "Clients", icon: Users },
+            { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: 12 },
+            { href: "/laboratories", label: "Laboratories", icon: Building2 },
+          ]
+        },
+        {
+          title: "FINANCE",
+          items: [
+            { href: "/billing", label: "Billing", icon: Receipt },
+          ]
+        }
       ]
-    case "PLATFORM_ADMIN":
+    case "LABORATORY":
       return [
-        { href: "/platform/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        ...common,
-        { href: "/laboratories", label: "Laboratories", icon: Building2 },
-        { href: "/bookings", label: "Bookings", icon: CalendarCheck },
-        { href: "/billing", label: "Billing", icon: Receipt },
-      ]
-    case "LAB_ADMIN":
-      return [
-        { href: "/lab/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/bookings", label: "Bookings", icon: CalendarCheck },
-        ...common,
-      ]
-    case "LAB_STAFF":
-      return [
-        { href: "/lab/staff/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/bookings", label: "Bookings", icon: CalendarCheck },
-        ...common,
+        {
+          title: "MAIN",
+          items: [
+            { href: "/lab/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: 5 },
+            { href: "/patients", label: "Clients", icon: Users },
+          ]
+        }
       ]
     case "INTERPRETER":
       return [
-        { href: "/interpreter/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/interpretations/queue", label: "Interpretations", icon: FileText },
-        ...common,
+        {
+          title: "MAIN",
+          items: [
+            { href: "/interpreter/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          ]
+        },
+        {
+          title: "CLINICAL",
+          items: [
+            { href: "/interpretations/queue", label: "Interpretations", icon: FileText, badge: 3 },
+            { href: "/patients", label: "Clients", icon: Users },
+          ]
+        }
       ]
-    case "HEALTH_ADVOCATE":
+    case "CLIENT":
       return [
-        { href: "/advocate/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/advocacy", label: "Task Board", icon: Activity },
-        ...common,
-      ]
-    case "REFERRAL_PARTNER":
-      return [
-        { href: "/referral/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      ]
-    case "PATIENT":
-      return [
-        { href: "/patient/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/patient/results", label: "My Results", icon: FileText },
-        { href: "/patient/bookings", label: "My Bookings", icon: CalendarCheck },
-        { href: "/patient/billing", label: "Billing", icon: Receipt },
+        {
+          title: "MAIN",
+          items: [
+            { href: "/client/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/client/bookings", label: "Book Screening", icon: CalendarCheck },
+            { href: "/client/results", label: "My Results", icon: FileText },
+            { href: "/client/referrals", label: "Referrals", icon: Users },
+            { href: "/client/billing", label: "Payments", icon: Receipt },
+            { href: "/settings", label: "Profile", icon: UserIcon },
+          ]
+        }
       ]
     default:
       return []

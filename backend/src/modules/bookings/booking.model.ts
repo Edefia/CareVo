@@ -2,6 +2,9 @@ import mongoose, { Schema, type Document, type Types } from 'mongoose';
 
 export interface IBooking extends Document {
   patientId: Types.ObjectId;
+  packageId: Types.ObjectId;
+  locationType: 'HOME' | 'CLINIC';
+  referralCode: string;
   staffId: Types.ObjectId | null;
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
   scheduledAt: Date;
@@ -19,6 +22,22 @@ const bookingSchema = new Schema<IBooking>(
       type: Schema.Types.ObjectId,
       ref: 'Patient',
       required: true,
+      index: true,
+    },
+    packageId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Package',
+      required: true,
+    },
+    locationType: {
+      type: String,
+      enum: ['HOME', 'CLINIC'],
+      required: true,
+    },
+    referralCode: {
+      type: String,
+      required: true,
+      unique: true,
       index: true,
     },
     staffId: {

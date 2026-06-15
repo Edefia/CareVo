@@ -5,26 +5,31 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-forest)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 font-sans",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:shadow-md",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "bg-[var(--color-lime)] text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-lime-dark)] hover:-translate-y-[1px] active:translate-y-0",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-transparent border-[1.5px] border-[var(--color-forest)] text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-forest)] hover:text-white",
+        ghost:
+          "bg-transparent text-[var(--color-text-secondary)] rounded-[var(--radius-md)] hover:bg-[var(--color-surface-2)]",
+        danger:
+          "bg-[var(--color-danger)] text-white font-semibold rounded-full hover:bg-[#B91C1C]",
+        dark:
+          "bg-white text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-off-white)]",
+        icon:
+          "bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] rounded-[var(--radius-md)] hover:bg-[var(--color-border)]",
+        outline: // keeping outline as fallback mapping to secondary
+          "bg-transparent border-[1.5px] border-[var(--color-forest)] text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-forest)] hover:text-white",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "px-[24px] py-[12px] text-[15px]",
+        sm: "px-[16px] py-[8px] text-[13px]",
+        lg: "px-[32px] py-[16px] text-[16px]",
+        icon: "h-[36px] w-[36px]",
+        secondary: "px-[23px] py-[11px] text-[15px]", // 1px less padding for border
       },
     },
     defaultVariants: {
