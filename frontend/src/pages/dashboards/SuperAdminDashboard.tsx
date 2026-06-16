@@ -108,7 +108,7 @@ export function SuperAdminDashboard() {
                 { timestamp: "5 mins ago", actor: "System", action: "Daily Backup" },
               ]}
             />
-            <Button variant="link" className="mt-4 px-0">View all audit logs →</Button>
+            <Button variant="ghost" className="mt-4 px-0 underline text-blue-600 hover:bg-transparent">View all audit logs →</Button>
           </CardContent>
         </Card>
 
@@ -128,7 +128,7 @@ export function SuperAdminDashboard() {
                 { name: "Kumasi Diagnostic Center", location: "Kumasi", status: "Active" },
               ]}
             />
-            <Button variant="link" className="mt-4 px-0">View all laboratories →</Button>
+            <Button variant="ghost" className="mt-4 px-0 underline text-blue-600 hover:bg-transparent">View all laboratories →</Button>
           </CardContent>
         </Card>
       </div>

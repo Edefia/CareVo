@@ -1,8 +1,8 @@
-import { UserModel, InvitationModel } from './auth.model.js';
-import { AppError, ConflictError, NotFoundError, UnauthorizedError, ValidationError, ForbiddenError } from '../../shared/errors/index.js';
+import { UserModel } from './auth.model.js';
+import { ConflictError, NotFoundError, UnauthorizedError } from '../../shared/errors/index.js';
 import * as argon2 from 'argon2';
-import * as otplib from 'otplib';
-const { authenticator } = otplib;
+// @ts-expect-error otplib types are inconsistent in ES modules
+import { authenticator } from 'otplib';
 import { generateSessionId, signAccessToken, signRefreshToken, verifyRefreshToken, generateSecureToken, hashToken } from '../../utils/token.js';
 import { AuditService } from '../audit/audit.service.js';
 import { notificationService } from '../notifications/notification.service.js';
@@ -59,7 +59,7 @@ function deleteCachePattern(prefix: string) {
 
 export class AuthService {
   static async register(data: Record<string, unknown>, ip: string, userAgent: string) {
-    const existing = await UserModel.findOne({ email: data.email });
+    const existing = await UserModel.findOne({ email: data.email as string });
     if (existing) {
       throw new ConflictError('Email already in use.');
     }
@@ -225,7 +225,7 @@ export class AuthService {
       setCache(sessionKey, sessionExists, 7 * 24 * 60 * 60);
 
       return { accessToken: newAccessToken, refreshToken: newRefreshToken };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedError('Invalid or expired refresh token.');
     }
   }

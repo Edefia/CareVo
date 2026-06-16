@@ -9,6 +9,7 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   phone?: string;
+  avatarUrl?: string;
   isActive: boolean;
   isEmailVerified: boolean;
   mfaEnabled: boolean;
@@ -33,6 +34,7 @@ const userSchema = new Schema<IUser>(
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     phone: { type: String },
+    avatarUrl: { type: String },
     isActive: { type: Boolean, default: true },
     isEmailVerified: { type: Boolean, default: false },
     mfaEnabled: { type: Boolean, default: false },

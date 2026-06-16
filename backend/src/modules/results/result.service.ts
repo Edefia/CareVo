@@ -8,6 +8,7 @@ import { notificationService } from '../notifications/notification.service.js';
 import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
 import { SubscriptionModel } from '../notifications/subscription.model.js';
 import { UserModel } from '../auth/auth.model.js';
+import { BookingModel } from '../bookings/booking.model.js';
 
 export const resultService = {
   async createResult(
@@ -18,9 +19,23 @@ export const resultService = {
     ipAddress: string,
     userAgent: string
   ): Promise<IResultRecord> {
-    const patient = await PatientModel.findById(data.patientId);
+    if (!data.referralCode) {
+      throw new ValidationError('Referral code is required to upload a result.');
+    }
+
+    // 1. Fetch the booking using the referral code
+    const booking = await BookingModel.findOne({ referralCode: data.referralCode });
+    if (!booking) {
+      throw new NotFoundError('Invalid referral code. No booking found.');
+    }
+
+    if (booking.status === 'COMPLETED') {
+      throw new ValidationError('A result has already been submitted for this referral code.');
+    }
+
+    const patient = await PatientModel.findById(booking.patientId);
     if (!patient) {
-      throw new NotFoundError('Patient not found.');
+      throw new NotFoundError('Patient associated with this booking not found.');
     }
 
     // Verify patient is linked to the staff's lab
@@ -36,12 +51,18 @@ export const resultService = {
 
     const result = new ResultRecordModel({
       ...data,
+      bookingId: booking._id,
+      patientId: booking.patientId,
       laboratoryId: staffLabId,
       enteredById: staffUserId,
       notes: encryptedNotes,
     });
 
     const savedResult = await result.save();
+
+    // Automate System Flow: Update booking to COMPLETED
+    booking.status = 'COMPLETED';
+    await booking.save();
 
     await AuditService.log({
       actorId: staffUserId,
@@ -62,7 +83,7 @@ export const resultService = {
     if (resultObj.notes) {
       try {
         resultObj.notes = decrypt(resultObj.notes);
-      } catch (error) {
+      } catch {
         resultObj.notes = '[Decryption Failed]';
       }
     }
@@ -116,7 +137,7 @@ export const resultService = {
       if (resultObj.notes) {
         try {
           resultObj.notes = decrypt(resultObj.notes);
-        } catch (error) {
+        } catch {
           resultObj.notes = '[Decryption Failed]';
         }
       }
@@ -152,7 +173,7 @@ export const resultService = {
     if (resultObj.notes) {
       try {
         resultObj.notes = decrypt(resultObj.notes);
-      } catch (error) {
+      } catch {
         resultObj.notes = '[Decryption Failed]';
       }
     }
@@ -244,7 +265,7 @@ export const resultService = {
     if (resultObj.notes) {
       try {
         resultObj.notes = decrypt(resultObj.notes);
-      } catch (error) {
+      } catch {
         resultObj.notes = '[Decryption Failed]';
       }
     }

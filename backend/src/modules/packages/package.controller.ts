@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { PackageModel } from './package.model.js';
 
-export const getActivePackages = async (req: Request, res: Response) => {
+export const getActivePackages = async (_req: Request, res: Response) => {
   try {
     const packages = await PackageModel.find({ isActive: true }).sort({ price: -1 });
     
@@ -9,7 +9,7 @@ export const getActivePackages = async (req: Request, res: Response) => {
       status: 'success',
       data: packages,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch packages',
@@ -25,7 +25,7 @@ export const createPackage = async (req: Request, res: Response) => {
       status: 'success',
       data: newPackage,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       status: 'error',
       message: 'Failed to create package',

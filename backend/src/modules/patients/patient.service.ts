@@ -1,4 +1,5 @@
 import { PatientModel, type IPatient } from './patient.model.js';
+import { ROLES } from '../../shared/constants/roles.js';
 import { UserModel } from '../auth/auth.model.js';
 import { NotFoundError, ConflictError, ForbiddenError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
@@ -19,8 +20,8 @@ export const patientService = {
       throw new NotFoundError('User not found.');
     }
 
-    if (user.role !== 'PATIENT') {
-      throw new ConflictError('Only users with PATIENT role can have a patient profile.');
+    if (user.role !== ROLES.CLIENT) {
+      throw new ConflictError('Only users with CLIENT role can have a patient profile.');
     }
 
     const laboratoryIds = createdByLabId ? [createdByLabId] : [];

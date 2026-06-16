@@ -87,7 +87,7 @@ export function LabAdminDashboard() {
               { name: "Michael Smith", role: "Lab Tech", resultsEntered: 3, lastActive: "Just now" },
             ]}
           />
-          <Button variant="link" className="mt-4 px-0">Manage Staff →</Button>
+          <Button variant="ghost" className="mt-4 px-0 underline text-blue-600 hover:bg-transparent">Manage Staff →</Button>
         </CardContent>
       </Card>
     </div>

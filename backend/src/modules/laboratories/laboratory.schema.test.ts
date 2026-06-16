@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createLaboratorySchema, updateLaboratorySchema } from './laboratory.schema.js';
+import { createLaboratorySchema } from './laboratory.schema.js';
 
 describe('Laboratory Validation Schemas', () => {
   describe('createLaboratorySchema', () => {

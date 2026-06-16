@@ -3,6 +3,47 @@ import { advocacyService } from './advocacy.service.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
 export const advocacyController = {
+  async getContent(req: Request, res: Response, next: NextFunction) {
+    try {
+      const type = req.query.type as 'EDUCATION_CARD' | 'PREVENTIVE_TIP' | undefined;
+      const content = await advocacyService.getContent(type);
+      sendSuccess(res, content);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async createContent(req: Request, res: Response, next: NextFunction) {
+    try {
+      const content = await advocacyService.createContent(
+        req.body,
+        req.user!.id,
+        req.user!.role,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
+      );
+      sendSuccess(res, content, 201);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateContentStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const content = await advocacyService.updateContentStatus(
+        req.params.id as string,
+        req.body.status,
+        req.user!.id,
+        req.user!.role,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
+      );
+      sendSuccess(res, content);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async createTask(req: Request, res: Response, next: NextFunction) {
     try {
       const task = await advocacyService.createTask(

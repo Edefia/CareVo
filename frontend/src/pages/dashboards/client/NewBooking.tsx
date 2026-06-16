@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Calendar as CalendarIcon, MapPin, Video, CheckCircle2, ChevronRight, Activity, Heart, Droplets } from "lucide-react"
+import { Calendar as CalendarIcon, MapPin, CheckCircle2, ChevronRight, Activity, Heart, Droplets } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"

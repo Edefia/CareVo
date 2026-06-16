@@ -14,6 +14,8 @@ export interface User {
   lastName: string
   role: UserRole
   laboratoryId?: string
+  phone?: string
+  avatarUrl?: string
 }
 
 interface AuthState {

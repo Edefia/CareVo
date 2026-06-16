@@ -1,11 +1,11 @@
-import { ReactNode } from "react"
+import { ElementType } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
 interface StatCardProps {
   title: string
   value: string | number
-  icon?: ReactNode
+  icon?: ElementType | any
   description?: string
   isLoading?: boolean
   className?: string
@@ -14,7 +14,7 @@ interface StatCardProps {
 export function StatCard({
   title,
   value,
-  icon,
+  icon: Icon,
   description,
   isLoading,
   className,
@@ -26,9 +26,9 @@ export function StatCard({
           <p className="font-sans text-[14px] font-semibold tracking-wide text-[var(--color-text-secondary)] uppercase">
             {title}
           </p>
-          {icon && (
+          {Icon && (
             <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-forest)]">
-              {icon}
+              <Icon className="h-5 w-5" />
             </div>
           )}
         </div>

@@ -10,7 +10,14 @@ export const advocacyRoutes = Router();
 
 advocacyRoutes.use(authenticate);
 
-// All advocacy routes require ADVOCATES_MONITOR_PATIENT permission
+// Public/Client facing routes for Health Advocacy Content (requires login, but no specific permission)
+advocacyRoutes.get('/content', advocacyController.getContent);
+
+// Admin routes for Health Advocacy Content
+advocacyRoutes.post('/content', authorize([PERMISSIONS.ADVOCATES_MONITOR_PATIENT]), advocacyController.createContent);
+advocacyRoutes.patch('/content/:id/status', authorize([PERMISSIONS.ADVOCATES_MONITOR_PATIENT]), advocacyController.updateContentStatus);
+
+// All advocacy task routes require ADVOCATES_MONITOR_PATIENT permission
 advocacyRoutes.use(authorize([PERMISSIONS.ADVOCATES_MONITOR_PATIENT]));
 
 // Create task

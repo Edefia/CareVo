@@ -71,7 +71,7 @@ export function LabList() {
             columns={[
               { 
                 header: "Laboratory Name", 
-                cell: (row) => (
+                cell: (row: any) => (
                   <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => navigate(`/laboratories/${row._id}`)}>
                     <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                       <Building2 className="h-5 w-5" />
@@ -85,7 +85,7 @@ export function LabList() {
               },
               { 
                 header: "Location", 
-                cell: (row) => (
+                cell: (row: any) => (
                   <div className="flex items-center text-sm text-muted-foreground">
                     <MapPin className="mr-2 h-4 w-4" />
                     {row.address?.city || "Unknown"}, {row.address?.state || "Unknown"}
@@ -94,7 +94,7 @@ export function LabList() {
               },
               { 
                 header: "Contact", 
-                cell: (row) => (
+                cell: (row: any) => (
                   <div className="space-y-1 text-sm">
                     <div className="flex items-center">
                       <Phone className="mr-2 h-3 w-3 text-muted-foreground" />
@@ -105,11 +105,11 @@ export function LabList() {
               },
               { 
                 header: "Status", 
-                cell: (row) => <StatusBadge status={row.status} />
+                cell: (row: any) => <StatusBadge status={row.status} />
               },
               { 
                 header: "Actions", 
-                cell: (row) => (
+                cell: (row: any) => (
                   <Button variant="outline" size="sm" onClick={() => navigate(`/laboratories/${row._id}`)}>
                     Manage
                   </Button>

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom"
-import { ArrowLeft, Building2, MapPin, Phone, Mail, Settings, Users, Activity, ExternalLink } from "lucide-react"
+import { ArrowLeft, MapPin, Phone, Mail, Settings, Users, Activity, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared/StatusBadge"
@@ -11,7 +11,7 @@ export function LabProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
   
-  const { data: laboratoriesData, isLoading } = useLaboratories()
+  const { data: laboratoriesData } = useLaboratories()
   
   // Real app would fetch the specific lab by ID using another hook, 
   // but for now we'll find it in the list if available

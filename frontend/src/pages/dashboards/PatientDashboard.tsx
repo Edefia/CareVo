@@ -85,7 +85,7 @@ export function PatientDashboard() {
                 <div className="text-center text-muted-foreground py-8">No recent results</div>
               )}
             </div>
-            <Button variant="link" className="mt-2 px-0 w-full">View all results →</Button>
+            <Button variant="ghost" className="mt-2 px-0 w-full underline text-blue-600 hover:bg-transparent">View all results →</Button>
           </CardContent>
         </Card>
       </div>

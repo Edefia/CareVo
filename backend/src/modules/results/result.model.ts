@@ -9,6 +9,8 @@ export interface IBiomarker {
 }
 
 export interface IResultRecord extends Document {
+  bookingId: Types.ObjectId;
+  referralCode: string;
   patientId: Types.ObjectId;
   laboratoryId: Types.ObjectId;
   enteredById: Types.ObjectId;
@@ -39,6 +41,17 @@ const biomarkerSchema = new Schema<IBiomarker>(
 
 const resultRecordSchema = new Schema<IResultRecord>(
   {
+    bookingId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Booking',
+      required: true,
+      index: true,
+    },
+    referralCode: {
+      type: String,
+      required: true,
+      index: true,
+    },
     patientId: {
       type: Schema.Types.ObjectId,
       ref: 'Patient',

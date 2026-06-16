@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createPatientProfileSchema, updatePatientProfileSchema } from './patient.schema.js';
+import { createPatientProfileSchema } from './patient.schema.js';
 
 describe('Patient Validation Schemas', () => {
   describe('createPatientProfileSchema', () => {

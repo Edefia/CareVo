@@ -72,14 +72,14 @@ export const interpretationService = {
     if (interpObj.clinicalNotes) {
       try {
         interpObj.clinicalNotes = decrypt(interpObj.clinicalNotes);
-      } catch (e) {
+      } catch {
         interpObj.clinicalNotes = '[Decryption Failed]';
       }
     }
     if (interpObj.recommendations) {
       try {
         interpObj.recommendations = decrypt(interpObj.recommendations);
-      } catch (e) {
+      } catch {
         interpObj.recommendations = '[Decryption Failed]';
       }
     }

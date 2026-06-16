@@ -150,7 +150,7 @@ async function runSeed() {
     );
 
     // Clinical Interpreter
-    const interpreterUser = await UserModel.findOneAndUpdate(
+    await UserModel.findOneAndUpdate(
       { email: 'deo.waye@gmail.com' },
       {
         email: 'deo.waye@gmail.com',
@@ -175,7 +175,7 @@ async function runSeed() {
       { referralCode: 'CRV-2025-A7K3P2' },
       {
         patientId: clientPatient._id,
-        packageId: packages[0]._id,
+        packageId: packages[0]?._id,
         locationType: 'HOME',
         referralCode: 'CRV-2025-A7K3P2',
         staffId: labTechUser._id,
@@ -193,7 +193,7 @@ async function runSeed() {
       { referralCode: 'CRV-2025-X2L8J4' },
       {
         patientId: clientPatient._id,
-        packageId: packages[1]._id,
+        packageId: packages[1]?._id,
         locationType: 'CLINIC',
         referralCode: 'CRV-2025-X2L8J4',
         staffId: null,

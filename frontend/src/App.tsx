@@ -23,6 +23,9 @@ import { ClientBookings } from "./pages/dashboards/client/ClientBookings"
 import { NewBooking } from "./pages/dashboards/client/NewBooking"
 import { ClientReferrals } from "./pages/dashboards/client/ClientReferrals"
 import { ClientBilling } from "./pages/dashboards/client/ClientBilling"
+import { PatientJourney } from "./pages/dashboards/client/PatientJourney"
+import { AdminHealthAdvocacy } from "./pages/advocacy/AdminHealthAdvocacy"
+import { ClientHealthAdvocacy } from "./pages/advocacy/ClientHealthAdvocacy"
 
 // Import Modules
 import { PatientList } from "./pages/patients/PatientList"
@@ -38,8 +41,10 @@ import { BookingList } from "./pages/bookings/BookingList"
 import { BookingWizard } from "./pages/bookings/BookingWizard"
 import { InvoiceList } from "./pages/billing/InvoiceList"
 import { PaymentTerminal } from "./pages/billing/PaymentTerminal"
+import { AdminPayments } from "./pages/billing/AdminPayments"
 import { AuditLogs } from "./pages/audit/AuditLogs"
 import { SettingsDashboard } from "./pages/settings/SettingsDashboard"
+import { UserManagement } from "./pages/admin/UserManagement"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -83,6 +88,9 @@ export default function App() {
             
             {/* Dashboards (4 Roles) */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/payments" element={<AdminPayments />} />
+            <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/advocacy" element={<AdminHealthAdvocacy />} />
             <Route path="/lab/dashboard" element={<LabDashboard />} />
             <Route path="/interpreter/dashboard" element={<InterpreterDashboard />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
@@ -110,6 +118,8 @@ export default function App() {
             <Route path="/client/bookings" element={<ClientBookings />} />
             <Route path="/client/referrals" element={<ClientReferrals />} />
             <Route path="/client/billing" element={<ClientBilling />} />
+            <Route path="/client/journey" element={<PatientJourney />} />
+            <Route path="/client/advocacy" element={<ClientHealthAdvocacy />} />
             
             <Route path="/settings" element={<SettingsDashboard />} />
           </Route>

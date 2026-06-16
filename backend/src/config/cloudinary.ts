@@ -12,8 +12,6 @@ cloudinary.config({
 
 export async function uploadToCloudinary(
   buffer: Buffer,
-  mimeType: string,
-  extension: string,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const publicId = `carevo/${uuidv4()}`;

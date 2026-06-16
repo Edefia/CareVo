@@ -1,4 +1,5 @@
 import { AdvocacyTaskModel } from './advocacy-task.model.js';
+import { AdvocacyContentModel } from './advocacy-content.model.js';
 import { PatientModel } from '../patients/patient.model.js';
 import { UserModel } from '../auth/auth.model.js';
 import { NotFoundError } from '../../shared/errors/index.js';
@@ -7,7 +8,67 @@ import { encrypt, decrypt } from '../../utils/crypto.js';
 import { AuditService } from '../audit/audit.service.js';
 
 export const advocacyService = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Content Management (Cards & Tips)
+  async getContent(type?: 'EDUCATION_CARD' | 'PREVENTIVE_TIP') {
+    const query = type ? { type, status: 'PUBLISHED' as const } : { status: 'PUBLISHED' as const };
+    return AdvocacyContentModel.find(query).sort({ createdAt: -1 });
+  },
+
+  async createContent(data: any, authorId: string, authorRole: string, ipAddress: string, userAgent: string) {
+    const content = new AdvocacyContentModel({
+      title: data.title,
+      type: data.type,
+      category: data.category,
+      content: data.content,
+      imageUrl: data.imageUrl,
+      authorId,
+      status: data.status || 'DRAFT'
+    });
+
+    const saved = await content.save();
+
+    await AuditService.log({
+      actorId: authorId,
+      actorRole: authorRole,
+      action: 'ADVOCACY_CONTENT_CREATED',
+      resourceType: 'AdvocacyContent',
+      resourceId: saved.id,
+      ipAddress,
+      userAgent,
+      sessionId: 'internal',
+      success: true,
+      newState: { title: saved.title, type: saved.type },
+    });
+
+    return saved;
+  },
+
+  async updateContentStatus(id: string, status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED', userId: string, userRole: string, ipAddress: string, userAgent: string) {
+    const content = await AdvocacyContentModel.findById(id);
+    if (!content) throw new NotFoundError('Content not found.');
+
+    const oldStatus = content.status;
+    content.status = status;
+    await content.save();
+
+    await AuditService.log({
+      actorId: userId,
+      actorRole: userRole,
+      action: 'ADVOCACY_CONTENT_STATUS_UPDATED',
+      resourceType: 'AdvocacyContent',
+      resourceId: content.id,
+      ipAddress,
+      userAgent,
+      sessionId: 'internal',
+      success: true,
+      previousState: { status: oldStatus },
+      newState: { status: content.status },
+    });
+
+    return content;
+  },
+
+  // Task Management
   async createTask(data: any, creatorId: string, creatorRole: string, ipAddress: string, userAgent: string) {
     const patient = await PatientModel.findById(data.patientId);
     if (!patient) throw new NotFoundError('Patient not found.');

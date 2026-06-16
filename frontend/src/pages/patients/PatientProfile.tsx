@@ -12,7 +12,7 @@ export function PatientProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const { data: patientsData, isLoading } = usePatients()
+  const { data: patientsData } = usePatients()
   
   // Real app would fetch specific patient, bookings, and interpretations
   const patients = patientsData?.data || []
