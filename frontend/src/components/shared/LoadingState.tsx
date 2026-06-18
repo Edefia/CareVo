@@ -1,4 +1,4 @@
-import { Loader2, Activity } from "lucide-react"
+import { Activity } from "lucide-react"
 
 interface LoadingStateProps {
   message?: string

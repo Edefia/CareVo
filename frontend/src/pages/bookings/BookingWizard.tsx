@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import { useLaboratories } from "@/hooks/useLaboratories"
-import { useCreateBooking } from "@/hooks/useBookings"
+
 import toast from "react-hot-toast"
 import { 
-  ArrowLeft, CheckCircle, ChevronRight, MapPin, 
+  ArrowLeft, CheckCircle, CheckCircle2, ChevronRight, MapPin, 
   Calendar as CalendarIcon, Clock, Heart, Droplets, 
   Activity, Copy, Download, Share2, Info, QrCode
 } from "lucide-react"
@@ -22,8 +22,6 @@ export function BookingWizard() {
     { id: '1', name: 'AccuLab Diagnostics', location: { address: 'Accra, Greater Accra' }, rating: 4.8 },
     { id: '2', name: 'MediScan Ghana', location: { address: 'Kumasi, Ashanti' }, rating: 4.9 }
   ]
-
-  const createBooking = useCreateBooking()
 
   const [formData, setFormData] = useState({
     packageId: "",

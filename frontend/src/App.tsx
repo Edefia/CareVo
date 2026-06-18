@@ -45,6 +45,7 @@ import { AdminPayments } from "./pages/billing/AdminPayments"
 import { AuditLogs } from "./pages/audit/AuditLogs"
 import { SettingsDashboard } from "./pages/settings/SettingsDashboard"
 import { UserManagement } from "./pages/admin/UserManagement"
+import { PackageManagement } from "./pages/admin/PackageManagement"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -58,13 +59,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-// Placeholder Pages (Temporary)
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex flex-col items-center justify-center py-12 text-center animate-in fade-in-50">
-    <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-    <p className="mt-4 text-muted-foreground max-w-md mx-auto">This module is currently under development. Please check back later for updates.</p>
-  </div>
-)
+
 
 export default function App() {
   return (
@@ -90,6 +85,7 @@ export default function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/payments" element={<AdminPayments />} />
             <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/packages" element={<PackageManagement />} />
             <Route path="/admin/advocacy" element={<AdminHealthAdvocacy />} />
             <Route path="/lab/dashboard" element={<LabDashboard />} />
             <Route path="/interpreter/dashboard" element={<InterpreterDashboard />} />

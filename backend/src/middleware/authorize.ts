@@ -55,9 +55,13 @@ export function authorize(requiredPermissions: string[]) {
 
     const rolePermissions = await loadPermissions(req.user.role);
 
-    const hasAll = requiredPermissions.every((perm) => rolePermissions.includes(perm));
+    // ADMIN superuser bypass OR check if required permissions are met
+    // Also, if the requiredPermission is a role name (like "ADMIN"), check the role directly.
+    const hasAny = req.user.role === 'ADMIN' || requiredPermissions.some(
+      (perm) => rolePermissions.includes(perm) || req.user!.role === perm
+    );
 
-    if (!hasAll) {
+    if (!hasAny) {
       logger.warn('Authorization denied', {
         userId: req.user.id,
         role: req.user.role,

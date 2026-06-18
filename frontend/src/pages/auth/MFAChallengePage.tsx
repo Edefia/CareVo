@@ -14,8 +14,8 @@ export function MFAChallengePage() {
   const { setAuth } = useAuthStore()
 
   // State from location
-  const [token, setToken] = useState<string | null>(location.state?.token || null)
-  const [setupRequired, setSetupRequired] = useState<boolean>(location.state?.setupRequired || false)
+  const [token] = useState<string | null>(location.state?.token || null)
+  const [setupRequired] = useState<boolean>(location.state?.setupRequired || false)
 
   // Local state
   const [code, setCode] = useState("")

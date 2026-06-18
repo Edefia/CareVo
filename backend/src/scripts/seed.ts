@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import * as argon2 from 'argon2';
-import { UserModel } from '../modules/auth/auth.model.js';
+import { UserModel, PermissionModel } from '../modules/auth/auth.model.js';
+import { ROLE_PERMISSIONS } from '../shared/constants/permissions.js';
 import { LaboratoryModel } from '../modules/laboratories/laboratory.model.js';
 import { BookingModel } from '../modules/bookings/booking.model.js';
 import { PatientModel } from '../modules/patients/patient.model.js';
@@ -22,6 +23,15 @@ async function runSeed() {
     console.log('📦 Seeding Packages...');
     await PackageModel.deleteMany({});
     
+    console.log('🔑 Seeding Permissions...');
+    await PermissionModel.deleteMany({});
+    for (const [role, perms] of Object.entries(ROLE_PERMISSIONS)) {
+      await PermissionModel.create({
+        role,
+        permissions: perms,
+      });
+    }
+
     await PackageModel.create([
       {
         name: 'Comprehensive Wellness Screen',
@@ -116,9 +126,9 @@ async function runSeed() {
 
     // Admin
     const adminUser = await UserModel.findOneAndUpdate(
-      { email: 'admin@carevo.com' },
+      { email: 'dieudonneladzekpo@gmail.com' },
       {
-        email: 'admin@carevo.com',
+        email: 'dieudonneladzekpo@gmail.com',
         passwordHash: hashedPassword,
         firstName: 'Super',
         lastName: 'Admin',

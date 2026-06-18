@@ -6,7 +6,7 @@ export interface IAuditLog extends Document {
   actorRole: string;
   action: string;
   resourceType: string;
-  resourceId: mongoose.Types.ObjectId;
+  resourceId: string;
   previousState: Record<string, unknown> | null;
   newState: Record<string, unknown> | null;
   ipAddress: string;
@@ -23,7 +23,7 @@ const auditLogSchema = new Schema<IAuditLog>(
     actorRole: { type: String, required: true },
     action: { type: String, required: true, index: true },
     resourceType: { type: String, required: true },
-    resourceId: { type: Schema.Types.ObjectId, required: true },
+    resourceId: { type: String, required: true },
     previousState: { type: Schema.Types.Mixed, default: null },
     newState: { type: Schema.Types.Mixed, default: null },
     ipAddress: { type: String, required: true },

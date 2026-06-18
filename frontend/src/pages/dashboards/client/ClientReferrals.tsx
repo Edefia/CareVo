@@ -9,7 +9,7 @@ export function ClientReferrals() {
   const [copied, setCopied] = useState(false)
   
   // Dummy referral code, in a real app this would come from user profile
-  const referralCode = user?.referralCode || "CAREVO50"
+  const referralCode = (user as any)?.referralCode || "CAREVO50"
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralCode)

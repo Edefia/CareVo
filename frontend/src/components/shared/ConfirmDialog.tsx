@@ -42,7 +42,7 @@ export function ConfirmDialog({
             {cancelText}
           </Button>
           <Button
-            variant={destructive ? "destructive" : "default"}
+            variant={destructive ? "danger" : "default"}
             onClick={() => {
               onConfirm()
               onOpenChange(false)

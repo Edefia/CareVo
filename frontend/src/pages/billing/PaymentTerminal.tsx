@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ArrowLeft, CreditCard, DollarSign, Smartphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -7,7 +7,7 @@ import { LoadingState } from "@/components/shared/LoadingState"
 import { useNavigate, useParams } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { useInvoice, useInitiatePayment } from "@/hooks/useBilling"
+import { useInvoice, useInitiatePayment, useRecordManualPayment } from "@/hooks/useBilling"
 import toast from "react-hot-toast"
 
 export function PaymentTerminal() {
@@ -17,33 +17,51 @@ export function PaymentTerminal() {
   const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [channel, setChannel] = useState("13")
+  const [referenceNote, setReferenceNote] = useState("")
   
   const { data: invoiceData, isLoading } = useInvoice(id as string)
   const initiatePayment = useInitiatePayment()
+  const manualPayment = useRecordManualPayment()
 
   const invoice = invoiceData?.data || invoiceData
   
   const handlePayment = async () => {
-    if (paymentMethod === "MOBILE_MONEY" && !phoneNumber) {
-      toast.error("Please enter a phone number for Mobile Money")
-      return
-    }
-
-    try {
-      await initiatePayment.mutateAsync({ 
-        id: id as string, 
-        customerPhone: phoneNumber || "0000000000",
-        channel: paymentMethod === "MOBILE_MONEY" ? channel : "13"
-      })
-      toast.success("Payment initiated successfully!")
-      navigate('/billing')
-    } catch (error) {
-      toast.error("Payment failed. Please try again.")
+    if (paymentMethod === "MOBILE_MONEY") {
+      if (!phoneNumber) {
+        toast.error("Please enter a phone number for Mobile Money")
+        return
+      }
+      try {
+        await initiatePayment.mutateAsync({ 
+          id: id as string, 
+          customerPhone: phoneNumber,
+          channel: channel
+        })
+        toast.success("Payment initiated successfully. Patient will receive a prompt.")
+        navigate('/billing')
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Payment initiation failed. Please try again.")
+      }
+    } else {
+      // CASH or CARD manual recording
+      try {
+        await manualPayment.mutateAsync({
+          id: id as string,
+          paymentMethod,
+          referenceNote
+        })
+        toast.success("Manual payment recorded successfully.")
+        navigate('/billing')
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to record manual payment.")
+      }
     }
   }
 
   if (isLoading) return <LoadingState message="Loading payment details..." fullScreen />
   if (!invoice) return <div>Invoice not found</div>
+
+  const displayAmount = invoice.amount / 100
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -53,7 +71,7 @@ export function PaymentTerminal() {
         </Button>
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Process Payment</h2>
-          <p className="text-muted-foreground">Invoice {invoice._id || invoice.id}</p>
+          <p className="text-muted-foreground">Invoice {invoice._id}</p>
         </div>
       </div>
 
@@ -66,20 +84,21 @@ export function PaymentTerminal() {
           <CardContent className="space-y-6">
             <div>
               <div className="text-sm text-muted-foreground mb-1">Patient</div>
-              <div className="font-medium">{invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "Unknown"}</div>
+              <div className="font-medium">{invoice.patientId?.userId ? `${invoice.patientId.userId.firstName} ${invoice.patientId.userId.lastName}` : "Unknown"}</div>
             </div>
             
             <div className="flex justify-between items-center pb-4 border-b">
               <div>
                 <div className="font-medium">Services</div>
-                <div className="text-sm text-muted-foreground">Service Date: {new Date(invoice.createdAt).toLocaleDateString()}</div>
+                <div className="text-sm text-muted-foreground">{invoice.description}</div>
+                <div className="text-sm text-muted-foreground mt-1">Date: {new Date(invoice.createdAt).toLocaleDateString()}</div>
               </div>
-              <div className="font-medium text-lg">GHS {invoice.totalAmount?.toFixed(2)}</div>
+              <div className="font-medium text-lg">GHS {displayAmount.toFixed(2)}</div>
             </div>
             
             <div className="flex justify-between items-center pt-2">
               <div className="font-bold text-lg">Total Due</div>
-              <div className="font-bold text-2xl text-primary">GHS {invoice.totalAmount?.toFixed(2)}</div>
+              <div className="font-bold text-2xl text-primary">GHS {displayAmount.toFixed(2)}</div>
             </div>
             
             <div className="pt-4">
@@ -103,7 +122,7 @@ export function PaymentTerminal() {
                 onClick={() => setPaymentMethod('MOBILE_MONEY')}
               >
                 <Smartphone className="h-6 w-6 mb-2" />
-                <span className="text-sm font-medium text-center">Mobile Money</span>
+                <span className="text-sm font-medium text-center">MoMo (Prompt)</span>
               </div>
               <div 
                 className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'CASH' ? 'border-primary bg-primary/5 text-primary' : 'hover:bg-muted'}`}
@@ -117,7 +136,7 @@ export function PaymentTerminal() {
                 onClick={() => setPaymentMethod('CARD')}
               >
                 <CreditCard className="h-6 w-6 mb-2" />
-                <span className="text-sm font-medium">Card</span>
+                <span className="text-sm font-medium">POS Card</span>
               </div>
             </div>
 
@@ -146,11 +165,20 @@ export function PaymentTerminal() {
               </div>
             )}
 
-            {paymentMethod === 'CASH' && (
+            {(paymentMethod === 'CASH' || paymentMethod === 'CARD') && (
               <div className="space-y-4 animate-in fade-in-50">
                 <div className="space-y-2">
                   <Label>Amount Tendered (GHS)</Label>
-                  <Input type="number" placeholder="0.00" defaultValue={invoice.totalAmount} />
+                  <Input type="number" placeholder="0.00" value={displayAmount.toFixed(2)} readOnly className="bg-slate-50" />
+                  <p className="text-xs text-muted-foreground mt-1">This amount will be marked as paid offline.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Reference Note</Label>
+                  <Input 
+                    placeholder="Receipt # or transaction note" 
+                    value={referenceNote}
+                    onChange={(e) => setReferenceNote(e.target.value)}
+                  />
                 </div>
               </div>
             )}
@@ -161,9 +189,9 @@ export function PaymentTerminal() {
               className="w-full" 
               size="lg" 
               onClick={handlePayment}
-              disabled={initiatePayment.isPending}
+              disabled={initiatePayment.isPending || manualPayment.isPending || invoice.status === 'PAID'}
             >
-              {initiatePayment.isPending ? "Processing..." : `Confirm Payment of GHS ${invoice.totalAmount?.toFixed(2)}`}
+              {initiatePayment.isPending || manualPayment.isPending ? "Processing..." : `Confirm Payment of GHS ${displayAmount.toFixed(2)}`}
             </Button>
           </CardFooter>
         </Card>

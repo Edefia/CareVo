@@ -2,7 +2,6 @@ import { Link } from "react-router-dom"
 import {
   Activity,
   ArrowRight,
-  Clock,
   FileText,
   Heart,
   Droplets,

@@ -3,6 +3,7 @@ import { NotFoundError, UnauthorizedError, ConflictError } from '../../shared/er
 import * as argon2 from 'argon2';
 import { AuditService } from '../audit/audit.service.js';
 import { cloudinary } from '../../config/cloudinary.js';
+import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
 
 export class UserService {
   static async getProfile(userId: string) {
@@ -120,5 +121,111 @@ export class UserService {
     });
 
     return { avatarUrl: user.avatarUrl };
+  }
+
+  // ===================== ADMIN METHODS =====================
+
+  static async getAllUsers(page: number, limit: number, roleFilter?: string, search?: string, statusFilter?: string) {
+    const { skip, limit: limitNum } = getPaginationOptions(page, limit);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = { deletedAt: null };
+
+    if (roleFilter && roleFilter !== 'ALL') {
+      query.role = roleFilter;
+    }
+
+    if (statusFilter === 'ACTIVE') {
+      query.isActive = true;
+    } else if (statusFilter === 'SUSPENDED') {
+      query.isActive = false;
+    }
+
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      UserModel.find(query)
+        .select('-passwordHash -mfaSecret -mfaBackupCodes')
+        .skip(skip)
+        .limit(limitNum)
+        .sort({ createdAt: -1 }),
+      UserModel.countDocuments(query),
+    ]);
+
+    return createPaginatedResponse(users, page, limitNum, total);
+  }
+
+  static async getUserById(userId: string) {
+    const user = await UserModel.findById(userId).select('-passwordHash -mfaSecret -mfaBackupCodes');
+    if (!user) throw new NotFoundError('User not found.');
+    return user;
+  }
+
+  static async updateUserStatus(userId: string, isActive: boolean, adminId: string, adminRole: string, ip: string, userAgent: string) {
+    const user = await UserModel.findById(userId);
+    if (!user) throw new NotFoundError('User not found.');
+
+    const previousActive = user.isActive;
+    user.isActive = isActive;
+    await user.save();
+
+    await AuditService.log({
+      actorId: adminId,
+      actorRole: adminRole,
+      action: isActive ? 'user.reactivated' : 'user.suspended',
+      resourceType: 'User',
+      resourceId: user._id.toString(),
+      previousState: { isActive: previousActive },
+      newState: { isActive: user.isActive },
+      ipAddress: ip,
+      userAgent,
+      sessionId: 'none',
+      success: true,
+    });
+
+    return { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, isActive: user.isActive };
+  }
+
+  static async softDeleteUser(userId: string, adminId: string, adminRole: string, ip: string, userAgent: string) {
+    const user = await UserModel.findById(userId);
+    if (!user) throw new NotFoundError('User not found.');
+
+    user.deletedAt = new Date();
+    user.isActive = false;
+    await user.save();
+
+    await AuditService.log({
+      actorId: adminId,
+      actorRole: adminRole,
+      action: 'user.deleted',
+      resourceType: 'User',
+      resourceId: user._id.toString(),
+      ipAddress: ip,
+      userAgent,
+      sessionId: 'none',
+      success: true,
+    });
+  }
+
+  static async getUserCounts() {
+    const [total, active, suspended, byRole] = await Promise.all([
+      UserModel.countDocuments({ deletedAt: null }),
+      UserModel.countDocuments({ deletedAt: null, isActive: true }),
+      UserModel.countDocuments({ deletedAt: null, isActive: false }),
+      UserModel.aggregate([
+        { $match: { deletedAt: null } },
+        { $group: { _id: '$role', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const roleMap: Record<string, number> = {};
+    byRole.forEach((r) => { roleMap[r._id] = r.count; });
+
+    return { total, active, suspended, byRole: roleMap };
   }
 }

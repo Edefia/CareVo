@@ -40,4 +40,51 @@ export class UserController {
     );
     sendSuccess(res, result);
   }
+
+  // ===================== ADMIN ENDPOINTS =====================
+
+  static async getAllUsers(req: Request, res: Response): Promise<void> {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const role = req.query.role as string | undefined;
+    const search = req.query.search as string | undefined;
+    const status = req.query.status as string | undefined;
+
+    const result = await UserService.getAllUsers(page, limit, role, search, status);
+    res.status(200).json(result);
+  }
+
+  static async getUserById(req: Request, res: Response): Promise<void> {
+    const user = await UserService.getUserById(req.params.id);
+    sendSuccess(res, user);
+  }
+
+  static async updateUserStatus(req: Request, res: Response): Promise<void> {
+    const { isActive } = req.body;
+    const result = await UserService.updateUserStatus(
+      req.params.id,
+      isActive,
+      req.user!.id,
+      req.user!.role,
+      req.ip ?? 'unknown',
+      req.headers['user-agent'] ?? 'unknown'
+    );
+    sendSuccess(res, result);
+  }
+
+  static async deleteUser(req: Request, res: Response): Promise<void> {
+    await UserService.softDeleteUser(
+      req.params.id,
+      req.user!.id,
+      req.user!.role,
+      req.ip ?? 'unknown',
+      req.headers['user-agent'] ?? 'unknown'
+    );
+    res.status(204).send();
+  }
+
+  static async getUserCounts(_req: Request, res: Response): Promise<void> {
+    const counts = await UserService.getUserCounts();
+    sendSuccess(res, counts);
+  }
 }

@@ -1,4 +1,4 @@
-import { FileText, Clock, Heart, Droplets, Activity } from "lucide-react"
+import { FileText, Clock, Heart, Droplets, Activity, CheckCircle } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { useResultsStore } from "@/store/results"
 import { Button } from "@/components/ui/button"

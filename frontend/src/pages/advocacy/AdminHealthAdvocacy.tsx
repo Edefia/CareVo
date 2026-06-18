@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Plus, Edit2, Archive, Activity, BookOpen, AlertCircle } from "lucide-react"
+
+import { Plus, Edit2, Archive, Activity, BookOpen } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Button } from "@/components/ui/button"
 
@@ -15,7 +15,7 @@ const MOCK_DISEASE_TRENDS = [
 ]
 
 export function AdminHealthAdvocacy() {
-  const navigate = useNavigate()
+
   const [activeTab, setActiveTab] = useState<'trends' | 'content'>('trends')
 
   return (

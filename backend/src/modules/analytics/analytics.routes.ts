@@ -10,3 +10,9 @@ analyticsRoutes.use(authenticate);
 
 // Get dashboard metrics (Staff only)
 analyticsRoutes.get('/dashboard', authorize([PERMISSIONS.PATIENTS_READ_ANY]), analyticsController.getDashboardMetrics);
+
+// Get revenue chart data (Admin only)
+analyticsRoutes.get('/revenue-chart', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), analyticsController.getRevenueChart);
+
+// Get booking statistics and lab performance (Admin only)
+analyticsRoutes.get('/booking-stats', authorize([PERMISSIONS.PATIENTS_READ_ANY]), analyticsController.getBookingStats);

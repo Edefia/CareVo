@@ -8,7 +8,7 @@ export function ClientDashboard() {
 
   // MOCK DATA (will be replaced by real API data later)
   const hasScreenings = true
-  const overallRisk = 'MODERATE' // LOW | MODERATE | HIGH
+  const overallRisk: string = 'MODERATE' // LOW | MODERATE | HIGH
 
   const cardio = {
     hasData: true,

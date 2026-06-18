@@ -1,16 +1,44 @@
-import apiClient from '../client';
+import { apiClient } from '../client';
 
 export const billingService = {
-  getInvoices: async (params?: any) => {
-    const { data } = await apiClient.get('/billing/invoices', { params });
-    return data.data || data;
+  getInvoices: async (params?: Record<string, unknown>) => {
+    const response = await apiClient.get('/billing', { params });
+    return response.data;
   },
+
   getInvoiceById: async (id: string) => {
-    const { data } = await apiClient.get(`/billing/invoices/${id}`);
-    return data.data;
+    const response = await apiClient.get(`/billing/${id}`);
+    return response.data;
   },
+
   initiatePayment: async (id: string, customerPhone: string, channel: string) => {
-    const { data } = await apiClient.post(`/billing/invoices/${id}/pay`, { customerPhone, channel });
-    return data.data;
+    const response = await apiClient.post(`/billing/${id}/pay`, { customerPhone, channel });
+    return response.data;
+  },
+
+  // Admin / System endpoints
+  getBillingStats: async () => {
+    const response = await apiClient.get('/billing/stats');
+    return response.data;
+  },
+
+  verifyPayment: async (id: string) => {
+    const response = await apiClient.post(`/billing/${id}/verify`);
+    return response.data;
+  },
+
+  recordManualPayment: async (id: string, paymentMethod: string, referenceNote: string) => {
+    const response = await apiClient.post(`/billing/${id}/manual-pay`, { paymentMethod, referenceNote });
+    return response.data;
+  },
+
+  createInvoice: async (data: any) => {
+    const response = await apiClient.post('/billing', data);
+    return response.data;
+  },
+
+  updateInvoiceStatus: async (id: string, status: string, referenceId?: string, paymentGateway?: string) => {
+    const response = await apiClient.patch(`/billing/${id}/status`, { status, referenceId, paymentGateway });
+    return response.data;
   }
 };

@@ -1,32 +1,58 @@
 import { useState } from "react"
-import { Search, Filter, Shield, UserX, UserCheck, KeyRound, MoreVertical } from "lucide-react"
+import { Search, Shield, UserX, UserCheck, Trash2, MoreVertical, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/shared/DataTable"
 import { StatCard } from "@/components/shared/StatCard"
+import { useUsers, useUserCounts, useUpdateUserStatus, useDeleteUser } from "@/hooks/useUsers"
+import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "react-hot-toast"
 
 export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("ALL")
+  const [page, setPage] = useState(1)
 
-  // Mock User Data
-  const users = [
-    { id: "USR-001", name: "Sarah Jenkins", email: "sarah.j@example.com", role: "CLIENT", status: "ACTIVE", lastLogin: "2026-06-16T19:00:00Z" },
-    { id: "USR-002", name: "Dr. Michael Chen", email: "dr.chen@mediscan.com", role: "INTERPRETER", status: "ACTIVE", lastLogin: "2026-06-16T18:45:00Z" },
-    { id: "USR-003", name: "AccuLab Admin", email: "admin@acculab.gh", role: "LABORATORY", status: "ACTIVE", lastLogin: "2026-06-15T09:00:00Z" },
-    { id: "USR-004", name: "James Wilson", email: "james.w@example.com", role: "CLIENT", status: "SUSPENDED", lastLogin: "2026-05-20T14:20:00Z" },
-    { id: "USR-005", name: "Admin (SysAuth)", email: "sysadmin@carevo.com", role: "SUPER_ADMIN", status: "ACTIVE", lastLogin: "2026-06-16T19:20:00Z" },
-  ]
+  const { data: usersResponse, isLoading: usersLoading } = useUsers({
+    page,
+    limit: 20,
+    role: roleFilter !== "ALL" ? roleFilter : undefined,
+    search: searchTerm || undefined,
+  })
 
-  const filteredUsers = users.filter(u => 
-    (roleFilter === "ALL" || u.role === roleFilter) &&
-    (u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  const { data: countsResponse, isLoading: countsLoading } = useUserCounts()
+  const updateStatusMutation = useUpdateUserStatus()
+  const deleteMutation = useDeleteUser()
+
+  const usersData = usersResponse?.data || usersResponse
+  const users = usersData?.items || usersData?.data || (Array.isArray(usersData) ? usersData : [])
+  
+  const countsData = countsResponse?.data || countsResponse
+  const counts = countsData || { total: 0, active: 0, suspended: 0, byRole: {} }
+
+  const handleToggleStatus = async (userId: string, currentActive: boolean) => {
+    try {
+      await updateStatusMutation.mutateAsync({ id: userId, isActive: !currentActive })
+      toast.success(`User ${currentActive ? 'suspended' : 'reactivated'} successfully`)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update user status")
+    }
+  }
+
+  const handleDelete = async (userId: string) => {
+    if (!confirm("Are you sure you want to permanently delete this user?")) return;
+    try {
+      await deleteMutation.mutateAsync(userId)
+      toast.success("User deleted successfully")
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete user")
+    }
+  }
 
   const getRoleBadge = (role: string) => {
     switch(role) {
-      case "SUPER_ADMIN": return "bg-purple-100 text-purple-700 border-purple-200"
+      case "ADMIN": return "bg-purple-100 text-purple-700 border-purple-200"
       case "INTERPRETER": return "bg-blue-100 text-blue-700 border-blue-200"
       case "LABORATORY": return "bg-emerald-100 text-emerald-700 border-emerald-200"
       case "CLIENT": return "bg-slate-100 text-slate-700 border-slate-200"
@@ -60,10 +86,16 @@ export function UserManagement() {
           OVERVIEW CARDS (KPIs)
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="grid gap-[24px] grid-cols-1 sm:grid-cols-3 lg:grid-cols-4">
-        <StatCard title="Total Users" value="24,500" icon={UserCheck} description="Across all roles" className="border-t-4 border-t-emerald-500" />
-        <StatCard title="Interpreters" value="45" icon={Shield} description="Medical professionals" className="border-t-4 border-t-blue-500" />
-        <StatCard title="Laboratories" value="48" icon={Shield} description="Active partner labs" className="border-t-4 border-t-violet-500" />
-        <StatCard title="Suspended" value="12" icon={UserX} description="Requires investigation" className="border-t-4 border-t-red-500" />
+        {countsLoading ? (
+          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-[140px] rounded-xl" />)
+        ) : (
+          <>
+            <StatCard title="Total Users" value={counts.total?.toLocaleString() || "0"} icon={UserCheck} description="Across all roles" className="border-t-4 border-t-emerald-500" />
+            <StatCard title="Interpreters" value={counts.byRole?.INTERPRETER?.toLocaleString() || "0"} icon={Shield} description="Medical professionals" className="border-t-4 border-t-blue-500" />
+            <StatCard title="Laboratories" value={counts.byRole?.LABORATORY?.toLocaleString() || "0"} icon={Shield} description="Active partner labs" className="border-t-4 border-t-violet-500" />
+            <StatCard title="Suspended" value={counts.suspended?.toLocaleString() || "0"} icon={UserX} description="Requires investigation" className="border-t-4 border-t-red-500" />
+          </>
+        )}
       </div>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -74,80 +106,141 @@ export function UserManagement() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <CardTitle className="font-serif text-xl text-[var(--color-forest)]">Global Directory</CardTitle>
             <div className="flex items-center gap-2">
-              <div className="relative w-full md:w-[350px]">
+              <form 
+                className="relative w-full md:w-[350px]"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  setPage(1)
+                }}
+              >
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
-                  placeholder="Search name or email..." 
+                  placeholder="Search name or email... (Press Enter)" 
                   className="pl-9 h-10 border-slate-200 focus-visible:ring-[var(--color-forest)]/20" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              </div>
+              </form>
               <select 
                 className="h-10 border border-slate-200 rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]/20"
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
+                onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
               >
                 <option value="ALL">All Roles</option>
                 <option value="CLIENT">Clients</option>
                 <option value="INTERPRETER">Interpreters</option>
                 <option value="LABORATORY">Laboratories</option>
-                <option value="SUPER_ADMIN">Admins</option>
+                <option value="ADMIN">Admins</option>
               </select>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <DataTable 
-            columns={[
-              { 
-                header: "User / Email", 
-                cell: (row) => (
-                  <div>
-                    <div className="font-semibold text-[14px] text-slate-900">{row.name}</div>
-                    <div className="text-[12px] text-slate-500">{row.email}</div>
+          {usersLoading ? (
+            <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
+          ) : (
+            <>
+              <DataTable 
+                columns={[
+                  { 
+                    header: "User / Email", 
+                    cell: (row: any) => (
+                      <div>
+                        <div className="font-semibold text-[14px] text-slate-900">{row.firstName} {row.lastName}</div>
+                        <div className="text-[12px] text-slate-500">{row.email}</div>
+                      </div>
+                    ) 
+                  },
+                  { 
+                    header: "Role", 
+                    cell: (row: any) => <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${getRoleBadge(row.role)}`}>{row.role.replace("_", " ")}</span> 
+                  },
+                  { 
+                    header: "Status", 
+                    cell: (row: any) => (
+                      <span className={`flex items-center gap-1.5 text-[12px] font-medium ${row.isActive ? 'text-emerald-600' : 'text-red-600'}`}>
+                        <span className={`h-2 w-2 rounded-full ${row.isActive ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                        {row.isActive ? 'ACTIVE' : 'SUSPENDED'}
+                      </span>
+                    )
+                  },
+                  { header: "Registered", cell: (row: any) => new Date(row.createdAt).toLocaleDateString() },
+                  { header: "Last Login", cell: (row: any) => row.lastLoginAt ? new Date(row.lastLoginAt).toLocaleDateString() : 'Never' },
+                  { 
+                    header: "Actions", 
+                    cell: (row: any) => (
+                      <div className="flex items-center gap-2">
+                        {row.isActive ? (
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50" 
+                            title="Suspend User"
+                            onClick={() => handleToggleStatus(row._id, row.isActive)}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            <UserX className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50" 
+                            title="Reactivate User"
+                            onClick={() => handleToggleStatus(row._id, row.isActive)}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50" 
+                          title="Delete User"
+                          onClick={() => handleDelete(row._id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-500">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )
+                  },
+                ]}
+                data={users}
+              />
+              
+              {/* Pagination Controls */}
+              {usersData?.totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--color-border)] bg-gray-50/50">
+                  <div className="text-sm text-slate-500">
+                    Page {page} of {usersData.totalPages}
                   </div>
-                ) 
-              },
-              { 
-                header: "Role", 
-                cell: (row) => <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${getRoleBadge(row.role)}`}>{row.role.replace("_", " ")}</span> 
-              },
-              { 
-                header: "Status", 
-                cell: (row) => (
-                  <span className={`flex items-center gap-1.5 text-[12px] font-medium ${row.status === 'ACTIVE' ? 'text-emerald-600' : 'text-red-600'}`}>
-                    <span className={`h-2 w-2 rounded-full ${row.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                    {row.status}
-                  </span>
-                )
-              },
-              { header: "Last Login", cell: (row) => new Date(row.lastLogin).toLocaleString() },
-              { 
-                header: "Actions", 
-                cell: (row) => (
-                  <div className="flex items-center gap-2">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Reset Password">
-                      <KeyRound className="h-4 w-4" />
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
                     </Button>
-                    {row.status === 'ACTIVE' ? (
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50" title="Suspend User">
-                        <UserX className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50" title="Reactivate User">
-                        <UserCheck className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-500">
-                      <MoreVertical className="h-4 w-4" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setPage(p => Math.min(usersData.totalPages, p + 1))}
+                      disabled={page === usersData.totalPages}
+                    >
+                      Next
                     </Button>
                   </div>
-                )
-              },
-            ]}
-            data={filteredUsers}
-          />
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

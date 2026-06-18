@@ -57,7 +57,7 @@ export function NewPatientModal({ open, onOpenChange }: NewPatientModalProps) {
     // Convert date format if needed
     const submitData = {
       ...formData,
-      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : undefined
+      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : ""
     }
 
     createPatientMutation.mutate(submitData)

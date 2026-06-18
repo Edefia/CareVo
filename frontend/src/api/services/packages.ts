@@ -1,21 +1,35 @@
 import { apiClient } from '../client';
 
-export interface Package {
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  features: string[];
-  pillarIcon: 'CARDIO' | 'RENAL' | 'METABOLIC' | 'COMPREHENSIVE';
-  color: string;
-  bgColor: string;
-  isActive: boolean;
-}
-
 export const packageService = {
-  getPackages: async (): Promise<Package[]> => {
+  // Public
+  getPackages: async () => {
     const response = await apiClient.get('/packages');
-    return response.data.data;
+    return response.data;
   },
+  
+  // Admin
+  getAllPackages: async (params?: Record<string, unknown>) => {
+    const response = await apiClient.get('/packages/admin', { params });
+    return response.data;
+  },
+
+  getPackageById: async (id: string) => {
+    const response = await apiClient.get(`/packages/${id}`);
+    return response.data;
+  },
+
+  createPackage: async (data: any) => {
+    const response = await apiClient.post('/packages', data);
+    return response.data;
+  },
+
+  updatePackage: async (id: string, data: any) => {
+    const response = await apiClient.put(`/packages/${id}`, data);
+    return response.data;
+  },
+
+  deletePackage: async (id: string) => {
+    const response = await apiClient.delete(`/packages/${id}`);
+    return response.data;
+  }
 };

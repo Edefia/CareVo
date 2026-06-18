@@ -2,25 +2,26 @@ import { Router } from 'express';
 import { billingController } from './billing.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
+import { PERMISSIONS } from '../../shared/constants/permissions.js';
 import { validate } from '../../middleware/validate.js';
 import { createInvoiceSchema, updateInvoiceStatusSchema } from './billing.schema.js';
-import { PERMISSIONS } from '../../shared/constants/permissions.js';
 
 export const billingRoutes = Router();
 
 billingRoutes.use(authenticate);
 
-// Create invoice (Staff only)
-billingRoutes.post('/invoices', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), validate(createInvoiceSchema), billingController.createInvoice);
+// Admin / System routes
+billingRoutes.post('/', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), validate(createInvoiceSchema), billingController.createInvoice);
+billingRoutes.get('/stats', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), billingController.getBillingStats);
+billingRoutes.get('/', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PERMISSIONS.PAYMENTS_READ_ALL]), billingController.getInvoices);
+billingRoutes.get('/:id', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PERMISSIONS.PAYMENTS_READ_ALL]), billingController.getInvoiceById);
 
-// List invoices
-billingRoutes.get('/invoices', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PERMISSIONS.PAYMENTS_READ_ALL]), billingController.getInvoices);
+// Update status (Admin/System)
+billingRoutes.patch('/:id/status', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), validate(updateInvoiceStatusSchema), billingController.updateInvoiceStatus);
 
-// Get invoice by ID
-billingRoutes.get('/invoices/:id', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PERMISSIONS.PAYMENTS_READ_ALL]), billingController.getInvoiceById);
+// Admin payment workflows
+billingRoutes.post('/:id/verify', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), billingController.verifyPayment);
+billingRoutes.post('/:id/manual-pay', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), billingController.recordManualPayment);
 
-// Update status (Staff only, or Webhook later)
-billingRoutes.patch('/invoices/:id/status', authorize([PERMISSIONS.PAYMENTS_READ_ALL]), validate(updateInvoiceStatusSchema), billingController.updateInvoiceStatus);
-
-// Initiate payment via Moolre
-billingRoutes.post('/invoices/:id/pay', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PERMISSIONS.PAYMENTS_READ_ALL]), billingController.initiatePayment);
+// Initiate Payment (Client or Admin on behalf of client)
+billingRoutes.post('/:id/pay', authorize([PERMISSIONS.PAYMENTS_READ_OWN, PERMISSIONS.PAYMENTS_READ_ALL]), billingController.initiatePayment);

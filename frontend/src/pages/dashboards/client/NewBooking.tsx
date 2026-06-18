@@ -12,7 +12,10 @@ import { LoadingState } from "@/components/shared/LoadingState"
 export function NewBooking() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { data: packages = [], isLoading } = usePackages()
+  const { data: packagesResponse, isLoading } = usePackages()
+  
+  const packagesData = packagesResponse?.data || packagesResponse
+  const packages = packagesData?.data || packagesData || []
 
   const [step, setStep] = useState(1)
   const [selectedPackage, setSelectedPackage] = useState("")
@@ -24,7 +27,7 @@ export function NewBooking() {
     setIsSubmitting(true)
     try {
       await bookingService.createBooking({
-        patientId: user?.patientId,
+        patientId: (user as any)?.patientId || (user as any)?._id || user?.id,
         packageId: selectedPackage,
         locationType: selectedType,
         scheduledAt: new Date(date).toISOString(),
@@ -50,7 +53,7 @@ export function NewBooking() {
     return <LoadingState message="Fetching available packages..." />
   }
 
-  const selectedPkgData = packages.find(p => p._id === selectedPackage)
+  const selectedPkgData = packages.find((p: any) => p._id === selectedPackage)
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in">
@@ -77,7 +80,7 @@ export function NewBooking() {
             <div className="space-y-6 animate-in slide-in-from-right-4">
               <h2 className="text-xl font-bold text-slate-900">Step 1: Select a Package</h2>
               <div className="grid gap-4">
-                {packages.map(pkg => {
+                {packages.map((pkg: any) => {
                   const Icon = getPackageIcon(pkg.pillarIcon)
                   return (
                     <div 
@@ -97,7 +100,7 @@ export function NewBooking() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-serif text-xl font-bold text-[var(--color-forest)]">GH₵{pkg.price}</div>
+                        <div className="font-serif text-xl font-bold text-[var(--color-forest)]">GH₵{(pkg.price / 100).toFixed(2)}</div>
                         {selectedPackage === pkg._id && <CheckCircle2 className="h-5 w-5 text-[var(--color-lime-dark)] inline-block mt-1" />}
                       </div>
                     </div>
@@ -173,7 +176,7 @@ export function NewBooking() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-slate-500">Price</p>
-                    <p className="font-serif text-xl font-bold text-[var(--color-forest)]">GH₵{selectedPkgData?.price}</p>
+                    <p className="font-serif text-xl font-bold text-[var(--color-forest)]">GH₵{selectedPkgData ? (selectedPkgData.price / 100).toFixed(2) : "0.00"}</p>
                   </div>
                 </div>
                 

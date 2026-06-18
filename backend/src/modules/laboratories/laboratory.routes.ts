@@ -9,10 +9,9 @@ import { ROLES } from '../../shared/constants/roles.js';
 export const laboratoryRoutes = Router();
 
 laboratoryRoutes.use(authenticate);
-laboratoryRoutes.use(authorize([ROLES.ADMIN]));
 
-laboratoryRoutes.post('/', validate(createLaboratorySchema), laboratoryController.createLaboratory);
+laboratoryRoutes.post('/', authorize([ROLES.ADMIN]), validate(createLaboratorySchema), laboratoryController.createLaboratory);
 laboratoryRoutes.get('/', laboratoryController.getLaboratories);
 laboratoryRoutes.get('/:id', validate(getLaboratoryParamsSchema), laboratoryController.getLaboratoryById);
-laboratoryRoutes.put('/:id', validate(updateLaboratorySchema), laboratoryController.updateLaboratory);
-laboratoryRoutes.delete('/:id', validate(getLaboratoryParamsSchema), laboratoryController.deleteLaboratory);
+laboratoryRoutes.put('/:id', authorize([ROLES.ADMIN]), validate(updateLaboratorySchema), laboratoryController.updateLaboratory);
+laboratoryRoutes.delete('/:id', authorize([ROLES.ADMIN]), validate(getLaboratoryParamsSchema), laboratoryController.deleteLaboratory);

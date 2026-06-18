@@ -350,6 +350,8 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGr
           title: "SYSTEM",
           items: [
             { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/admin/packages", label: "Packages", icon: FileText },
+            { href: "/admin/users", label: "Users", icon: Users },
             { href: "/audit", label: "Audit Logs", icon: Activity },
           ]
         },
@@ -364,7 +366,8 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGr
         {
           title: "FINANCE",
           items: [
-            { href: "/billing", label: "Billing", icon: Receipt },
+            { href: "/billing", label: "Invoices", icon: Receipt },
+            { href: "/admin/payments", label: "Payments", icon: Receipt },
           ]
         }
       ]

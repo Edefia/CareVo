@@ -87,4 +87,48 @@ export const billingController = {
       next(error);
     }
   },
+
+  // ===================== NEW ADMIN ENDPOINTS =====================
+
+  async getBillingStats(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const stats = await billingService.getBillingStats();
+      sendSuccess(res, stats);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async verifyPayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await billingService.verifyPaymentStatus(
+        req.params.id as string,
+        req.user!.id,
+        req.user!.role,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
+      );
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async recordManualPayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { paymentMethod, referenceNote } = req.body;
+      const result = await billingService.recordManualPayment(
+        req.params.id as string,
+        paymentMethod || 'CASH',
+        referenceNote || '',
+        req.user!.id,
+        req.user!.role,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
+      );
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
