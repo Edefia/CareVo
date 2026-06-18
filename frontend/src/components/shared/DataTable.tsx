@@ -29,14 +29,31 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
-      <div className="rounded-md border p-8 flex justify-center items-center">
-        <div className="animate-pulse flex space-x-4">
-          <div className="flex-1 space-y-4 py-1">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="space-y-2">
-              <div className="h-4 bg-muted rounded"></div>
-              <div className="h-4 bg-muted rounded w-5/6"></div>
-            </div>
+      <div className="rounded-md border bg-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map((col, index) => (
+                <TableHead key={index}>{col.header}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {columns.map((_, colIndex) => (
+                  <TableCell key={colIndex}>
+                    <div className="h-5 w-full bg-slate-100 rounded-md animate-pulse"></div>
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <div className="flex items-center justify-center py-6 bg-white/50 border-t">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border shadow-sm">
+            <div className="h-3 w-3 rounded-full bg-[var(--color-lime-dark)] animate-ping"></div>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Loading Records...</span>
           </div>
         </div>
       </div>

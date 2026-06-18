@@ -16,7 +16,11 @@ const emergencyContactSchema = z.object({
 
 export const createPatientProfileSchema = z.object({
   body: z.object({
-    userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID').optional(), // Optional if self-registering (inferred from token), required if staff creating
+    userId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID').optional().nullable(), // Optional if self-registering (inferred from token), required if staff creating unless providing name/email
+    firstName: z.string().min(2).optional(),
+    lastName: z.string().min(2).optional(),
+    email: z.string().email().optional(),
+    phone: z.string().optional(),
     dateOfBirth: z.string().datetime().optional().nullable(),
     gender: z.enum(['Male', 'Female', 'Other', 'Unknown']).optional(),
     bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown']).optional(),

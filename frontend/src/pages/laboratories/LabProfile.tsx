@@ -11,11 +11,10 @@ export function LabProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
   
-  const { data: laboratoriesData } = useLaboratories()
+  const { data: laboratoriesData, isLoading } = useLaboratories()
   
-  // Real app would fetch the specific lab by ID using another hook, 
-  // but for now we'll find it in the list if available
-  const labs = laboratoriesData?.data || []
+  // Try items first, then data, then assume array
+  const labs = laboratoriesData?.items || laboratoriesData?.data || (Array.isArray(laboratoriesData) ? laboratoriesData : [])
   const labData = labs.find((l: any) => l._id === id) || {
     _id: id || "Unknown",
     name: "Loading...",
@@ -29,6 +28,14 @@ export function LabProfile() {
   // Real app would fetch staff and services from API
   const staff: any[] = []
   const services: any[] = []
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

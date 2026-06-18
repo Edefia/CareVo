@@ -114,6 +114,12 @@ export class AuthController {
     sendSuccess(res, { user: (result as any).user });
   }
 
+  static async resendMfaCode(req: Request, res: Response): Promise<void> {
+    const { token } = req.body;
+    await AuthService.resendMfaCode(token);
+    sendSuccess(res, { message: 'MFA code resent successfully' });
+  }
+
   // --- Password Reset ---
 
   static async requestPasswordReset(req: Request, res: Response): Promise<void> {

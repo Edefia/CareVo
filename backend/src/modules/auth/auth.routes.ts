@@ -16,6 +16,7 @@ router.post('/logout', authenticate, AuthController.logout);
 router.post('/mfa/setup', authenticate, AuthController.setupMfa);
 router.post('/mfa/verify-setup', authenticate, AuthController.verifyMfaSetup);
 router.post('/mfa/verify-login', authLimiter, validate(mfaVerifySchema), AuthController.verifyMfaLogin);
+router.post('/mfa/resend', authLimiter, AuthController.resendMfaCode);
 
 // Password Reset
 router.post('/password-reset/request', authLimiter, validate(passwordResetRequestSchema), AuthController.requestPasswordReset);

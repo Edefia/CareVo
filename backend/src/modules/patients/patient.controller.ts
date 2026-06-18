@@ -8,11 +8,19 @@ export const patientController = {
       let targetUserId = req.user!.id;
       if (req.body.userId && req.user!.role !== 'CLIENT') {
         targetUserId = req.body.userId;
+      } else if (!req.body.userId && req.user!.role !== 'CLIENT') {
+        targetUserId = null as any; // Trigger auto-creation
       }
 
       const createdByLabId = req.user!.role !== 'CLIENT' ? req.user!.laboratoryId : null;
 
-      const patient = await patientService.createProfile(targetUserId, req.body, createdByLabId);
+      const patient = await patientService.createProfile(
+        targetUserId, 
+        req.body, 
+        createdByLabId,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
+      );
       sendSuccess(res, patient, 201);
     } catch (error) {
       next(error);

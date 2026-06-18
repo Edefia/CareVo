@@ -5,7 +5,7 @@ import toast from "react-hot-toast"
 import { 
   ArrowLeft, CheckCircle, ChevronRight, MapPin, 
   Calendar as CalendarIcon, Clock, Heart, Droplets, 
-  Activity, Copy, Download, Share2, Info
+  Activity, Copy, Download, Share2, Info, QrCode
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

@@ -9,6 +9,7 @@ import { encrypt, decrypt } from '../../utils/crypto.js';
 import { AuditService } from '../audit/audit.service.js';
 import { notificationService } from '../notifications/notification.service.js';
 import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
+import { LaboratoryModel } from '../laboratories/laboratory.model.js';
 
 function generateReferralCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -34,6 +35,11 @@ export const bookingService = {
       if (!staff) throw new NotFoundError('Staff not found.');
     }
 
+    if (data.laboratoryId) {
+      const lab = await LaboratoryModel.findById(data.laboratoryId);
+      if (!lab) throw new NotFoundError('Laboratory not found.');
+    }
+
     const pkg = await PackageModel.findById(data.packageId);
     if (!pkg || !pkg.isActive) throw new NotFoundError('Package not found or inactive.');
 
@@ -45,6 +51,7 @@ export const bookingService = {
       locationType: data.locationType,
       referralCode: referralCode,
       staffId: data.staffId || null,
+      laboratoryId: data.laboratoryId || null,
       status: 'PENDING',
       scheduledAt: new Date(data.scheduledAt),
       durationMinutes: data.durationMinutes || 30,
@@ -88,6 +95,13 @@ export const bookingService = {
       const patient = await PatientModel.findOne({ userId });
       if (!patient) throw new NotFoundError('Patient profile not found.');
       query.patientId = patient._id;
+    } else if (userRole === 'LABORATORY') {
+      // Lab user sees bookings for their laboratory
+      const user = await UserModel.findById(userId);
+      if (user && user.laboratoryId) {
+        query.laboratoryId = user.laboratoryId;
+      }
+      if (patientIdFilter) query.patientId = patientIdFilter;
     } else {
       if (patientIdFilter) query.patientId = patientIdFilter;
     }
@@ -95,7 +109,18 @@ export const bookingService = {
     if (statusFilter) query.status = statusFilter;
 
     const [bookings, total] = await Promise.all([
-      BookingModel.find(query).skip(skip).limit(limitNum).sort({ scheduledAt: 1 }),
+      BookingModel.find(query)
+        .populate({
+          path: 'patientId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email phone'
+          }
+        })
+        .populate('packageId', 'name')
+        .skip(skip)
+        .limit(limitNum)
+        .sort({ scheduledAt: 1 }),
       BookingModel.countDocuments(query),
     ]);
 

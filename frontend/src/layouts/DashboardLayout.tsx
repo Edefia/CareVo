@@ -1,5 +1,7 @@
 import * as React from "react"
-import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom"
+import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom"
+import { useBookings } from "@/hooks/useBookings"
+import { useLaboratories } from "@/hooks/useLaboratories"
 import { useAuthStore } from "@/store/auth"
 import { cn } from "@/lib/utils"
 import { 
@@ -34,11 +36,59 @@ export function DashboardLayout() {
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false)
 
-  const navGroups = getNavGroupsForRole(user?.role || "CLIENT")
+  // Fetch pending bookings for badge (only if role is LABORATORY or ADMIN)
+  const shouldFetchBookings = user?.role === "LABORATORY" || user?.role === "ADMIN"
+  const { data: pendingBookingsData } = useBookings(shouldFetchBookings ? { status: 'PENDING' } : undefined)
+  const pendingBookingsCount = pendingBookingsData?.total || 0
 
-  // Generate simple breadcrumbs from path
-  const pathSegments = location.pathname.split('/').filter(Boolean)
-  const breadcrumbs = ["Home", ...pathSegments.map(p => p.charAt(0).toUpperCase() + p.slice(1).replace(/-/g, ' '))]
+  const { data: labsData } = useLaboratories()
+  const labs = labsData?.items || labsData || []
+  const myLab = user?.laboratoryId ? labs.find((l: any) => (l._id || l.id) === user.laboratoryId) : null
+
+  const navGroups = getNavGroupsForRole(user?.role || "CLIENT", pendingBookingsCount)
+
+  // Smart Breadcrumbs
+  const getBreadcrumbs = () => {
+    const paths = location.pathname.split('/').filter(Boolean);
+    const crumbs = [];
+    
+    let homeHref = '/client/dashboard';
+    if (user?.role) {
+      if (user.role === 'ADMIN') homeHref = '/admin/dashboard';
+      else if (user.role === 'LABORATORY') homeHref = '/lab/dashboard';
+      else if (user.role === 'INTERPRETER') homeHref = '/interpreter/dashboard';
+    }
+    crumbs.push({ label: 'Home', href: homeHref, isLast: paths.length === 0 });
+
+    let currentPath = '';
+    
+    for (let i = 0; i < paths.length; i++) {
+      currentPath += `/${paths[i]}`;
+      const isLast = i === paths.length - 1;
+      
+      let label = paths[i].replace(/-/g, ' ');
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+      let href = currentPath;
+
+      if (paths[i] === 'lab' || paths[i] === 'admin' || paths[i] === 'interpreter' || paths[i] === 'client') {
+        if (i === 0 && paths.length > 1 && paths[1] === 'dashboard') {
+          continue; 
+        }
+        label = 'Dashboard';
+        href = `/${paths[i]}/dashboard`;
+      }
+      
+      if (paths[i] === 'results' && paths[0] === 'lab') {
+        href = '/lab/dashboard';
+      }
+      
+      crumbs.push({ label, href, isLast });
+    }
+    
+    return crumbs;
+  }
+  
+  const breadcrumbs = getBreadcrumbs();
 
   const handleLogout = () => {
     logout()
@@ -79,9 +129,16 @@ export function DashboardLayout() {
         {/* Sidebar Top */}
         <div className="flex shrink-0 items-center justify-between px-[20px] py-[24px]">
           {isSidebarExpanded || isMobileOpen ? (
-            <div className="flex items-center gap-1">
-              <span className="font-serif text-[20px] font-semibold text-white">CareVo</span>
-              <sup className="mt-1 text-[10px] font-bold text-[var(--color-lime)]">®</sup>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1">
+                <span className="font-serif text-[20px] font-semibold text-white">CareVo</span>
+                <sup className="mt-1 text-[10px] font-bold text-[var(--color-lime)]">®</sup>
+              </div>
+              {myLab && (
+                <div className="text-[11px] font-medium text-[var(--color-lime)] truncate w-full max-w-[150px]">
+                  {myLab.name}
+                </div>
+              )}
             </div>
           ) : (
             <div className="mx-auto flex h-8 w-8 items-center justify-center rounded bg-white/10">
@@ -165,12 +222,12 @@ export function DashboardLayout() {
               className="absolute bottom-[calc(100%+8px)] left-[12px] right-[12px] rounded-[var(--radius-md)] bg-white p-[8px] shadow-[var(--shadow-modal)] z-50 animate-in slide-in-from-bottom-2 fade-in"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-[12px] py-[8px] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]">
-                <Settings className="h-4 w-4 text-[var(--color-text-secondary)]" /> Settings
-              </div>
-              <div className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-[12px] py-[8px] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]">
+              <Link to="/settings" className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-[12px] py-[8px] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]" onClick={() => setIsUserMenuOpen(false)}>
                 <UserIcon className="h-4 w-4 text-[var(--color-text-secondary)]" /> My Profile
-              </div>
+              </Link>
+              <Link to="/settings" className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-[12px] py-[8px] text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]" onClick={() => setIsUserMenuOpen(false)}>
+                <Settings className="h-4 w-4 text-[var(--color-text-secondary)]" /> Settings
+              </Link>
               <div className="my-[4px] h-[1px] w-full bg-[var(--color-border)]"></div>
               <div 
                 onClick={handleLogout}
@@ -232,14 +289,18 @@ export function DashboardLayout() {
               {breadcrumbs.map((crumb, i) => (
                 <React.Fragment key={i}>
                   {i > 0 && <ChevronRight className="h-[14px] w-[14px] text-[var(--color-text-muted)]" />}
-                  <span className={cn(
-                    "capitalize",
-                    i === breadcrumbs.length - 1 
-                      ? "font-medium text-[var(--color-text-primary)]" 
-                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer"
-                  )}>
-                    {crumb}
-                  </span>
+                  {crumb.isLast ? (
+                    <span className="capitalize font-medium text-[var(--color-text-primary)]">
+                      {crumb.label}
+                    </span>
+                  ) : (
+                    <NavLink 
+                      to={crumb.href} 
+                      className="capitalize text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                    >
+                      {crumb.label}
+                    </NavLink>
+                  )}
                 </React.Fragment>
               ))}
             </div>
@@ -281,7 +342,7 @@ export function DashboardLayout() {
   )
 }
 
-function getNavGroupsForRole(role: string): NavGroup[] {
+function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGroup[] {
   switch (role) {
     case "ADMIN":
       return [
@@ -296,7 +357,7 @@ function getNavGroupsForRole(role: string): NavGroup[] {
           title: "CLINICAL",
           items: [
             { href: "/patients", label: "Clients", icon: Users },
-            { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: 12 },
+            { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: pendingBookingsCount || undefined },
             { href: "/laboratories", label: "Laboratories", icon: Building2 },
           ]
         },
@@ -313,7 +374,7 @@ function getNavGroupsForRole(role: string): NavGroup[] {
           title: "MAIN",
           items: [
             { href: "/lab/dashboard", label: "Dashboard", icon: LayoutDashboard },
-            { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: 5 },
+            { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: pendingBookingsCount || undefined },
             { href: "/patients", label: "Clients", icon: Users },
           ]
         }

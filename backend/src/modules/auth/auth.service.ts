@@ -2,7 +2,8 @@ import { UserModel } from './auth.model.js';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../../shared/errors/index.js';
 import * as argon2 from 'argon2';
 // @ts-expect-error otplib types are inconsistent in ES modules
-import { authenticator } from 'otplib';
+import * as otplib from 'otplib';
+const { authenticator } = otplib;
 import { generateSessionId, signAccessToken, signRefreshToken, verifyRefreshToken, generateSecureToken, hashToken } from '../../utils/token.js';
 import { AuditService } from '../audit/audit.service.js';
 import { notificationService } from '../notifications/notification.service.js';
@@ -138,18 +139,21 @@ export class AuthService {
     // Check MFA
     const mfaRequired = MFA_REQUIRED_ROLES.includes(user.role) || user.mfaEnabled;
 
-    if (mfaRequired && user.mfaEnabled) {
+    if (mfaRequired) {
       // Issue temporary token for MFA step
       const tempToken = generateSecureToken();
-      setCache(`mfa:temp:${tempToken}`, user._id.toString(), 300); // 5 min expiry
-      return { mfaRequired: true, token: tempToken };
-    }
+      const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      const cacheData = JSON.stringify({ userId: user._id.toString(), emailCode });
+      setCache(`mfa:temp:${tempToken}`, cacheData, 300); // 5 min expiry
 
-    if (mfaRequired && !user.mfaEnabled) {
-      // Force MFA setup
-      const tempToken = generateSecureToken();
-      setCache(`mfa:setup:${tempToken}`, user._id.toString(), 900); // 15 min expiry for setup
-      return { mfaRequired: true, setupRequired: true, token: tempToken };
+      await notificationService.sendEmail(
+        user.email,
+        'CareVo Login Code',
+        `<p>Your login code is: <strong>${emailCode}</strong>. It will expire in 5 minutes.</p>`
+      );
+
+      return { mfaRequired: true, token: tempToken };
     }
 
     return this.createSession(user, ip, userAgent);
@@ -299,38 +303,60 @@ export class AuthService {
     return { backupCodes: rawBackupCodes };
   }
 
-  static async verifyMfaLogin(tempToken: string, code: string, ip: string, userAgent: string) {
-    // Check both login token and setup token
-    let userId = getCache(`mfa:temp:${tempToken}`);
-    let isSetup = false;
-    
-    if (!userId) {
-      userId = getCache(`mfa:setup:${tempToken}`);
-      isSetup = true;
-    }
-
-    if (!userId) {
+  static async resendMfaCode(tempToken: string) {
+    const cacheStr = getCache(`mfa:temp:${tempToken}`);
+    if (!cacheStr) {
       throw new UnauthorizedError('Invalid or expired MFA token. Please log in again.');
     }
+    
+    const cacheData = JSON.parse(cacheStr);
+    const user = await UserModel.findById(cacheData.userId);
+    if (!user) throw new NotFoundError('User not found.');
+
+    const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+    cacheData.emailCode = emailCode;
+    
+    setCache(`mfa:temp:${tempToken}`, JSON.stringify(cacheData), 300);
+
+    await notificationService.sendEmail(
+      user.email,
+      'CareVo Login Code',
+      `<p>Your new login code is: <strong>${emailCode}</strong>. It will expire in 5 minutes.</p>`
+    );
+  }
+
+  static async verifyMfaLogin(tempToken: string, code: string, ip: string, userAgent: string) {
+    const cacheStr = getCache(`mfa:temp:${tempToken}`);
+    
+    if (!cacheStr) {
+      throw new UnauthorizedError('Invalid or expired MFA token. Please log in again.');
+    }
+    
+    const cacheData = JSON.parse(cacheStr);
+    const userId = cacheData.userId;
+    const emailCode = cacheData.emailCode;
 
     const user = await UserModel.findById(userId);
-    if (!user || !user.mfaEnabled || !user.mfaSecret) {
-      throw new UnauthorizedError('MFA is not fully configured for this account.');
+    if (!user) {
+      throw new UnauthorizedError('User not found.');
     }
 
-    const secret = decrypt(user.mfaSecret);
-    
-    // Check if it's an authenticator code or a backup code
     let isValid = false;
-    
-    if (code.length === 6) {
+
+    // 1. Check Email OTP
+    if (code === emailCode) {
+      isValid = true;
+    }
+    // 2. Check Authenticator App if enabled
+    else if (user.mfaEnabled && user.mfaSecret && code.length === 6) {
+      const secret = decrypt(user.mfaSecret);
       isValid = authenticator.verify({ token: code, secret });
-    } else if (code.length === 10 && user.mfaBackupCodes && user.mfaBackupCodes.length > 0) {
-      // Verify backup code
+    }
+    // 3. Check Backup Codes
+    else if (code.length === 10 && user.mfaBackupCodes && user.mfaBackupCodes.length > 0) {
       for (let i = 0; i < user.mfaBackupCodes.length; i++) {
         if (await argon2.verify(user.mfaBackupCodes[i] as string, code)) {
           isValid = true;
-          // Consume the backup code
           user.mfaBackupCodes.splice(i, 1);
           await user.save();
           break;
@@ -342,12 +368,7 @@ export class AuthService {
       throw new UnauthorizedError('Invalid MFA or backup code.');
     }
 
-    // Clear temp token
-    if (isSetup) {
-      delCache(`mfa:setup:${tempToken}`);
-    } else {
-      delCache(`mfa:temp:${tempToken}`);
-    }
+    delCache(`mfa:temp:${tempToken}`);
 
     return this.createSession(user, ip, userAgent);
   }

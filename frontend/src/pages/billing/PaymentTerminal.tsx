@@ -3,6 +3,7 @@ import { ArrowLeft, CreditCard, DollarSign, Smartphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared/StatusBadge"
+import { LoadingState } from "@/components/shared/LoadingState"
 import { useNavigate, useParams } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -41,7 +42,7 @@ export function PaymentTerminal() {
     }
   }
 
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading) return <LoadingState message="Loading payment details..." fullScreen />
   if (!invoice) return <div>Invoice not found</div>
 
   return (

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Search, Filter, Plus, Calendar as CalendarIcon, Clock, Edit2 } from "lucide-react"
+import { Search, Filter, Plus, Calendar as CalendarIcon, Clock, MoreVertical, CheckCircle, XCircle, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,7 +7,15 @@ import { DataTable } from "@/components/shared/DataTable"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 
-import { useBookings } from "@/hooks/useBookings"
+import { useBookings, useUpdateBookingStatus } from "@/hooks/useBookings"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 
@@ -17,6 +25,11 @@ export function BookingList() {
 
   const { data: bookingsData, isLoading } = useBookings()
   const bookings = bookingsData?.items || bookingsData || []
+  const updateStatusMutation = useUpdateBookingStatus()
+
+  const handleStatusUpdate = (id: string, status: string) => {
+    updateStatusMutation.mutate({ id, status })
+  }
 
   const filteredBookings = Array.isArray(bookings) ? bookings.filter((b: any) => 
     (b.patientId?.userId?.firstName + " " + b.patientId?.userId?.lastName).toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -63,7 +76,7 @@ export function BookingList() {
             columns={[
               { header: "Booking ID", cell: (row) => row._id || row.id },
               { header: "Patient", cell: (row) => row.patientId?.userId ? `${row.patientId.userId.firstName} ${row.patientId.userId.lastName}` : "Unknown" },
-              { header: "Reason/Package", cell: (row) => row.reason || "N/A" },
+              { header: "Reason/Package", cell: (row) => row.packageId?.name || row.package || row.reason || "N/A" },
               { header: "Laboratory", cell: (row) => row.staffId?.laboratoryId?.name || "N/A" },
               { 
                 header: "Schedule", 
@@ -86,11 +99,44 @@ export function BookingList() {
               },
               { 
                 header: "Actions", 
-                cell: () => (
-                  <Button variant="ghost" size="icon" title="Edit Booking">
-                    <Edit2 className="h-4 w-4 text-slate-600" />
-                  </Button>
-                )
+                cell: (row) => {
+                  const id = row._id || row.id;
+                  return (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {row.status === 'PENDING' && (
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(id, 'CONFIRMED')} className="cursor-pointer text-green-600">
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Accept Booking
+                          </DropdownMenuItem>
+                        )}
+                        {row.status === 'CONFIRMED' && (
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(id, 'COMPLETED')} className="cursor-pointer text-blue-600">
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Mark Completed
+                          </DropdownMenuItem>
+                        )}
+                        {(row.status === 'PENDING' || row.status === 'CONFIRMED') && (
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(id, 'CANCELLED')} className="cursor-pointer text-red-600">
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Cancel Booking
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem className="cursor-pointer">
+                          View Details
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                }
               },
             ]}
             data={filteredBookings}

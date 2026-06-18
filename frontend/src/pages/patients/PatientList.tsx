@@ -8,20 +8,23 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { useNavigate } from "react-router-dom"
 
 import { usePatients } from "@/hooks/usePatients"
-
+import { NewPatientModal } from "./NewPatientModal"
 
 export function PatientList() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const { data: patientsData, isLoading } = usePatients({ search: searchTerm })
   const patients = patientsData?.items || patientsData || []
 
   // Ensure it's an array before filtering (if filtering is done client-side, though the API also supports search)
-  const filteredPatients = Array.isArray(patients) ? patients.filter((p: any) => 
-    `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (p.id || '').toLowerCase().includes(searchTerm.toLowerCase())
-  ) : []
+  const filteredPatients = Array.isArray(patients) ? patients.filter((p: any) => {
+    const firstName = p.userId?.firstName || p.firstName || ''
+    const lastName = p.userId?.lastName || p.lastName || ''
+    return `${firstName} ${lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (p._id || p.id || '').toLowerCase().includes(searchTerm.toLowerCase())
+  }) : []
 
   return (
     <div className="space-y-6">
@@ -31,7 +34,7 @@ export function PatientList() {
           <p className="text-muted-foreground">Manage and view all patient records.</p>
         </div>
         <div className="mt-4 md:mt-0">
-          <Button className="flex items-center gap-2">
+          <Button className="flex items-center gap-2" onClick={() => setIsModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Add Patient
           </Button>
@@ -61,17 +64,27 @@ export function PatientList() {
         <CardContent>
           <DataTable 
             columns={[
-              { header: "Patient ID", accessorKey: "id" },
+              { 
+                header: "Patient ID", 
+                cell: (row) => row._id || row.id || "-" 
+              },
               { 
                 header: "Name", 
-                cell: (row) => <span className="font-medium text-primary hover:underline cursor-pointer" onClick={() => navigate(`/patients/${row._id || row.id}`)}>{row.firstName} {row.lastName}</span>
+                cell: (row) => {
+                  const firstName = row.userId?.firstName || row.firstName || ''
+                  const lastName = row.userId?.lastName || row.lastName || ''
+                  return <span className="font-medium text-primary hover:underline cursor-pointer" onClick={() => navigate(`/patients/${row._id || row.id}`)}>{firstName} {lastName}</span>
+                }
               },
               { header: "Gender", accessorKey: "gender" },
               { 
                 header: "Date of Birth", 
                 cell: (row) => row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString() : "-"
               },
-              { header: "Phone", accessorKey: "phone" },
+              { 
+                header: "Phone", 
+                cell: (row) => row.userId?.phone || row.phone || "-" 
+              },
               { 
                 header: "Risk Level", 
                 cell: (row) => row.riskLevel && row.riskLevel !== "PENDING" ? <StatusBadge status={row.riskLevel} /> : <span className="text-muted-foreground">-</span>
@@ -96,6 +109,8 @@ export function PatientList() {
           />
         </CardContent>
       </Card>
+
+      <NewPatientModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>
   )
 }

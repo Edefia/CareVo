@@ -46,23 +46,25 @@ export function ResultsEntry() {
     const packagePillars = client.package === "Complete Wellness" ? ["CARDIO", "RENAL", "METABOLIC"] : [client.pillar]
     
     packagePillars.forEach(pillar => {
-      // @ts-expect-error test parameters
-      const parameters = TEST_PARAMETERS[pillar]
-      if (parameters) {
+      const parameters = Object.values(TEST_PARAMETERS).filter((param: any) => param.pillar === pillar)
+      if (parameters.length > 0) {
         labData[pillar] = parameters.map((param: any) => {
-          const valStr = formData[param.id] || "0"
+          const valStr = formData[param.id] || formData[param.name] || "0"
           const valNum = parseFloat(valStr)
           
           // Basic Outlier checking based on string parsing
           let isOutlier = false
-          if (param.normalRange.includes('<')) {
-            const max = parseFloat(param.normalRange.replace('<', '').trim())
+          if (param.referenceRange?.includes('<')) {
+            const max = parseFloat(param.referenceRange.replace('<', '').trim())
             isOutlier = valNum >= max
-          } else if (param.normalRange.includes('>')) {
-            const min = parseFloat(param.normalRange.replace('>', '').trim())
+          } else if (param.referenceRange?.includes('>')) {
+            const min = parseFloat(param.referenceRange.replace('>', '').trim())
             isOutlier = valNum <= min
-          } else if (param.normalRange.includes('-')) {
-            const [min, max] = param.normalRange.split('-').map((n: string) => parseFloat(n.trim()))
+          } else if (param.referenceRange?.includes('–')) {
+            const [min, max] = param.referenceRange.split('–').map((n: string) => parseFloat(n.trim()))
+            isOutlier = valNum < min || valNum > max
+          } else if (param.referenceRange?.includes('-')) {
+            const [min, max] = param.referenceRange.split('-').map((n: string) => parseFloat(n.trim()))
             isOutlier = valNum < min || valNum > max
           }
 
@@ -70,7 +72,7 @@ export function ResultsEntry() {
             name: param.name,
             value: valStr,
             unit: param.unit,
-            normalRange: param.normalRange,
+            normalRange: param.referenceRange,
             isOutlier
           }
         })
@@ -136,9 +138,8 @@ export function ResultsEntry() {
 
           <form onSubmit={handleSubmit} className="space-y-[48px]">
             {packagePillars.map((pillar) => {
-              // @ts-expect-error test parameters
-              const parameters = TEST_PARAMETERS[pillar]
-              if (!parameters) return null
+              const parameters = Object.values(TEST_PARAMETERS).filter((param: any) => param.pillar === pillar)
+              if (parameters.length === 0) return null
 
               return (
                 <div key={pillar} className="bg-white border border-[var(--color-border)] rounded-[var(--radius-xl)] shadow-sm overflow-hidden transition-all hover:shadow-md">
@@ -149,30 +150,32 @@ export function ResultsEntry() {
                   </div>
                   <div className="p-[24px] grid gap-[24px] sm:grid-cols-2 bg-white">
                     {parameters.map((param: any) => {
-                      const value = formData[param.id] || ""
+                      const paramKey = param.id || param.name;
+                      const value = formData[paramKey] || ""
                       const isFilled = value !== ""
 
                       return (
-                        <div key={param.id} className="space-y-1.5 group">
-                          <Label htmlFor={param.id} className="text-[14px] font-medium text-[var(--color-text-primary)] transition-colors group-focus-within:text-[var(--color-forest)]">
+                        <div key={paramKey} className="space-y-1.5 group">
+                          <Label htmlFor={paramKey} className="text-[14px] font-medium text-[var(--color-text-primary)] transition-colors group-focus-within:text-[var(--color-forest)]">
                             {param.name}
                           </Label>
                           <div className="relative">
                             <Input 
-                              id={param.id} 
+                              id={paramKey} 
                               type="number" 
                               step="any"
                               required
                               className={`pr-[72px] h-[48px] text-[16px] font-medium transition-all ${isFilled ? 'border-[var(--color-forest)] bg-[#F0FDF4]/50' : 'bg-gray-50 focus:bg-white'}`}
                               value={value}
-                              onChange={(e) => handleInputChange(param.id, e.target.value)}
+                              onChange={(e) => handleInputChange(paramKey, e.target.value)}
                             />
                             <div className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[13px] text-[var(--color-text-muted)] font-medium bg-transparent pointer-events-none px-1 rounded">
                               {param.unit}
                             </div>
                           </div>
-                          <div className="text-[11px] text-[var(--color-text-muted)] mt-1 ml-1 font-medium">
-                            Normal Range: <span className="text-[var(--color-text-secondary)]">{param.normalRange} {param.unit}</span>
+                          <div className="text-[11px] text-[var(--color-text-muted)] mt-1 ml-1 font-medium flex items-center justify-between">
+                            <span>Normal Range: <span className="text-[var(--color-text-secondary)]">{param.referenceRange} {param.unit}</span></span>
+                            {isFilled && <CheckCircle className="h-3 w-3 text-[#16A34A]" />}
                           </div>
                         </div>
                       )

@@ -1,21 +1,49 @@
 import { PatientModel, type IPatient } from './patient.model.js';
 import { ROLES } from '../../shared/constants/roles.js';
 import { UserModel } from '../auth/auth.model.js';
+import { AuthService } from '../auth/auth.service.js';
 import { NotFoundError, ConflictError, ForbiddenError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
 
 export const patientService = {
   async createProfile(
-    userId: string,
-    data: Partial<IPatient>,
-    createdByLabId?: string | null
+    userId: string | null,
+    data: Partial<IPatient> & { firstName?: string; lastName?: string; email?: string; phone?: string },
+    createdByLabId?: string | null,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<IPatient> {
-    const existingPatient = await PatientModel.findOne({ userId });
+    let finalUserId = userId;
+
+    if (!finalUserId) {
+      if (!createdByLabId) {
+        throw new ForbiddenError('Only staff can create patients without an existing user.');
+      }
+      
+      if (!data.firstName || !data.lastName || !data.email) {
+        throw new ConflictError('First name, last name, and email are required to create a new patient user.');
+      }
+
+      // Auto-create the user
+      const defaultPassword = 'Password123!';
+      const newUser = await AuthService.register({
+        email: data.email,
+        password: defaultPassword,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone || '',
+        role: ROLES.CLIENT
+      }, ipAddress || 'unknown', userAgent || 'unknown');
+      
+      finalUserId = (newUser.user as any).id;
+    }
+
+    const existingPatient = await PatientModel.findOne({ userId: finalUserId });
     if (existingPatient) {
       throw new ConflictError('A patient profile already exists for this user.');
     }
 
-    const user = await UserModel.findById(userId);
+    const user = await UserModel.findById(finalUserId);
     if (!user) {
       throw new NotFoundError('User not found.');
     }
@@ -27,7 +55,7 @@ export const patientService = {
     const laboratoryIds = createdByLabId ? [createdByLabId] : [];
 
     const patient = new PatientModel({
-      userId,
+      userId: finalUserId,
       ...data,
       laboratoryIds,
     });

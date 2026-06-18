@@ -1,15 +1,12 @@
 import { Outlet, Navigate } from "react-router-dom"
 import { useAuthStore } from "@/store/auth"
+import { LoadingState } from "@/components/shared/LoadingState"
 
 export function AuthLayout() {
   const { isAuthenticated, isLoading, user } = useAuthStore()
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-      </div>
-    )
+    return <LoadingState message="Authenticating..." fullScreen />
   }
 
   // If already authenticated, redirect to their dashboard

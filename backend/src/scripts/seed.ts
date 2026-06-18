@@ -99,7 +99,6 @@ async function runSeed() {
     console.log('👥 Seeding Users...');
     const hashedPassword = await argon2.hash('12345hdA$');
 
-    // Client
     const clientUser = await UserModel.findOneAndUpdate(
       { email: 'hebradalton@gmail.com' },
       {
@@ -111,6 +110,22 @@ async function runSeed() {
         phone: '+233 556893894',
         isActive: true,
         mfaEnabled: false,
+      },
+      { upsert: true, new: true }
+    );
+
+    // Admin
+    const adminUser = await UserModel.findOneAndUpdate(
+      { email: 'admin@carevo.com' },
+      {
+        email: 'admin@carevo.com',
+        passwordHash: hashedPassword,
+        firstName: 'Super',
+        lastName: 'Admin',
+        role: 'ADMIN',
+        phone: '+233 20 000 0000',
+        isActive: true,
+        mfaEnabled: false, // Will use email OTP by default
       },
       { upsert: true, new: true }
     );

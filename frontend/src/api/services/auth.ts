@@ -29,6 +29,10 @@ export const authService = {
     const { data } = await apiClient.post('/auth/mfa/verify-login', { token, code });
     return data.data; // { user }
   },
+  resendMfaCode: async (token: string) => {
+    const { data } = await apiClient.post('/auth/mfa/resend', { token });
+    return data;
+  },
   requestPasswordReset: async (email: string) => {
     const { data } = await apiClient.post('/auth/password-reset/request', { email });
     return data;
