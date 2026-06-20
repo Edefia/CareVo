@@ -28,12 +28,12 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/modules/*": ["src/modules/*"],
-      "@/shared/*": ["src/shared/*"],
-      "@/middleware/*": ["src/middleware/*"],
-      "@/config/*": ["src/config/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/jobs/*": ["src/jobs/*"]
+      "@/modules/*": ["./src/modules/*"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/middleware/*": ["./src/middleware/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/jobs/*": ["./src/jobs/*"]
     }
   },
   "include": ["src/**/*.ts"],
