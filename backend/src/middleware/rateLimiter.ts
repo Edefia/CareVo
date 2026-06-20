@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 /**
  * Auth routes: 10 requests per 15 minutes per IP
@@ -45,7 +45,7 @@ export const uploadLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, _res) => (req as any).user?.id ?? (req.ip || 'unknown'),
+  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req as any, res as any),
   message: {
     success: false,
     error: {
@@ -64,7 +64,7 @@ export const generalLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, _res) => (req as any).user?.id ?? (req.ip || 'unknown'),
+  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req as any, res as any),
   message: {
     success: false,
     error: {
