@@ -98,7 +98,7 @@ export const SCREENING_PACKAGES = [
     pillar: ['CARDIO', 'RENAL', 'METABOLIC'],
     price: 450,
     duration: 120,
-    description: 'The most comprehensive CareVo screening. Covers your heart, kidneys, and metabolic function in one visit.',
+    description: 'The most comprehensive CareBis Prime screening. Covers your heart, kidneys, and metabolic function in one visit.',
     tests: [
       'Blood Pressure (Systolic & Diastolic)',
       'Total Cholesterol',

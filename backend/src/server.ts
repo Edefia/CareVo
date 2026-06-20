@@ -8,7 +8,7 @@ let server: import('http').Server;
 
 async function bootstrap() {
   try {
-    logger.info(`Starting CareVo backend in ${env.NODE_ENV} mode...`);
+    logger.info(`Starting CareBis Prime backend in ${env.NODE_ENV} mode...`);
 
     await connectDatabase();
     

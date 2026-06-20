@@ -240,7 +240,7 @@ export function ClientDashboard() {
               Overall Health Risk: {overallRisk}
             </h3>
             <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">
-              Based on your most recent CareVo screening.
+              Based on your most recent CareBis Prime screening.
             </p>
           </div>
         </div>

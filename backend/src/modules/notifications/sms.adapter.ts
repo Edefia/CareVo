@@ -14,7 +14,7 @@ export class MoolreSmsService implements ISmsService {
     try {
       const url = new URL(this.baseUrl);
       url.searchParams.append('type', '1');
-      url.searchParams.append('senderid', 'CareVo');
+      url.searchParams.append('senderid', 'CareBis Prime');
       url.searchParams.append('recipient', to);
       url.searchParams.append('message', message);
 

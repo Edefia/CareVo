@@ -95,7 +95,7 @@ export class UserService {
     if (!user) throw new NotFoundError('User not found.');
 
     const uploadResponse = await cloudinary.uploader.upload(avatarBase64, {
-      folder: 'carevo/avatars',
+      folder: 'carebis-prime/avatars',
       transformation: [
         { width: 400, height: 400, crop: 'fill', gravity: 'face' },
         { quality: 'auto', fetch_format: 'auto' }

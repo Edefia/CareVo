@@ -14,7 +14,7 @@ export async function uploadToCloudinary(
   buffer: Buffer,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const publicId = `carevo/${uuidv4()}`;
+    const publicId = `carebis-prime/${uuidv4()}`;
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         public_id: publicId,

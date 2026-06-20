@@ -36,7 +36,7 @@ export function AdminDashboard() {
             Platform Overview
           </h1>
           <p className="font-sans text-[16px] text-[var(--color-text-secondary)]">
-            Welcome back, {user?.firstName}. Here is what's happening on CareVo today.
+            Welcome back, {user?.firstName}. Here is what's happening on CareBis Prime today.
           </p>
         </div>
         <div className="flex gap-3">

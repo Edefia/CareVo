@@ -1,7 +1,7 @@
 {
-  "name": "carevo-backend",
+  "name": "carebis-prime-backend",
   "version": "1.0.0",
-  "description": "CareVo Health — Preventive Healthcare Platform API",
+  "description": "CareBis Prime Health — Preventive Healthcare Platform API",
   "main": "dist/server.js",
   "type": "module",
   "scripts": {

@@ -181,7 +181,7 @@ export const billingService = {
             await notificationService.add('sendEmail', {
               to: patientUser.email,
               subject: 'Payment Receipt',
-              body: `Hello ${patientUser.firstName},<br><br>We have successfully received your payment of ${invoice.currency} ${displayAmount} for "${invoice.description}".<br><br>Thank you for using CareVo Health.`,
+              body: `Hello ${patientUser.firstName},<br><br>We have successfully received your payment of ${invoice.currency} ${displayAmount} for "${invoice.description}".<br><br>Thank you for using CareBis Prime Health.`,
             });
           }
         }

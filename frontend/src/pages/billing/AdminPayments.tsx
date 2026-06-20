@@ -91,7 +91,7 @@ export function AdminPayments() {
             Payment Management
           </h1>
           <p className="font-sans text-[16px] text-[var(--color-text-secondary)]">
-            Recover, record, and monitor all financial transactions across CareVo.
+            Recover, record, and monitor all financial transactions across CareBis Prime.
           </p>
         </div>
         <div className="flex gap-3">

@@ -12,7 +12,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Get token from auth store or localStorage if persisted
-    const token = localStorage.getItem('carevo_token');
+    const token = localStorage.getItem('carebis-prime_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Clear token and redirect to login
-      localStorage.removeItem('carevo_token');
+      localStorage.removeItem('carebis-prime_token');
       useAuthStore.getState().logout();
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';

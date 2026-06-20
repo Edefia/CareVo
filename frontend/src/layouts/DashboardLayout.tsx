@@ -131,7 +131,7 @@ export function DashboardLayout() {
           {isSidebarExpanded || isMobileOpen ? (
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1">
-                <span className="font-serif text-[20px] font-semibold text-white">CareVo</span>
+                <span className="font-serif text-[20px] font-semibold text-white">CareBis Prime</span>
                 <sup className="mt-1 text-[10px] font-bold text-[var(--color-lime)]">®</sup>
               </div>
               {myLab && (

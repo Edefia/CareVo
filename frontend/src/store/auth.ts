@@ -37,18 +37,18 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       setAuth: (user, token) => {
-        localStorage.setItem('carevo_token', token)
+        localStorage.setItem('carebis-prime_token', token)
         set({ user, token, isAuthenticated: true, isLoading: false })
       },
       setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
       setLoading: (isLoading) => set({ isLoading }),
       logout: () => {
-        localStorage.removeItem('carevo_token')
+        localStorage.removeItem('carebis-prime_token')
         set({ user: null, token: null, isAuthenticated: false, isLoading: false })
       },
     }),
     {
-      name: 'carevo-auth-storage',
+      name: 'carebis-prime-auth-storage',
       // Only persist user and token, not isLoading
       partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
     }
