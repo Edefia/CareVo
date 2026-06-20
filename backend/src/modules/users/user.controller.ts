@@ -55,14 +55,14 @@ export class UserController {
   }
 
   static async getUserById(req: Request, res: Response): Promise<void> {
-    const user = await UserService.getUserById(req.params.id);
+    const user = await UserService.getUserById(req.params.id as string);
     sendSuccess(res, user);
   }
 
   static async updateUserStatus(req: Request, res: Response): Promise<void> {
     const { isActive } = req.body;
     const result = await UserService.updateUserStatus(
-      req.params.id,
+      req.params.id as string,
       isActive,
       req.user!.id,
       req.user!.role,
@@ -74,7 +74,7 @@ export class UserController {
 
   static async deleteUser(req: Request, res: Response): Promise<void> {
     await UserService.softDeleteUser(
-      req.params.id,
+      req.params.id as string,
       req.user!.id,
       req.user!.role,
       req.ip ?? 'unknown',

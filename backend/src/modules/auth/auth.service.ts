@@ -1,7 +1,7 @@
 import { UserModel } from './auth.model.js';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../../shared/errors/index.js';
 import * as argon2 from 'argon2';
-// @ts-expect-error otplib types are inconsistent in ES modules
+
 import * as otplib from 'otplib';
 const { authenticator } = otplib;
 import { generateSessionId, signAccessToken, signRefreshToken, verifyRefreshToken, generateSecureToken, hashToken } from '../../utils/token.js';

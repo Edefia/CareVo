@@ -125,7 +125,7 @@ async function runSeed() {
     );
 
     // Admin
-    const adminUser = await UserModel.findOneAndUpdate(
+    await UserModel.findOneAndUpdate(
       { email: 'dieudonneladzekpo@gmail.com' },
       {
         email: 'dieudonneladzekpo@gmail.com',
