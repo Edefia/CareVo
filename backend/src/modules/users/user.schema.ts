@@ -19,3 +19,21 @@ export const changePasswordSchema = z.strictObject({
 export const uploadAvatarSchema = z.strictObject({
   avatarBase64: z.string().startsWith('data:image/', 'Invalid image format'),
 });
+
+export const adminCreateUserSchema = z.strictObject({
+  email: z.string().email('Invalid email address').trim().toLowerCase(),
+  firstName: z.string().min(2, 'First name is required').trim(),
+  lastName: z.string().min(2, 'Last name is required').trim(),
+  password: z.string().min(12, 'Temporary password must be at least 12 characters'),
+  role: z.enum(['ADMIN', 'LABORATORY', 'INTERPRETER', 'CLIENT']),
+  laboratoryId: z.string().optional(),
+  sendResetEmail: z.boolean().optional(),
+});
+
+export const adminUpdateUserSchema = z.strictObject({
+  email: z.string().email('Invalid email address').trim().toLowerCase().optional(),
+  firstName: z.string().min(2, 'First name is required').trim().optional(),
+  lastName: z.string().min(2, 'Last name is required').trim().optional(),
+  role: z.enum(['ADMIN', 'LABORATORY', 'INTERPRETER', 'CLIENT']).optional(),
+  laboratoryId: z.string().optional().nullable(),
+});

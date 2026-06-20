@@ -61,6 +61,41 @@ export function AdminPayments() {
     }
   }
 
+  const handleExportCSV = () => {
+    if (!invoices || invoices.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+    
+    // Create CSV header
+    const headers = ["Transaction ID", "Client Name", "Client Email", "Description", "Amount (GHS)", "Gateway", "Date", "Status"];
+    
+    // Create CSV rows
+    const rows = invoices.map((inv: any) => [
+      inv._id,
+      `"${inv.patientId?.userId?.firstName || ''} ${inv.patientId?.userId?.lastName || ''}"`,
+      inv.patientId?.userId?.email || '',
+      `"${inv.description || ''}"`,
+      (inv.amount / 100).toFixed(2),
+      inv.paymentGateway || 'N/A',
+      new Date(inv.createdAt).toLocaleDateString(),
+      inv.status
+    ]);
+    
+    const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `payment_ledger_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Ledger exported successfully");
+  }
+
   // Client-side filtering for search term
   const filteredInvoices = invoices.filter((inv: any) => 
     searchTerm === "" || 
@@ -95,7 +130,7 @@ export function AdminPayments() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="h-[44px] flex items-center gap-2">
+          <Button onClick={handleExportCSV} variant="outline" className="h-[44px] flex items-center gap-2">
             <Download className="h-4 w-4" /> Export Ledger
           </Button>
           <Button onClick={() => refetchInvoices()} variant="outline" className="h-[44px] flex items-center gap-2">

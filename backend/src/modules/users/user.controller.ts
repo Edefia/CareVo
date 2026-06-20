@@ -43,14 +43,38 @@ export class UserController {
 
   // ===================== ADMIN ENDPOINTS =====================
 
+  static async adminCreateUser(req: Request, res: Response): Promise<void> {
+    const result = await UserService.adminCreateUser(
+      req.body,
+      req.user!.id,
+      req.user!.role,
+      req.ip ?? 'unknown',
+      req.headers['user-agent'] ?? 'unknown'
+    );
+    sendSuccess(res, result, 201);
+  }
+
+  static async adminUpdateUser(req: Request, res: Response): Promise<void> {
+    const result = await UserService.adminUpdateUser(
+      req.params.id as string,
+      req.body,
+      req.user!.id,
+      req.user!.role,
+      req.ip ?? 'unknown',
+      req.headers['user-agent'] ?? 'unknown'
+    );
+    sendSuccess(res, result);
+  }
+
   static async getAllUsers(req: Request, res: Response): Promise<void> {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const role = req.query.role as string | undefined;
     const search = req.query.search as string | undefined;
     const status = req.query.status as string | undefined;
+    const laboratoryId = req.query.laboratoryId as string | undefined;
 
-    const result = await UserService.getAllUsers(page, limit, role, search, status);
+    const result = await UserService.getAllUsers(page, limit, role, search, status, laboratoryId);
     res.status(200).json(result);
   }
 

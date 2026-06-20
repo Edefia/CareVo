@@ -23,6 +23,16 @@ export const userService = {
   },
 
   // Admin / System
+  adminCreateUser: async (data: any) => {
+    const response = await apiClient.post('/users', data);
+    return response.data;
+  },
+
+  adminUpdateUser: async (id: string, data: any) => {
+    const response = await apiClient.put(`/users/${id}`, data);
+    return response.data;
+  },
+
   getAllUsers: async (params?: Record<string, unknown>) => {
     const response = await apiClient.get('/users', { params });
     return response.data;

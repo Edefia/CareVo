@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { DataTable } from "@/components/shared/DataTable"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { useLaboratories } from "@/hooks/useLaboratories"
+import { useUsers } from "@/hooks/useUsers"
 
 export function LabProfile() {
   const { id } = useParams()
@@ -25,8 +26,17 @@ export function LabProfile() {
     contactEmail: "",
   }
 
-  // Real app would fetch staff and services from API
-  const staff: any[] = []
+  // Fetch staff assigned to this lab
+  const { data: staffResponse, isLoading: isStaffLoading } = useUsers({
+    role: "LABORATORY",
+    laboratoryId: id,
+    limit: 100, // fetch all for now
+  })
+  
+  const staffData = staffResponse?.data || staffResponse
+  const staff = staffData?.items || staffData?.data || (Array.isArray(staffData) ? staffData : [])
+
+  // Real app would fetch services from API
   const services: any[] = []
 
   if (isLoading) {
@@ -115,11 +125,17 @@ export function LabProfile() {
               {staff.length > 0 ? (
                 <DataTable 
                   columns={[
-                    { header: "Name", accessorKey: "name" },
-                    { header: "Role", accessorKey: "role" },
+                    { 
+                      header: "Name", 
+                      cell: (row: any) => `${row.firstName} ${row.lastName}` 
+                    },
+                    { 
+                      header: "Email", 
+                      accessorKey: "email" 
+                    },
                     { 
                       header: "Status", 
-                      cell: (row) => <StatusBadge status={row.status} />
+                      cell: (row: any) => <StatusBadge status={row.isActive ? "ACTIVE" : "SUSPENDED"} />
                     },
                     { 
                       header: "Actions", 

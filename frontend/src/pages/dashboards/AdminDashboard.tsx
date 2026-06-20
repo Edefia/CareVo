@@ -23,6 +23,49 @@ export function AdminDashboard() {
   const recentUsers = metrics?.recentUsers || []
 
   const isLoading = metricsLoading || revenueLoading || bookingStatsLoading
+  
+  const handleDownloadReport = () => {
+    if (!metrics) return;
+    
+    // Create CSV content for Platform Overview
+    const rows = [
+      ["CareBis Prime - Platform Overview Report", ""],
+      ["Generated On", new Date().toLocaleDateString()],
+      ["", ""],
+      ["Key Metrics", "Value"],
+      ["Total Users", metrics.totalUsers || 0],
+      ["Total Patients", metrics.totalPatients || 0],
+      ["Total Bookings", metrics.totalBookings || 0],
+      ["Pending Bookings", metrics.pendingBookings || 0],
+      ["Total Labs", metrics.totalLabs || 0],
+      ["Active Labs", metrics.activeLabs || 0],
+      ["Monthly Revenue (GHS)", (metrics.monthlyRevenue / 100 || 0).toFixed(2)],
+      ["Pending Payments (GHS)", (metrics.pendingPaymentsAmount / 100 || 0).toFixed(2)],
+      ["", ""],
+      ["Partner Laboratory Performance", ""],
+      ["Lab Name", "Bookings", "Efficiency (%)"]
+    ];
+
+    labPerformance.forEach((lab: any) => {
+      rows.push([
+        `"${lab.name}"`, 
+        lab.bookingCount, 
+        Math.round(lab.efficiency).toString()
+      ]);
+    });
+
+    const csvContent = rows.map(row => row.join(",")).join("\n");
+    
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `platform_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   return (
     <div className="space-y-[32px] md:space-y-[48px] max-w-[1400px] mx-auto pb-[96px] animate-in fade-in duration-500">
@@ -40,7 +83,7 @@ export function AdminDashboard() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="h-[44px]">Download Report</Button>
+          <Button onClick={handleDownloadReport} variant="outline" className="h-[44px]">Download Report</Button>
           <Link to="/settings">
             <Button className="h-[44px]">System Config</Button>
           </Link>

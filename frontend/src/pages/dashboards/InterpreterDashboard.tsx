@@ -3,10 +3,22 @@ import { useAuthStore } from "@/store/auth"
 import { useResultsStore } from "@/store/results"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useLaboratories } from "@/hooks/useLaboratories"
+import { useState } from "react"
 
 export function InterpreterDashboard() {
   const { user } = useAuthStore()
   const { pendingInterpretations } = useResultsStore()
+  const [selectedLabName, setSelectedLabName] = useState<string>("ALL")
+  
+  const { data: laboratoriesData } = useLaboratories()
+  const labsData = laboratoriesData?.data || laboratoriesData
+  const labs = labsData?.items || labsData?.data || (Array.isArray(labsData) ? labsData : [])
+
+  const filteredInterpretations = selectedLabName === "ALL" 
+    ? pendingInterpretations 
+    : pendingInterpretations.filter((item: any) => item.lab === selectedLabName)
 
   const renderPillarIcon = (pillar: string) => {
     switch(pillar) {
@@ -40,7 +52,7 @@ export function InterpreterDashboard() {
             <Clock className="h-[28px] w-[28px] text-orange-500" />
           </div>
           <div className="relative z-10">
-            <div className="font-serif text-[36px] font-bold text-[var(--color-text-primary)] leading-none">{pendingInterpretations.length}</div>
+            <div className="font-serif text-[36px] font-bold text-[var(--color-text-primary)] leading-none">{filteredInterpretations.length}</div>
             <div className="font-sans text-[15px] text-[var(--color-text-secondary)] font-medium mt-1">Pending Review</div>
           </div>
         </div>
@@ -72,6 +84,19 @@ export function InterpreterDashboard() {
               Results securely submitted by partner laboratories awaiting your review.
             </p>
           </div>
+          <div className="w-[250px]">
+            <Select value={selectedLabName} onValueChange={setSelectedLabName}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Filter by Laboratory" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Laboratories</SelectItem>
+                {labs.map((lab: any) => (
+                  <SelectItem key={lab._id} value={lab.name}>{lab.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -86,7 +111,7 @@ export function InterpreterDashboard() {
               </tr>
             </thead>
             <tbody>
-              {pendingInterpretations.map((item, idx) => (
+              {filteredInterpretations.map((item, idx) => (
                 <tr 
                   key={item.id} 
                   className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]/30 transition-colors animate-fade-in-up"
@@ -121,7 +146,7 @@ export function InterpreterDashboard() {
                   </td>
                 </tr>
               ))}
-              {pendingInterpretations.length === 0 && (
+              {filteredInterpretations.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-[24px] py-[64px] text-center">
                     <div className="flex flex-col items-center justify-center text-[var(--color-text-muted)]">

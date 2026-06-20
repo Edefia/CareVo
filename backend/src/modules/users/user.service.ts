@@ -4,6 +4,7 @@ import * as argon2 from 'argon2';
 import { AuditService } from '../audit/audit.service.js';
 import { cloudinary } from '../../config/cloudinary.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
+import { AuthService } from '../auth/auth.service.js';
 
 export class UserService {
   static async getProfile(userId: string) {
@@ -125,7 +126,76 @@ export class UserService {
 
   // ===================== ADMIN METHODS =====================
 
-  static async getAllUsers(page: number, limit: number, roleFilter?: string, search?: string, statusFilter?: string) {
+  static async adminCreateUser(data: any, adminId: string, adminRole: string, ip: string, userAgent: string) {
+    const existing = await UserModel.findOne({ email: data.email });
+    if (existing) {
+      throw new ConflictError('Email already in use.');
+    }
+
+    const passwordHash = await argon2.hash(data.password);
+
+    const user = await UserModel.create({
+      email: data.email,
+      passwordHash,
+      role: data.role,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      laboratoryId: data.laboratoryId || null,
+    });
+
+    await AuditService.log({
+      actorId: adminId,
+      actorRole: adminRole,
+      action: 'user.provisioned',
+      resourceType: 'User',
+      resourceId: user._id.toString(),
+      ipAddress: ip,
+      userAgent,
+      sessionId: 'none',
+      success: true,
+      newState: { role: user.role, email: user.email },
+    });
+
+    if (data.sendResetEmail) {
+      await AuthService.requestPasswordReset(user.email, ip, userAgent);
+    }
+
+    return { id: user._id, email: user.email, role: user.role, firstName: user.firstName, lastName: user.lastName };
+  }
+
+  static async adminUpdateUser(userId: string, data: any, adminId: string, adminRole: string, ip: string, userAgent: string) {
+    const user = await UserModel.findById(userId);
+    if (!user) throw new NotFoundError('User not found.');
+
+    if (data.email && data.email !== user.email) {
+      const existing = await UserModel.findOne({ email: data.email });
+      if (existing) throw new ConflictError('Email already in use.');
+      user.email = data.email;
+    }
+
+    if (data.firstName !== undefined) user.firstName = data.firstName;
+    if (data.lastName !== undefined) user.lastName = data.lastName;
+    if (data.role !== undefined) user.role = data.role;
+    if (data.laboratoryId !== undefined) user.laboratoryId = data.laboratoryId;
+
+    await user.save();
+
+    await AuditService.log({
+      actorId: adminId,
+      actorRole: adminRole,
+      action: 'user.updated_by_admin',
+      resourceType: 'User',
+      resourceId: user._id.toString(),
+      ipAddress: ip,
+      userAgent,
+      sessionId: 'none',
+      success: true,
+    });
+
+    return { id: user._id, email: user.email, role: user.role, firstName: user.firstName, lastName: user.lastName };
+  }
+
+  static async getAllUsers(page: number, limit: number, roleFilter?: string, search?: string, statusFilter?: string, laboratoryId?: string) {
     const { skip, limit: limitNum } = getPaginationOptions(page, limit);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = { deletedAt: null };
@@ -138,6 +208,10 @@ export class UserService {
       query.isActive = true;
     } else if (statusFilter === 'SUSPENDED') {
       query.isActive = false;
+    }
+
+    if (laboratoryId) {
+      query.laboratoryId = laboratoryId;
     }
 
     if (search) {
