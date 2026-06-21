@@ -3,6 +3,7 @@ import { sendSuccess } from '../../utils/apiResponse.js';
 import { NotificationPreferenceModel } from './notification-preference.model.js';
 import { SubscriptionModel } from './subscription.model.js';
 import { PatientModel } from '../patients/patient.model.js';
+import { notificationService } from './notification.service.js';
 import { NotFoundError, ForbiddenError, ConflictError } from '../../shared/errors/index.js';
 
 export const notificationController = {
@@ -94,6 +95,63 @@ export const notificationController = {
       if (!subscription) {
         throw new NotFoundError('Subscription not found');
       }
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // --- Broadcast & In-App ---
+  async broadcastNotification(req: Request, res: Response, next: NextFunction) {
+    try {
+      await notificationService.broadcast({
+        ...req.body,
+        sender: {
+          id: req.user!.id,
+          role: req.user!.role,
+          laboratoryId: req.user!.laboratoryId?.toString(),
+        }
+      });
+      sendSuccess(res, { message: 'Broadcast triggered successfully' }, 202);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getNotifications(req: Request, res: Response, next: NextFunction) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const data = await notificationService.getNotifications(req.user!.id, page, limit);
+      sendSuccess(res, data);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async markAsRead(req: Request, res: Response, next: NextFunction) {
+    try {
+      const notification = await notificationService.markAsRead(req.user!.id, req.params.id);
+      if (!notification) throw new NotFoundError('Notification not found');
+      sendSuccess(res, notification);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async markAllAsRead(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await notificationService.markAllAsRead(req.user!.id);
+      sendSuccess(res, { updatedCount: result.modifiedCount });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteNotification(req: Request, res: Response, next: NextFunction) {
+    try {
+      const notification = await notificationService.deleteNotification(req.user!.id, req.params.id);
+      if (!notification) throw new NotFoundError('Notification not found');
       res.status(204).send();
     } catch (error) {
       next(error);

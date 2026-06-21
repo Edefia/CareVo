@@ -90,9 +90,9 @@ export function UserManagement() {
         <div className="flex gap-3">
           <Button 
             onClick={() => { setEditingUser(null); setIsFormOpen(true); }}
-            className="h-[44px] bg-[var(--color-forest)] hover:bg-[var(--color-forest)]/90 flex items-center gap-2"
+            className="flex items-center gap-2"
           >
-            <Shield className="h-4 w-4" /> Provision New User
+            <Shield className="h-4 w-4" /> Create New User
           </Button>
         </div>
       </div>

@@ -9,11 +9,11 @@ import { Input, Label } from "@/components/ui/input"
 import toast from "react-hot-toast"
 import { Loader2, AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react"
 
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
 
 const resetPasswordSchema = z.object({
   password: z.string()
-    .min(12, "Password must be at least 12 characters")
+    .min(8, "Password must be at least 8 characters")
     .regex(passwordRegex, "Must contain uppercase, lowercase, number, and special character"),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {

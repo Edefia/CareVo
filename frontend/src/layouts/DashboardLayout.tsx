@@ -21,8 +21,10 @@ import {
   Bell,
   ChevronRight,
   Settings,
-  User as UserIcon
+  User as UserIcon,
+  Send
 } from "lucide-react"
+import { NotificationPopover } from "@/components/shared/NotificationPopover"
 
 type NavItem = { href: string; label: string; icon: any; badge?: number }
 type NavGroup = { title: string; items: NavItem[] }
@@ -313,12 +315,7 @@ export function DashboardLayout() {
             </button>
             
             {/* Notifications */}
-            <div className="relative">
-              <button className="flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)]">
-                <Bell className="h-[18px] w-[18px]" />
-              </button>
-              <div className="absolute right-0 top-0 h-[8px] w-[8px] rounded-full border-2 border-white bg-[var(--color-danger)]"></div>
-            </div>
+            <NotificationPopover />
 
             <div className="h-[24px] w-[1px] bg-[var(--color-border)] mx-1"></div>
 
@@ -350,6 +347,7 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGr
           title: "SYSTEM",
           items: [
             { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/notifications/broadcast", label: "Broadcast", icon: Send },
             { href: "/admin/packages", label: "Packages", icon: FileText },
             { href: "/admin/users", label: "Users", icon: Users },
             { href: "/audit", label: "Audit Logs", icon: Activity },
@@ -377,6 +375,7 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGr
           title: "MAIN",
           items: [
             { href: "/lab/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/notifications/broadcast", label: "Broadcast", icon: Send },
             { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: pendingBookingsCount || undefined },
             { href: "/patients", label: "Clients", icon: Users },
           ]
@@ -388,6 +387,7 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGr
           title: "MAIN",
           items: [
             { href: "/interpreter/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/notifications/broadcast", label: "Broadcast", icon: Send },
           ]
         },
         {
