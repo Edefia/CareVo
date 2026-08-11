@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowLeft, CreditCard, DollarSign, Smartphone } from "lucide-react"
+import { ArrowLeft, CreditCard, DollarSign, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared/StatusBadge"
@@ -8,52 +8,79 @@ import { useNavigate, useParams } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { useInvoice, useInitiatePayment, useRecordManualPayment } from "@/hooks/useBilling"
+import { usePaystack } from "@/hooks/usePaystack"
 import toast from "react-hot-toast"
 
 export function PaymentTerminal() {
   const navigate = useNavigate()
   const { id } = useParams()
   
-  const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY")
-  const [phoneNumber, setPhoneNumber] = useState("")
-  const [channel, setChannel] = useState("13")
+  const [paymentMethod, setPaymentMethod] = useState("PAYSTACK")
+  const [email, setEmail] = useState("")
   const [referenceNote, setReferenceNote] = useState("")
+  const [isProcessing, setIsProcessing] = useState(false)
   
   const { data: invoiceData, isLoading } = useInvoice(id as string)
   const initiatePayment = useInitiatePayment()
   const manualPayment = useRecordManualPayment()
+  const { openPaystack, isReady } = usePaystack()
 
   const invoice = invoiceData?.data || invoiceData
   
   const handlePayment = async () => {
-    if (paymentMethod === "MOBILE_MONEY") {
-      if (!phoneNumber) {
-        toast.error("Please enter a phone number for Mobile Money")
+    if (paymentMethod === "PAYSTACK") {
+      if (!isReady) {
+        toast.error("Payment system is loading. Please try again.")
         return
       }
+
+      setIsProcessing(true)
       try {
-        await initiatePayment.mutateAsync({ 
+        const patientEmail = email || invoice.patientId?.userId?.email || "patient@example.com"
+        
+        // 1. Initialize on backend
+        const response = await initiatePayment.mutateAsync({ 
           id: id as string, 
-          customerPhone: phoneNumber,
-          channel: channel
+          email: patientEmail,
+          callbackUrl: window.location.href,
         })
-        toast.success("Payment initiated successfully. Patient will receive a prompt.")
-        navigate('/billing')
+        
+        const { reference } = response.data || response
+
+        // 2. Open Paystack popup for the patient to pay at the terminal
+        openPaystack({
+          publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_placeholder",
+          email: patientEmail,
+          amount: invoice.amount, // Already in pesewas
+          reference: reference,
+          onSuccess: () => {
+            toast.success("Online payment successful!")
+            setIsProcessing(false)
+            setTimeout(() => navigate('/billing'), 2000)
+          },
+          onClose: () => {
+            toast.error("Payment window closed.")
+            setIsProcessing(false)
+          }
+        })
       } catch (error: any) {
         toast.error(error.response?.data?.message || "Payment initiation failed. Please try again.")
+        setIsProcessing(false)
       }
     } else {
       // CASH or CARD manual recording
+      setIsProcessing(true)
       try {
         await manualPayment.mutateAsync({
           id: id as string,
           paymentMethod,
           referenceNote
         })
-        toast.success("Manual payment recorded successfully.")
+        toast.success(`Manual ${paymentMethod.toLowerCase()} payment recorded successfully.`)
         navigate('/billing')
       } catch (error: any) {
         toast.error(error.response?.data?.message || "Failed to record manual payment.")
+        setIsProcessing(false)
       }
     }
   }
@@ -85,6 +112,7 @@ export function PaymentTerminal() {
             <div>
               <div className="text-sm text-muted-foreground mb-1">Patient</div>
               <div className="font-medium">{invoice.patientId?.userId ? `${invoice.patientId.userId.firstName} ${invoice.patientId.userId.lastName}` : "Unknown"}</div>
+              <div className="text-sm text-muted-foreground">{invoice.patientId?.userId?.email || "No email"}</div>
             </div>
             
             <div className="flex justify-between items-center pb-4 border-b">
@@ -118,11 +146,11 @@ export function PaymentTerminal() {
             
             <div className="grid grid-cols-3 gap-3">
               <div 
-                className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'MOBILE_MONEY' ? 'border-primary bg-primary/5 text-primary' : 'hover:bg-muted'}`}
-                onClick={() => setPaymentMethod('MOBILE_MONEY')}
+                className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'PAYSTACK' ? 'border-primary bg-primary/5 text-primary' : 'hover:bg-muted'}`}
+                onClick={() => setPaymentMethod('PAYSTACK')}
               >
-                <Smartphone className="h-6 w-6 mb-2" />
-                <span className="text-sm font-medium text-center">MoMo (Prompt)</span>
+                <ExternalLink className="h-6 w-6 mb-2" />
+                <span className="text-sm font-medium text-center">Paystack (Online)</span>
               </div>
               <div 
                 className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'CASH' ? 'border-primary bg-primary/5 text-primary' : 'hover:bg-muted'}`}
@@ -140,26 +168,17 @@ export function PaymentTerminal() {
               </div>
             </div>
 
-            {paymentMethod === 'MOBILE_MONEY' && (
+            {paymentMethod === 'PAYSTACK' && (
               <div className="space-y-4 animate-in fade-in-50">
-                <div className="space-y-2">
-                  <Label>Network Provider</Label>
-                  <select 
-                    value={channel}
-                    onChange={(e) => setChannel(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    <option value="13">MTN MoMo</option>
-                    <option value="6">Telecel Cash</option>
-                    <option value="7">AT Money</option>
-                  </select>
+                <div className="p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
+                  This will open the Paystack secure checkout popup for the patient to pay via Mobile Money, Card, or Bank Transfer right here on the terminal.
                 </div>
                 <div className="space-y-2">
-                  <Label>Phone Number</Label>
+                  <Label>Patient Email (For Receipt)</Label>
                   <Input 
-                    placeholder="e.g. 024 123 4567" 
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Enter email (optional)" 
+                    defaultValue={invoice.patientId?.userId?.email || ""}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
@@ -189,9 +208,9 @@ export function PaymentTerminal() {
               className="w-full" 
               size="lg" 
               onClick={handlePayment}
-              disabled={initiatePayment.isPending || manualPayment.isPending || invoice.status === 'PAID'}
+              disabled={isProcessing || invoice.status === 'PAID'}
             >
-              {initiatePayment.isPending || manualPayment.isPending ? "Processing..." : `Confirm Payment of GHS ${displayAmount.toFixed(2)}`}
+              {isProcessing ? "Processing..." : paymentMethod === 'PAYSTACK' ? `Open Payment Terminal (GHS ${displayAmount.toFixed(2)})` : `Record Payment of GHS ${displayAmount.toFixed(2)}`}
             </Button>
           </CardFooter>
         </Card>

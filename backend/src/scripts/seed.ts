@@ -65,17 +65,19 @@ async function runSeed() {
       }
     ]);
 
-    // 1. Mock Labs
+    // 1. Real Labs in Ghana
     console.log('🏢 Seeding Laboratories...');
+    await LaboratoryModel.deleteMany({});
+    
     const medicanLab = await LaboratoryModel.findOneAndUpdate(
-      { code: 'MEDISCAN' },
+      { code: 'MDS-LANCET' },
       {
-        name: 'MediScan Ghana',
-        code: 'MEDISCAN',
-        contactEmail: 'hello@mediscanghana.com',
-        contactPhone: '+233 24 123 4567',
+        name: 'MDS-Lancet Laboratories',
+        code: 'MDS-LANCET',
+        contactEmail: 'info@mds-lancet.com',
+        contactPhone: '+233 30 261 0480',
         address: {
-          street: '12 Independence Ave',
+          street: '27 Maseru St, East Legon',
           city: 'Accra',
           state: 'Greater Accra',
           zipCode: 'GA-000',
@@ -87,17 +89,17 @@ async function runSeed() {
     );
 
     const acculab = await LaboratoryModel.findOneAndUpdate(
-      { code: 'ACCULAB' },
+      { code: 'SYNLAB' },
       {
-        name: 'AccuLab Diagnostics',
-        code: 'ACCULAB',
-        contactEmail: 'contact@acculab.com',
-        contactPhone: '+233 50 987 6543',
+        name: 'Synlab Ghana',
+        code: 'SYNLAB',
+        contactEmail: 'ghana@synlab.com',
+        contactPhone: '+233 30 276 9951',
         address: {
-          street: '5 Prempeh II St',
-          city: 'Kumasi',
-          state: 'Ashanti',
-          zipCode: 'AK-000',
+          street: 'Roman Ridge, 11th Lane',
+          city: 'Accra',
+          state: 'Greater Accra',
+          zipCode: 'GA-000',
           country: 'Ghana'
         },
         isActive: true,

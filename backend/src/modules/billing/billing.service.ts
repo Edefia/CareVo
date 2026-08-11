@@ -10,7 +10,19 @@ import { NotificationPreferenceModel } from '../notifications/notification-prefe
 import { paymentService } from './payment.service.js';
 
 export const billingService = {
-  async initiateMoolrePayment(invoiceId: string, customerPhone: string, channel: string, userId: string, userRole: string, ipAddress: string, userAgent: string) {
+  /**
+   * Initialize a Paystack payment for an invoice.
+   * Returns the authorization_url and access_code for the frontend to open the Paystack popup.
+   */
+  async initiatePaystackPayment(
+    invoiceId: string,
+    email: string,
+    callbackUrl: string | undefined,
+    userId: string,
+    userRole: string,
+    ipAddress: string,
+    userAgent: string
+  ) {
     const invoice = await InvoiceModel.findById(invoiceId).populate('patientId');
     if (!invoice) throw new NotFoundError('Invoice not found.');
     if (invoice.status === 'PAID') throw new ValidationError('Invoice is already paid.');
@@ -20,16 +32,26 @@ export const billingService = {
     const user = await UserModel.findById(patient.userId);
     if (!user) throw new NotFoundError('Patient user not found.');
 
-    const customerName = `${user.firstName} ${user.lastName}`;
+    // Generate a unique reference for this payment attempt
+    const reference = `CRV-${invoiceId}-${Date.now()}`;
 
-    const paymentResponse = await paymentService.initiatePayment(
-      invoice.amount,
-      invoice.currency,
-      invoice.id,
-      customerPhone,
-      customerName,
-      channel
+    const paymentResponse = await paymentService.initializeTransaction(
+      invoice.amount,       // Already in pesewas
+      email || user.email,  // Use provided email or fall back to patient's email
+      reference,
+      {
+        invoice_id: invoiceId,
+        patient_name: `${user.firstName} ${user.lastName}`,
+        description: invoice.description,
+      },
+      callbackUrl
     );
+
+    // Store the Paystack reference on the invoice for webhook matching
+    invoice.referenceId = paymentResponse.reference;
+    invoice.paystackAccessCode = paymentResponse.access_code;
+    invoice.paymentGateway = 'PAYSTACK';
+    await invoice.save();
 
     await AuditService.log({
       actorId: userId,
@@ -41,10 +63,87 @@ export const billingService = {
       userAgent,
       sessionId: 'internal',
       success: true,
-      newState: { status: invoice.status, gateway: 'Moolre' },
+      newState: { status: invoice.status, gateway: 'PAYSTACK', reference: paymentResponse.reference },
     });
 
-    return paymentResponse;
+    return {
+      authorization_url: paymentResponse.authorization_url,
+      access_code: paymentResponse.access_code,
+      reference: paymentResponse.reference,
+    };
+  },
+
+  /**
+   * Handle Paystack webhook events.
+   * Called when Paystack sends a charge.success event.
+   */
+  async handlePaystackWebhook(event: any) {
+    if (event.event !== 'charge.success') {
+      return { status: 'ignored', event: event.event };
+    }
+
+    const data = event.data;
+    const reference = data.reference;
+
+    // Find the invoice by the Paystack reference
+    const invoice = await InvoiceModel.findOne({ referenceId: reference });
+    if (!invoice) {
+      // Not our invoice — ignore gracefully
+      return { status: 'not_found', reference };
+    }
+
+    if (invoice.status === 'PAID') {
+      return { status: 'already_paid', reference };
+    }
+
+    // Verify the transaction with Paystack to be safe
+    const verification = await paymentService.verifyTransaction(reference);
+
+    if (verification.status === 'success') {
+      invoice.status = 'PAID';
+      invoice.paidAt = new Date(verification.paid_at || Date.now());
+      invoice.paymentGateway = 'PAYSTACK';
+      await invoice.save();
+
+      await AuditService.log({
+        actorId: 'SYSTEM',
+        actorRole: 'SYSTEM',
+        action: 'PAYMENT_WEBHOOK_SUCCESS',
+        resourceType: 'Invoice',
+        resourceId: invoice.id,
+        ipAddress: 'webhook',
+        userAgent: 'paystack-webhook',
+        sessionId: 'webhook',
+        success: true,
+        newState: {
+          status: 'PAID',
+          channel: verification.channel,
+          amount: verification.amount,
+          reference,
+        },
+      });
+
+      // Notify patient
+      const patient = await PatientModel.findById(invoice.patientId);
+      if (patient) {
+        const patientUser = await UserModel.findById(patient.userId);
+        if (patientUser) {
+          const prefs = await NotificationPreferenceModel.findOne({ userId: patientUser._id });
+          if (!prefs || prefs.emailEnabled) {
+            const displayAmount = (invoice.amount / 100).toFixed(2);
+            await notificationService.add('sendEmail', {
+              to: patientUser.email,
+              subject: 'Payment Receipt — CareVo Health',
+              body: `Hello ${patientUser.firstName},<br><br>We have successfully received your payment of ${invoice.currency} ${displayAmount} for "${invoice.description}".<br><br>Thank you for choosing CareVo Health.`,
+            });
+          }
+        }
+      }
+
+      return { status: 'success', reference };
+    }
+
+    return { status: 'verification_failed', reference, verificationStatus: verification.status };
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,7 +290,7 @@ export const billingService = {
     return this.getInvoiceById(id, userRole, userId);
   },
 
-  // ===================== NEW ADMIN METHODS =====================
+  // ===================== ADMIN METHODS =====================
 
   async getBillingStats() {
     const now = new Date();
@@ -239,13 +338,13 @@ export const billingService = {
     if (!invoice) throw new NotFoundError('Invoice not found.');
     if (!invoice.referenceId) throw new ValidationError('No payment reference found for this invoice.');
 
-    const verifyResult = await paymentService.verifyPayment(invoice.referenceId);
+    const verifyResult = await paymentService.verifyTransaction(invoice.referenceId);
 
     // If payment is confirmed, update invoice status
-    if (verifyResult && (verifyResult.status === 'SUCCESSFUL' || verifyResult.code === '00')) {
+    if (verifyResult && verifyResult.status === 'success') {
       invoice.status = 'PAID';
-      invoice.paidAt = new Date();
-      invoice.paymentGateway = 'HUBTEL'; // or extract from response
+      invoice.paidAt = new Date(verifyResult.paid_at || Date.now());
+      invoice.paymentGateway = 'PAYSTACK';
       await invoice.save();
 
       await AuditService.log({

@@ -11,8 +11,12 @@ export const billingService = {
     return response.data;
   },
 
-  initiatePayment: async (id: string, customerPhone: string, channel: string) => {
-    const response = await apiClient.post(`/billing/${id}/pay`, { customerPhone, channel });
+  /**
+   * Initialize a Paystack payment for an invoice.
+   * Returns { authorization_url, access_code, reference }
+   */
+  initiatePayment: async (id: string, email: string, callbackUrl?: string) => {
+    const response = await apiClient.post(`/billing/${id}/pay`, { email, callbackUrl });
     return response.data;
   },
 

@@ -19,7 +19,7 @@ export const useInvoice = (id: string) => {
 export const useInitiatePayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, customerPhone, channel }: { id: string; customerPhone: string; channel: string }) => billingService.initiatePayment(id, customerPhone, channel),
+    mutationFn: ({ id, email, callbackUrl }: { id: string; email: string; callbackUrl?: string }) => billingService.initiatePayment(id, email, callbackUrl),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['invoice', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });

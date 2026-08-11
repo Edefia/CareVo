@@ -10,6 +10,7 @@ export interface IInvoice extends Document {
   referenceId: string | null;
   paymentGateway: 'PAYSTACK' | 'FLUTTERWAVE' | 'HUBTEL' | 'MANUAL' | null;
   paidAt: Date | null;
+  paystackAccessCode: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -62,6 +63,10 @@ const invoiceSchema = new Schema<IInvoice>(
     },
     paidAt: {
       type: Date,
+      default: null,
+    },
+    paystackAccessCode: {
+      type: String,
       default: null,
     },
   },

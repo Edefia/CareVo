@@ -30,11 +30,9 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().email(),
 
-  // SMS and Payments (Moolre)
-  MOOLRE_API_USER: z.string().min(1),
-  MOOLRE_API_KEY: z.string().min(1),
-  MOOLRE_VASKEY: z.string().min(1),
-  MOOLRE_ACCOUNT_NUMBER: z.string().min(1),
+  // Payments (Paystack)
+  PAYSTACK_SECRET_KEY: z.string().min(1),
+  PAYSTACK_PUBLIC_KEY: z.string().min(1),
 
   // Seed
   SEED_ADMIN_EMAIL: z.string().email(),

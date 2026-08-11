@@ -1,15 +1,24 @@
-import { Receipt, CreditCard, Clock, FileText, ArrowUpRight } from "lucide-react"
+import { useState } from "react"
+import { Receipt, CreditCard, Clock, FileText, ArrowUpRight, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useNavigate } from "react-router-dom"
-import { useInvoices } from "@/hooks/useBilling"
+import { useInvoices, useInitiatePayment } from "@/hooks/useBilling"
+import { usePaystack } from "@/hooks/usePaystack"
+import { useAuthStore } from "@/store/auth"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { LoadingState } from "@/components/shared/LoadingState"
+import toast from "react-hot-toast"
 
 export function ClientBilling() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const { data: billingData, isLoading } = useInvoices()
+  const { mutateAsync: initiatePayment } = useInitiatePayment()
+  const { openPaystack, isReady } = usePaystack()
   
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
   const invoices = billingData?.items || billingData || []
 
   // Sort invoices by date, newest first, but put PENDING first
@@ -18,6 +27,49 @@ export function ClientBilling() {
     if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   }) : []
+
+  const handlePayNow = async (invoice: any) => {
+    if (!isReady) {
+      toast.error("Payment system is loading. Please try again in a moment.")
+      return
+    }
+
+    setProcessingId(invoice._id || invoice.id)
+    try {
+      // 1. Initialize payment on backend
+      const response = await initiatePayment({
+        id: invoice._id || invoice.id,
+        email: user?.email || "patient@example.com",
+        callbackUrl: window.location.href, // If redirect is needed
+      })
+
+      const { access_code, reference } = response.data || response
+
+      // 2. Open Paystack popup
+      openPaystack({
+        // For production, this should come from your environment config
+        publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_placeholder",
+        email: user?.email || "patient@example.com",
+        amount: invoice.amount, // Already in pesewas
+        reference: reference,
+        onSuccess: () => {
+          toast.success("Payment successful! Your invoice is being updated.")
+          setProcessingId(null)
+          // The webhook will handle the actual status update, but we can optimistically invalidate
+          setTimeout(() => {
+            window.location.reload()
+          }, 2000)
+        },
+        onClose: () => {
+          toast.error("Payment window closed.")
+          setProcessingId(null)
+        }
+      })
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to initialize payment")
+      setProcessingId(null)
+    }
+  }
 
   if (isLoading) {
     return <LoadingState message="Fetching your invoices..." />
@@ -51,6 +103,7 @@ export function ClientBilling() {
         <div className="grid gap-4">
           {sortedInvoices.map((invoice: any) => {
             const isPending = invoice.status === "PENDING"
+            const isProcessing = processingId === (invoice._id || invoice.id)
             
             return (
               <Card key={invoice._id || invoice.id} className={`overflow-hidden transition-all ${isPending ? 'border-[var(--color-lime-dark)] ring-1 ring-[var(--color-lime-dark)]/20 shadow-md' : 'hover:shadow-md'}`}>
@@ -88,14 +141,22 @@ export function ClientBilling() {
                     
                     {isPending ? (
                       <Button 
-                        onClick={() => navigate(`/billing/pay/${invoice._id || invoice.id}`)}
-                        className="w-full shadow-md"
+                        onClick={() => handlePayNow(invoice)}
+                        disabled={isProcessing || !isReady}
+                        className="w-full shadow-md gap-2"
                       >
-                        Pay Now <ArrowUpRight className="ml-2 h-4 w-4" />
+                        {isProcessing ? (
+                          <>
+                            <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>Pay Now <ArrowUpRight className="h-4 w-4" /></>
+                        )}
                       </Button>
                     ) : (
-                      <Button variant="outline" className="w-full">
-                        Download PDF
+                      <Button variant="outline" className="w-full gap-2 text-green-700 border-green-200 bg-green-50 hover:bg-green-100">
+                        <CheckCircle2 className="h-4 w-4" /> Paid
                       </Button>
                     )}
                   </div>

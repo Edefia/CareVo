@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { billingService } from './billing.service.js';
+import { paymentService } from './payment.service.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
+import { logger } from '../../utils/logger.js';
 
 export const billingController = {
   async createInvoice(req: Request, res: Response, next: NextFunction) {
@@ -68,15 +70,19 @@ export const billingController = {
     }
   },
 
+  /**
+   * Initialize a Paystack payment.
+   * Client sends { email, callbackUrl } and receives { authorization_url, access_code, reference }.
+   */
   async initiatePayment(req: Request, res: Response, next: NextFunction) {
     try {
-      const { customerPhone, channel } = req.body;
-      if (!channel) throw new Error('Channel is required (e.g., 13 for MTN).');
+      const { email, callbackUrl } = req.body;
+      if (!email) throw new Error('Email is required for Paystack payment.');
 
-      const response = await billingService.initiateMoolrePayment(
+      const response = await billingService.initiatePaystackPayment(
         req.params.id as string,
-        customerPhone,
-        channel,
+        email,
+        callbackUrl,
         req.user!.id,
         req.user!.role,
         req.ip || '127.0.0.1',
@@ -88,7 +94,40 @@ export const billingController = {
     }
   },
 
-  // ===================== NEW ADMIN ENDPOINTS =====================
+  /**
+   * Paystack Webhook Handler.
+   * This endpoint receives POST requests from Paystack when payment events occur.
+   * No authentication — Paystack sends directly. We verify using HMAC signature.
+   */
+  async handleWebhook(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Verify the webhook signature
+      const signature = req.headers['x-paystack-signature'] as string;
+      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+
+      if (!signature || !paymentService.validateWebhookSignature(rawBody, signature)) {
+        logger.warn('Invalid Paystack webhook signature received');
+        res.status(401).json({ status: false, message: 'Invalid signature' });
+        return;
+      }
+
+      const event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      logger.info('Paystack webhook received', { event: event.event, reference: event.data?.reference });
+
+      const result = await billingService.handlePaystackWebhook(event);
+
+      // Paystack expects a 200 response — always respond quickly
+      res.status(200).json({ status: true, ...result });
+    } catch (error) {
+      logger.error('Paystack webhook processing error', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      // Still return 200 to prevent Paystack from retrying
+      res.status(200).json({ status: true, message: 'Webhook received with processing error' });
+    }
+  },
+
+  // ===================== ADMIN ENDPOINTS =====================
 
   async getBillingStats(_req: Request, res: Response, next: NextFunction) {
     try {
