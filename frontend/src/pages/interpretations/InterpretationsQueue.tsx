@@ -18,10 +18,15 @@ export function InterpretationsQueue() {
   const { data: queueData, isLoading } = useInterpretations()
   const queue = queueData?.items || queueData || []
 
-  const filteredQueue = Array.isArray(queue) ? queue.filter((item: any) => 
-    (item.patientId || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (item._id || item.id || "").toLowerCase().includes(searchTerm.toLowerCase())
-  ) : []
+  const filteredQueue = Array.isArray(queue) ? queue.filter((item: any) => {
+    const patientName = item.patientId?.userId ? `${item.patientId.userId.firstName} ${item.patientId.userId.lastName}` : "";
+    const referralCode = item.resultId?.referralCode || "";
+    const term = searchTerm.toLowerCase();
+    
+    return patientName.toLowerCase().includes(term) || 
+           referralCode.toLowerCase().includes(term) ||
+           (item._id || item.id || "").toLowerCase().includes(term);
+  }) : []
 
   return (
     <div className="space-y-6">
@@ -55,18 +60,28 @@ export function InterpretationsQueue() {
         <CardContent>
           <DataTable 
             columns={[
-              { header: "ID", cell: (row) => row._id || row.id },
-              { header: "Patient ID", cell: (row) => row.patientId || "Unknown" },
-              { header: "Package/Result", cell: (row) => row.resultId || "Unknown" },
-              { header: "Submitted", cell: (row) => new Date(row.createdAt).toLocaleDateString() },
               { 
-                header: "Priority", 
-                cell: (row) => (
-                  <div className="flex items-center gap-2">
-                    {row.priority === "URGENT" && <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
-                    <StatusBadge status={row.priority || "NORMAL"} />
-                  </div>
-                )
+                header: "Referral Code", 
+                cell: (row) => <span className="font-mono font-medium text-[var(--color-forest)] bg-[var(--color-lime)]/20 px-2 py-1 rounded">{row.resultId?.referralCode || row.id?.substring(0,8)}</span> 
+              },
+              { 
+                header: "Patient", 
+                cell: (row) => {
+                  const patient = row.patientId?.userId;
+                  return patient ? `${patient.firstName} ${patient.lastName}` : "Unknown"
+                } 
+              },
+              { 
+                header: "Package", 
+                cell: (row) => <span className="font-medium">{row.resultId?.panelName || "Unknown"}</span> 
+              },
+              { 
+                header: "Laboratory", 
+                cell: (row) => <span className="text-muted-foreground">{row.resultId?.laboratoryId?.name || "Unknown"}</span> 
+              },
+              { 
+                header: "Submitted", 
+                cell: (row) => new Date(row.createdAt).toLocaleDateString() 
               },
               { 
                 header: "Status", 

@@ -16,6 +16,7 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage"
 // Import Dashboards
 import { AdminDashboard } from "./pages/dashboards/AdminDashboard"
 import { LabDashboard } from "./pages/dashboards/LabDashboard"
+import { LabServices } from "./pages/dashboards/laboratory/LabServices"
 import { InterpreterDashboard } from "./pages/dashboards/InterpreterDashboard"
 import { ClientDashboard } from "./pages/dashboards/ClientDashboard"
 import { ClientResults } from "./pages/dashboards/client/ClientResults"
@@ -88,6 +89,7 @@ export default function App() {
             <Route path="/admin/packages" element={<PackageManagement />} />
             <Route path="/admin/advocacy" element={<AdminHealthAdvocacy />} />
             <Route path="/lab/dashboard" element={<LabDashboard />} />
+            <Route path="/lab/services" element={<LabServices />} />
             <Route path="/interpreter/dashboard" element={<InterpreterDashboard />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
 

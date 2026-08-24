@@ -214,7 +214,7 @@ export function InterpretationForm() {
               <div className="mt-[32px] pt-[24px] border-t border-[var(--color-border)] flex justify-end">
                 <Button type="submit" className="h-[56px] px-[40px] text-[16px] gap-2 shadow-lg font-semibold bg-[#16A34A] hover:bg-[#15803d] transition-all hover:scale-[1.02] active:scale-95">
                   <CheckCircle className="h-5 w-5" />
-                  Publish Interpretation
+                  Submit Interpretation
                 </Button>
               </div>
             </div>

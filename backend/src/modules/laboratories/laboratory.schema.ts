@@ -42,3 +42,36 @@ export const getLaboratoryParamsSchema = z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid laboratory ID'),
   }),
 });
+
+export const createLabServiceSchema = z.object({
+  body: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').max(150, 'Name is too long'),
+    description: z.string().max(500, 'Description is too long').optional(),
+    category: z.string().min(2, 'Category must be at least 2 characters').max(50, 'Category is too long'),
+    labPrice: z.number().min(0, 'Price cannot be negative'),
+    turnaroundTime: z.string().min(1, 'Turnaround time is required').max(50, 'Turnaround time is too long'),
+  }),
+});
+
+export const updateLabServiceSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid service ID'),
+  }),
+  body: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').max(150, 'Name is too long').optional(),
+    description: z.string().max(500, 'Description is too long').optional(),
+    category: z.string().min(2, 'Category must be at least 2 characters').max(50, 'Category is too long').optional(),
+    labPrice: z.number().min(0, 'Price cannot be negative').optional(),
+    turnaroundTime: z.string().min(1, 'Turnaround time is required').max(50, 'Turnaround time is too long').optional(),
+    isActive: z.boolean().optional(),
+    // Admin only fields:
+    platformPrice: z.number().min(0, 'Price cannot be negative').optional(),
+    approvalStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED']).optional(),
+  }),
+});
+
+export const getLabServiceParamsSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid service ID'),
+  }),
+});

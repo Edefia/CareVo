@@ -27,25 +27,7 @@ export function AdminDashboard() {
   return (
     <div className="space-y-[32px] md:space-y-[48px] max-w-[1400px] mx-auto pb-[96px] animate-in fade-in duration-500">
       
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          PAGE HEADER
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[24px]">
-        <div>
-          <h1 className="font-serif text-[32px] md:text-[36px] font-semibold text-[var(--color-forest)] leading-tight mb-[8px]">
-            Platform Overview
-          </h1>
-          <p className="font-sans text-[16px] text-[var(--color-text-secondary)]">
-            Welcome back, {user?.firstName}. Here is what's happening on CareVo today.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="h-[44px]">Download Report</Button>
-          <Link to="/settings">
-            <Button className="h-[44px]">System Config</Button>
-          </Link>
-        </div>
-      </div>
+
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           OVERVIEW CARDS (KPIs)

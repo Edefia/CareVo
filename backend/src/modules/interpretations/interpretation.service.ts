@@ -104,7 +104,18 @@ export const interpretationService = {
     }
 
     const [interpretations, total] = await Promise.all([
-      InterpretationModel.find(query).skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      InterpretationModel.find(query)
+        .populate({
+          path: 'patientId',
+          select: 'userId',
+          populate: { path: 'userId', select: 'firstName lastName email phone' }
+        })
+        .populate({
+          path: 'resultId',
+          select: 'laboratoryId panelName referralCode status',
+          populate: { path: 'laboratoryId', select: 'name' }
+        })
+        .skip(skip).limit(limitNum).sort({ createdAt: -1 }),
       InterpretationModel.countDocuments(query),
     ]);
 
@@ -123,7 +134,9 @@ export const interpretationService = {
   },
 
   async getInterpretationById(id: string, userRole: string, userId: string) {
-    const interpretation = await InterpretationModel.findById(id).populate('interpreterId', 'firstName lastName role');
+    const interpretation = await InterpretationModel.findById(id)
+      .populate('interpreterId', 'firstName lastName role')
+      .populate('resultId');
     if (!interpretation) throw new NotFoundError('Interpretation not found.');
 
     if (userRole === 'CLIENT') {

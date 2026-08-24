@@ -41,3 +41,14 @@ export const useCreatePatientNote = () => {
     },
   });
 };
+
+export const useUpdatePatient = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) => patientsService.updatePatient(id, updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['patient', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['patients'] });
+    },
+  });
+};

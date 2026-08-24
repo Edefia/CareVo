@@ -20,5 +20,9 @@ export const patientsService = {
   createPatientNote: async (id: string, note: any) => {
     const { data } = await apiClient.post(`/patients/${id}/notes`, note);
     return data.data;
+  },
+  updatePatient: async (id: string, updates: any) => {
+    const { data } = await apiClient.put(`/patients/${id}`, updates);
+    return data.data;
   }
 };

@@ -52,36 +52,70 @@ export function LabDashboard() {
   return (
     <div className="space-y-[32px] md:space-y-[48px] max-w-[1280px] mx-auto animate-fade-in-up">
 
-      {/* PAGE HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[24px]">
+      {/* PAGE HEADER & SEARCH */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="font-serif text-[32px] md:text-[40px] font-semibold text-[var(--color-forest)] leading-tight mb-[8px]">
+          <h1 className="font-serif text-[32px] md:text-[36px] font-semibold text-[var(--color-forest)] leading-tight mb-1">
             Laboratory Operations
           </h1>
-          <p className="font-sans text-[16px] text-[var(--color-text-secondary)]">
+          <p className="font-sans text-[15px] text-[var(--color-text-secondary)]">
             Welcome back, {user?.firstName}. Manage your assigned clients and securely enter results.
           </p>
         </div>
-      </div>
-
-      {/* SEARCH BAR (Glassmorphism) */}
-      <div className="glass-panel rounded-[var(--radius-xl)] p-[24px] transition-all hover:shadow-[var(--shadow-card-hover)] relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#A8E6BC]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="font-sans text-[18px] font-bold text-[var(--color-text-primary)] mb-1">Find a Client</h2>
-            <p className="text-[14px] text-[var(--color-text-muted)]">Scan or enter the patient's referral code</p>
-          </div>
-          <div className="relative w-full md:max-w-[400px]">
-            <Search className="absolute left-[16px] top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--color-text-muted)]" />
+        
+        <div className="w-full md:w-auto flex items-center">
+          <div className="relative w-full md:w-[320px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
             <Input
-              placeholder="e.g. CRV-2025-A7K3P2"
-              className="pl-[48px] h-[56px] text-[16px] font-mono border-2 bg-white/50 focus:bg-white focus:border-[var(--color-forest)] transition-all shadow-sm rounded-[var(--radius-md)]"
+              placeholder="Search referral code or name..."
+              className="pl-9 h-10 text-sm focus:border-[var(--color-forest)] transition-all shadow-sm rounded-lg bg-white border-[var(--color-border)]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
+      </div>
+
+      {/* HIGH-LEVEL STATISTICS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Today's Clients */}
+        <div className="bg-white border border-[var(--color-border)] p-4 rounded-xl flex items-center shadow-sm">
+          <div className="h-10 w-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-[var(--color-forest)] mr-4 shrink-0">
+            <Calendar className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">Today's Clients</p>
+            <h3 className="font-serif text-2xl font-bold text-[var(--color-text-primary)] leading-none">
+              {Array.isArray(bookings) ? bookings.filter(b => new Date(b.scheduledAt).toDateString() === new Date().toDateString()).length : 0}
+            </h3>
+          </div>
+        </div>
+
+        {/* Pending Results */}
+        <div className="bg-white border border-[var(--color-border)] p-4 rounded-xl flex items-center shadow-sm">
+          <div className="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 mr-4 shrink-0">
+            <Clock className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">Pending Results</p>
+            <h3 className="font-serif text-2xl font-bold text-amber-600 leading-none">
+              {Array.isArray(bookings) ? bookings.filter(b => b.status === 'CONFIRMED').length : 0}
+            </h3>
+          </div>
+        </div>
+
+        {/* Active Services Link */}
+        <Link to="/lab/services" className="bg-white border border-[var(--color-border)] hover:border-[var(--color-forest)] p-4 rounded-xl flex items-center shadow-sm transition-colors group cursor-pointer">
+          <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-[var(--color-forest)]/10 group-hover:text-[var(--color-forest)] transition-colors mr-4 shrink-0">
+            <Activity className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">Manage Catalog</p>
+            <h3 className="font-sans text-[14px] font-bold text-[var(--color-text-primary)] leading-tight group-hover:text-[var(--color-forest)] transition-colors mt-1">
+              View & Update Services &rarr;
+            </h3>
+          </div>
+        </Link>
       </div>
 
       {/* ASSIGNED CLIENTS QUEUE */}

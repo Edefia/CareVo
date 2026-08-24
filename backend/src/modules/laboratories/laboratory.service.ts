@@ -1,4 +1,5 @@
 import { LaboratoryModel, type ILaboratory } from './laboratory.model.js';
+import { LabServiceModel, type ILabService } from './lab-service.model.js';
 import { NotFoundError, ConflictError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
 
@@ -58,12 +59,77 @@ export const laboratoryService = {
   },
 
   async deleteLaboratory(id: string): Promise<void> {
-    // Note: Deleting a lab should probably deactivate it or check for attached staff
-    // In a real scenario we'd do a soft delete or cascading checks.
-    // For now we will do a hard delete as per simple CRUD
     const result = await LaboratoryModel.deleteOne({ _id: id });
     if (result.deletedCount === 0) {
       throw new NotFoundError('Laboratory not found.');
+    }
+  },
+
+  // --- LAB SERVICES ---
+  async createLabService(laboratoryId: string, data: Partial<ILabService>): Promise<ILabService> {
+    const labService = new LabServiceModel({
+      ...data,
+      laboratoryId,
+      platformPrice: data.platformPrice ?? data.labPrice, // Default platform price to lab price initially
+      approvalStatus: 'PENDING',
+    });
+    return await labService.save();
+  },
+
+  async getLabServices(laboratoryId: string, page: number, limit: number, filters: any = {}) {
+    const { skip, limit: limitNum } = getPaginationOptions(page, limit);
+    const query = { laboratoryId, ...filters };
+
+    const [services, total] = await Promise.all([
+      LabServiceModel.find(query).skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      LabServiceModel.countDocuments(query),
+    ]);
+
+    return createPaginatedResponse(services, page, limitNum, total);
+  },
+
+  async getAllLabServices(page: number, limit: number, filters: any = {}) {
+    const { skip, limit: limitNum } = getPaginationOptions(page, limit);
+
+    const [services, total] = await Promise.all([
+      LabServiceModel.find(filters).populate('laboratoryId', 'name code').skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      LabServiceModel.countDocuments(filters),
+    ]);
+
+    return createPaginatedResponse(services, page, limitNum, total);
+  },
+
+  async updateLabService(id: string, laboratoryId: string, updateData: Partial<ILabService>, isAdmin: boolean = false): Promise<ILabService> {
+    const service = await LabServiceModel.findOne({ _id: id, laboratoryId });
+    if (!service) {
+      throw new NotFoundError('Lab service not found.');
+    }
+
+    // If it's a normal lab user updating their service, force approvalStatus back to PENDING if they touch sensitive fields
+    if (!isAdmin && (updateData.name || updateData.labPrice || updateData.category)) {
+      updateData.approvalStatus = 'PENDING';
+      // They can't set platformPrice directly
+      delete updateData.platformPrice;
+    }
+
+    Object.assign(service, updateData);
+    return await service.save();
+  },
+
+  async updateLabServiceStatus(id: string, updateData: Partial<ILabService>): Promise<ILabService> {
+    const service = await LabServiceModel.findById(id);
+    if (!service) {
+      throw new NotFoundError('Lab service not found.');
+    }
+
+    Object.assign(service, updateData);
+    return await service.save();
+  },
+
+  async deleteLabService(id: string, laboratoryId: string): Promise<void> {
+    const result = await LabServiceModel.deleteOne({ _id: id, laboratoryId });
+    if (result.deletedCount === 0) {
+      throw new NotFoundError('Lab service not found.');
     }
   },
 };

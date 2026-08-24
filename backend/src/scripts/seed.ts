@@ -170,6 +170,7 @@ async function runSeed() {
         firstName: 'McHebra',
         lastName: 'Dalton',
         role: 'LABORATORY',
+        laboratoryId: medicanLab._id,
         phone: '+233 24 333 4444',
         isActive: true,
       },

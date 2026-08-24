@@ -1,183 +1,243 @@
+
+import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { ArrowLeft, Edit, Activity, FileText, Calendar, Clock, AlertCircle } from "lucide-react"
+import { ArrowLeft, Edit, Activity, FileText, Clock, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import toast from "react-hot-toast"
 import { StatusBadge } from "@/components/shared/StatusBadge"
-import { DataTable } from "@/components/shared/DataTable"
-import { EmptyState } from "@/components/shared/EmptyState"
-import { usePatients } from "@/hooks/usePatients"
-// import { useBookings } from "@/hooks/useBookings"
+import { usePatient, usePatientResults, usePatientNotes } from "@/hooks/usePatients"
+import { EditPatientModal } from "./EditPatientModal"
+
+import { useAuthStore } from "@/store/auth"
 
 export function PatientProfile() {
+  const { user } = useAuthStore()
   const { id } = useParams()
   const navigate = useNavigate()
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
-  const { data: patientsData } = usePatients()
+  const { data: patientResponse, isLoading } = usePatient(id!)
+  const { data: resultsResponse } = usePatientResults(id!)
+  const { data: notesResponse } = usePatientNotes(id!)
   
-  // Real app would fetch specific patient, bookings, and interpretations
-  const patients = patientsData?.data || []
-  const patientData = patients.find((p: any) => p._id === id) || {
-    _id: id || "Unknown",
-    user: { firstName: "Loading...", lastName: "", email: "", phone: "" },
-    gender: "-",
-    dateOfBirth: "-",
-    address: { street: "", city: "", state: "" },
-    registeredAt: new Date().toISOString(),
+  const patientData = patientResponse?.data || patientResponse
+  const history = resultsResponse?.data || resultsResponse || []
+  const notes = notesResponse?.data || notesResponse || []
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-forest)]" />
+      </div>
+    )
   }
 
-  // Real data would come from API hooks
-  const history: any[] = []
-  const notes: any[] = []
+  if (!patientData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-bold">Patient Not Found</h2>
+        <Button onClick={() => navigate('/patients')} className="mt-4">Back to Directory</Button>
+      </div>
+    )
+  }
 
-  const fullName = `${patientData.user?.firstName || ""} ${patientData.user?.lastName || ""}`.trim()
+  const fullName = `${patientData.userId?.firstName || patientData.user?.firstName || ""} ${patientData.userId?.lastName || patientData.user?.lastName || ""}`.trim()
+  const phone = patientData.userId?.phone || patientData.user?.phone || patientData.phone || "-"
+  const email = patientData.userId?.email || patientData.user?.email || patientData.email || "-"
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between">
+    <div className="space-y-[32px] md:space-y-[48px] max-w-[1280px] mx-auto animate-fade-in-up pb-[96px]">
+      {/* PAGE HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:bg-[var(--color-surface-2)]">
+            <ArrowLeft className="h-5 w-5 text-[var(--color-text-secondary)]" />
+          </Button>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">{fullName || "Patient Profile"}</h2>
-            <p className="text-muted-foreground">ID: {patientData._id.substring(0,8)}</p>
+            <h1 className="font-serif text-[32px] md:text-[36px] font-semibold text-[var(--color-forest)] leading-tight mb-1">
+              {fullName || "Patient Profile"}
+            </h1>
+            <p className="font-sans text-[15px] text-[var(--color-text-secondary)]">
+              Patient ID: <span className="font-mono text-[var(--color-text-primary)]">
+                PT-{String(patientData._id || patientData.id).slice(-6).toUpperCase()}
+              </span>
+            </p>
           </div>
-          <div className="mt-4 md:mt-0 flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
-              Edit Profile
+        </div>
+        <div className="flex gap-3">
+          {user?.role !== 'INTERPRETER' && (
+            <Button variant="outline" className="gap-2 border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] transition-colors" onClick={() => setIsEditModalOpen(true)}>
+              <Edit className="h-4 w-4 text-[var(--color-text-muted)]" />
+              <span className="font-medium">Edit Profile</span>
             </Button>
-            <Button className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              New Booking
-            </Button>
-          </div>
+          )}
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-[32px] lg:grid-cols-[1fr_2fr]">
         {/* Left Column: Demographics & Risk */}
-        <div className="space-y-6 md:col-span-1">
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Patient Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <div className="space-y-[24px]">
+          {/* Patient Information Card */}
+          <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
+            <div className="px-6 py-[18px] border-b border-[var(--color-border)] bg-[var(--color-surface-2)]/30 flex items-center gap-2">
+              <h2 className="font-sans text-[16px] font-bold text-[var(--color-text-primary)]">Patient Information</h2>
+            </div>
+            <div className="p-6 space-y-6">
               <div>
-                <div className="text-sm text-muted-foreground">Contact</div>
-                <div className="font-medium">{patientData.user?.phone || "-"}</div>
-                <div className="font-medium text-sm">{patientData.user?.email || "-"}</div>
+                <div className="text-[13px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Contact</div>
+                <div className="font-medium text-[var(--color-text-primary)] text-[15px]">{phone}</div>
+                <div className="font-medium text-[var(--color-text-secondary)] text-[14px]">{email}</div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-muted-foreground">Gender</div>
-                  <div className="font-medium">{patientData.gender}</div>
+                  <div className="text-[13px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Gender</div>
+                  <div className="font-medium text-[var(--color-text-primary)] text-[15px] capitalize">{patientData.gender || "-"}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">DOB</div>
-                  <div className="font-medium">
+                  <div className="text-[13px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-1">DOB</div>
+                  <div className="font-medium text-[var(--color-text-primary)] text-[15px]">
                     {patientData.dateOfBirth ? new Date(patientData.dateOfBirth).toLocaleDateString() : "-"}
                   </div>
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Address</div>
-                <div className="font-medium">
+                <div className="text-[13px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Address</div>
+                <div className="font-medium text-[var(--color-text-primary)] text-[15px]">
                   {patientData.address?.street ? `${patientData.address.street}, ${patientData.address.city}` : "-"}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="border-slate-200 bg-slate-50 dark:bg-slate-900/50">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-slate-100 rounded-full dark:bg-slate-800">
-                  <Activity className="h-6 w-6 text-slate-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Health Status</h3>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Awaiting enough data for health assessment.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Health Status Card */}
+          <div className="bg-[#F0FDF4] rounded-[var(--radius-xl)] border border-[#16A34A]/20 shadow-sm p-6 flex items-start gap-4 hover:shadow-md transition-shadow duration-300">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white border border-[#16A34A]/20 shrink-0 shadow-sm">
+              <Activity className="h-6 w-6 text-[#16A34A]" />
+            </div>
+            <div>
+              <h3 className="font-sans font-semibold text-[var(--color-text-primary)] text-lg">Health Status</h3>
+              <p className="text-sm text-[var(--color-text-secondary)] mt-1 leading-relaxed">
+                {patientData.riskLevel && patientData.riskLevel !== "PENDING" ? (
+                  <>Current assessed risk: <StatusBadge status={patientData.riskLevel} /></>
+                ) : (
+                  "Awaiting enough data for a comprehensive health assessment."
+                )}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: History & Notes */}
-        <div className="space-y-6 md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Test History</CardTitle>
-              <CardDescription>Previous bookings and laboratory results.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {history.length > 0 ? (
-                <DataTable 
-                  columns={[
-                    { header: "Date", accessorKey: "date" },
-                    { header: "Package", accessorKey: "package" },
-                    { header: "Laboratory", accessorKey: "lab" },
-                    { 
-                      header: "Status", 
-                      cell: (row) => <StatusBadge status={row.status} />
-                    },
-                    { 
-                      header: "Action", 
-                      cell: () => (
-                        <Button variant="ghost" size="sm" className="text-blue-600">
-                          View
+        <div className="space-y-[32px]">
+          
+          {/* Test History Card */}
+          <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
+            <div className="px-6 py-[18px] border-b border-[var(--color-border)] bg-[var(--color-surface-2)]/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h2 className="font-sans text-[16px] font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-lime)]/20 shadow-sm shrink-0">
+                  <FileText className="h-4 w-4 text-[var(--color-forest)]" />
+                </div>
+                Test History
+              </h2>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--color-border)] bg-gray-50/30">
+                    <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Date</th>
+                    <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Package</th>
+                    <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Laboratory</th>
+                    <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Status</th>
+                    <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.length > 0 ? history.map((item: any, idx: number) => (
+                    <tr key={idx} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]/50 transition-colors">
+                      <td className="px-[24px] py-[16px] text-[14px] font-medium text-[var(--color-text-secondary)]">
+                        {item.date ? new Date(item.date).toLocaleDateString() : "-"}
+                      </td>
+                      <td className="px-[24px] py-[16px] text-[14px] font-medium text-[var(--color-text-primary)]">
+                        {item.package || "-"}
+                      </td>
+                      <td className="px-[24px] py-[16px] text-[14px] text-[var(--color-text-secondary)]">
+                        {item.lab || "-"}
+                      </td>
+                      <td className="px-[24px] py-[16px]">
+                        <StatusBadge status={item.status || "PENDING"} />
+                      </td>
+                      <td className="px-[24px] py-[16px] text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-[var(--color-forest)] hover:text-[var(--color-forest-mid)] hover:bg-[var(--color-lime)]/20 font-medium"
+                          onClick={() => {
+                            if (user?.role === 'INTERPRETER') {
+                              navigate(`/interpreter/editor/${item.referralCode || item._id}`)
+                            } else {
+                              toast.info("Detailed results view coming soon")
+                            }
+                          }}
+                        >
+                          {user?.role === 'INTERPRETER' ? "Review Results" : "View Results"}
                         </Button>
-                      )
-                    },
-                  ]}
-                  data={history}
-                />
-              ) : (
-                <EmptyState 
-                  icon={<FileText className="h-10 w-10 text-muted-foreground" />}
-                  title="No test history"
-                  description="This patient has no recorded test history yet."
-                />
-              )}
-            </CardContent>
-          </Card>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="px-[24px] py-[64px] text-center">
+                        <div className="flex flex-col items-center justify-center text-[var(--color-text-muted)]">
+                          <div className="h-14 w-14 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100 shadow-inner">
+                            <FileText className="h-6 w-6 text-gray-400" />
+                          </div>
+                          <p className="font-medium text-[16px] text-[var(--color-text-secondary)]">No test history</p>
+                          <p className="text-[14px] mt-1">This patient has no recorded test history yet.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <div>
-                <CardTitle className="text-lg">Clinical Interpretations</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
+          {/* Clinical Interpretations Card */}
+          <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
+            <div className="px-6 py-[18px] border-b border-[var(--color-border)] bg-[var(--color-surface-2)]/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h2 className="font-sans text-[16px] font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-50 border border-orange-100 shadow-sm shrink-0">
+                  <Activity className="h-4 w-4 text-orange-500" />
+                </div>
+                Clinical Interpretations
+              </h2>
+            </div>
+            <div className="p-6">
               {notes.length > 0 ? (
                 <div className="space-y-6">
-                  {notes.map((note, idx) => (
+                  {notes.map((note: any, idx: number) => (
                     <div key={idx} className="flex gap-4 relative">
-                      {/* Timeline Line */}
                       {idx !== notes.length - 1 && (
-                        <div className="absolute left-4 top-8 bottom-[-24px] w-0.5 bg-border"></div>
+                        <div className="absolute left-4 top-8 bottom-[-24px] w-0.5 bg-[var(--color-border)]"></div>
                       )}
                       
-                      <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-muted border ring-4 ring-background">
+                      <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white border border-[var(--color-border)] shadow-sm">
                         {note.author === "System" ? (
-                          <AlertCircle className="h-4 w-4 text-amber-500" />
+                          <AlertCircle className="h-4 w-4 text-orange-500" />
                         ) : (
-                          <FileText className="h-4 w-4 text-blue-500" />
+                          <FileText className="h-4 w-4 text-[var(--color-forest)]" />
                         )}
                       </div>
                       <div className="flex-1 space-y-1 pb-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{note.author}</p>
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Clock className="mr-1 h-3 w-3" />
-                            {note.date}
+                          <p className="text-[14px] font-bold text-[var(--color-text-primary)]">{note.author || "Clinical Interpreter"}</p>
+                          <div className="flex items-center text-[12px] font-medium text-[var(--color-text-muted)]">
+                            <Clock className="mr-1 h-3.5 w-3.5" />
+                            {note.date ? new Date(note.date).toLocaleDateString() : "Unknown Date"}
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground bg-slate-50 dark:bg-slate-900/50 p-3 rounded-md border mt-2">
+                        <p className="text-[14px] text-[var(--color-text-secondary)] bg-[var(--color-surface-2)] p-4 rounded-lg border border-[var(--color-border)] mt-2 leading-relaxed">
                           {note.note}
                         </p>
                       </div>
@@ -185,16 +245,18 @@ export function PatientProfile() {
                   ))}
                 </div>
               ) : (
-                <EmptyState 
-                  icon={<Activity className="h-10 w-10 text-muted-foreground" />}
-                  title="No clinical notes"
-                  description="No interpretations or notes have been recorded."
-                />
+                <div className="flex flex-col items-center justify-center text-[var(--color-text-muted)] py-8">
+                  <Activity className="h-10 w-10 mb-3 opacity-20" />
+                  <p className="font-medium text-[15px] text-[var(--color-text-secondary)]">No clinical notes</p>
+                  <p className="text-[14px] mt-1">No interpretations or notes have been recorded.</p>
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
         </div>
       </div>
+      <EditPatientModal open={isEditModalOpen} onOpenChange={setIsEditModalOpen} patient={patientData} />
     </div>
   )
 }

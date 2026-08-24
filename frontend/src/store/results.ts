@@ -30,69 +30,21 @@ export interface PendingInterpretation {
 interface ResultsState {
   assignedClients: AssignedClient[];
   pendingInterpretations: PendingInterpretation[];
+  completedInterpretationsCount: number;
   submitLabResult: (referralCode: string, labData: Record<string, any[]>, notes: string) => void;
   publishInterpretation: (referralCode: string, assessmentData: any) => void;
   markClientArrived: (referralCode: string) => void;
 }
 
-// Initial mock data
-const INITIAL_CLIENTS: AssignedClient[] = [
-  {
-    id: "bkg-1",
-    referralCode: "CRV-2025-A7K3P2",
-    clientName: "Kwame Mensah",
-    package: "Complete Wellness",
-    packageId: "pkg-4",
-    pillar: "METABOLIC",
-    bookedFor: "Today, 09:00 AM",
-    status: "PENDING_ARRIVAL"
-  },
-  {
-    id: "bkg-2",
-    referralCode: "CRV-2025-M9B4R1",
-    clientName: "Ama Serwaa",
-    package: "Complete Wellness",
-    packageId: "pkg-4",
-    pillar: "METABOLIC",
-    bookedFor: "Today, 11:30 AM",
-    status: "ATTENDED"
-  },
-  {
-    id: "bkg-3",
-    referralCode: "CRV-2025-X2L8J4",
-    clientName: "Kofi Annan",
-    package: "Renal Check",
-    packageId: "pkg-2",
-    pillar: "RENAL",
-    bookedFor: "Yesterday, 02:00 PM",
-    status: "RESULTS_ENTERED"
-  }
-];
+// Initial mock data removed as requested
+const INITIAL_CLIENTS: AssignedClient[] = [];
 
-const INITIAL_PENDING: PendingInterpretation[] = [
-  {
-    id: "res-1",
-    submittedAt: "2 hours ago",
-    referralCode: "CRV-2025-V5N1C9",
-    clientName: "Abena Osei",
-    package: "Metabolic Profile",
-    packageId: "pkg-3",
-    pillar: "METABOLIC",
-    pillars: ["METABOLIC"],
-    lab: "MediScan Ghana",
-    labData: {
-      METABOLIC: [
-        { name: "Fasting Blood Glucose", value: "7.1", unit: "mmol/L", normalRange: "3.9 - 5.5", isOutlier: true },
-        { name: "HbA1c", value: "6.4", unit: "%", normalRange: "< 5.7", isOutlier: true },
-        { name: "Body Mass Index", value: "24.5", unit: "kg/m²", normalRange: "18.5 - 24.9", isOutlier: false }
-      ]
-    }
-  }
-];
+const INITIAL_PENDING: PendingInterpretation[] = [];
 
 export const useResultsStore = create<ResultsState>((set) => ({
   assignedClients: INITIAL_CLIENTS,
   pendingInterpretations: INITIAL_PENDING,
+  completedInterpretationsCount: 0,
 
   markClientArrived: (referralCode) => {
     set((state) => ({
@@ -142,6 +94,7 @@ export const useResultsStore = create<ResultsState>((set) => ({
       pendingInterpretations: state.pendingInterpretations.filter(
         (p) => p.referralCode !== referralCode
       ),
+      completedInterpretationsCount: state.completedInterpretationsCount + 1,
     }));
   }
 }));

@@ -79,7 +79,7 @@ export function PatientList() {
                 columns={[
                   { 
                     header: "Patient ID", 
-                    cell: (row: any) => <span className="font-mono text-xs">{row._id?.substring(0, 8)}</span> 
+                    cell: (row: any) => <span className="font-mono text-[13px] font-medium text-[var(--color-text-secondary)]">PT-{String(row._id || row.id).slice(-6).toUpperCase()}</span> 
                   },
                   { 
                     header: "Name", 
@@ -110,7 +110,7 @@ export function PatientList() {
                         <Button variant="ghost" size="icon" title="View Profile" onClick={() => navigate(`/patients/${row._id}`)}>
                           <Activity className="h-4 w-4 text-blue-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" title="View Results">
+                        <Button variant="ghost" size="icon" title="View Results" onClick={() => navigate(`/patients/${row._id}`)}>
                           <FileText className="h-4 w-4 text-slate-600" />
                         </Button>
                       </div>

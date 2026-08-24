@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-do
 import { useBookings } from "@/hooks/useBookings"
 import { useLaboratories } from "@/hooks/useLaboratories"
 import { useAuthStore } from "@/store/auth"
+import { useResultsStore } from "@/store/results"
 import { cn } from "@/lib/utils"
 import { 
   LayoutDashboard, 
@@ -23,6 +24,7 @@ import {
   Settings,
   User as UserIcon
 } from "lucide-react"
+import toast from "react-hot-toast"
 
 type NavItem = { href: string; label: string; icon: any; badge?: number }
 type NavGroup = { title: string; items: NavItem[] }
@@ -45,7 +47,9 @@ export function DashboardLayout() {
   const labs = labsData?.items || labsData || []
   const myLab = user?.laboratoryId ? labs.find((l: any) => (l._id || l.id) === user.laboratoryId) : null
 
-  const navGroups = getNavGroupsForRole(user?.role || "CLIENT", pendingBookingsCount)
+  const { pendingInterpretations } = useResultsStore()
+
+  const navGroups = getNavGroupsForRole(user?.role || "CLIENT", pendingBookingsCount, pendingInterpretations.length)
 
   // Smart Breadcrumbs
   const getBreadcrumbs = () => {
@@ -80,6 +84,11 @@ export function DashboardLayout() {
       
       if (paths[i] === 'results' && paths[0] === 'lab') {
         href = '/lab/dashboard';
+      }
+
+      // Format MongoDB IDs (24 char hex strings) to look cleaner
+      if (/^[a-fA-F0-9]{24}$/.test(paths[i])) {
+        label = `ID: ${paths[i].slice(-6).toUpperCase()}`;
       }
       
       crumbs.push({ label, href, isLast });
@@ -307,17 +316,25 @@ export function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-[16px]">
-            {/* Search */}
-            <button className="flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)]">
-              <Search className="h-[18px] w-[18px]" />
-            </button>
+            {/* Profile Settings */}
+            <Link 
+              to="/settings" 
+              className="group flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-all hover:bg-[rgba(126,232,162,0.15)] hover:text-[var(--color-forest)] shadow-sm hover:shadow"
+              title="My Profile"
+            >
+              <UserIcon className="h-[18px] w-[18px] transition-transform group-hover:scale-110" />
+            </Link>
             
             {/* Notifications */}
             <div className="relative">
-              <button className="flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)]">
-                <Bell className="h-[18px] w-[18px]" />
+              <button 
+                onClick={() => toast.success("You're all caught up! No new notifications.")}
+                className="group flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-all hover:bg-orange-50 hover:text-orange-500 shadow-sm hover:shadow"
+                title="Notifications"
+              >
+                <Bell className="h-[18px] w-[18px] transition-transform group-hover:rotate-12" />
               </button>
-              <div className="absolute right-0 top-0 h-[8px] w-[8px] rounded-full border-2 border-white bg-[var(--color-danger)]"></div>
+              <div className="absolute right-0 top-0 h-[8px] w-[8px] rounded-full border-2 border-white bg-[var(--color-danger)] animate-pulse"></div>
             </div>
 
             <div className="h-[24px] w-[1px] bg-[var(--color-border)] mx-1"></div>
@@ -342,7 +359,7 @@ export function DashboardLayout() {
   )
 }
 
-function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGroup[] {
+function getNavGroupsForRole(role: string, pendingBookingsCount?: number, pendingInterpretationsCount?: number): NavGroup[] {
   switch (role) {
     case "ADMIN":
       return [
@@ -377,8 +394,10 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGr
           title: "MAIN",
           items: [
             { href: "/lab/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/lab/services", label: "Catalog", icon: FileText },
             { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: pendingBookingsCount || undefined },
             { href: "/patients", label: "Clients", icon: Users },
+            { href: "/settings", label: "Settings", icon: Settings },
           ]
         }
       ]
@@ -393,7 +412,7 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number): NavGr
         {
           title: "CLINICAL",
           items: [
-            { href: "/interpretations/queue", label: "Interpretations", icon: FileText, badge: 3 },
+            { href: "/interpretations/queue", label: "Interpretations", icon: FileText, badge: pendingInterpretationsCount || undefined },
             { href: "/patients", label: "Clients", icon: Users },
           ]
         }

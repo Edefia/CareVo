@@ -1,13 +1,13 @@
 import { UserModel } from './auth.model.js';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../../shared/errors/index.js';
 import * as argon2 from 'argon2';
-// @ts-expect-error otplib types are inconsistent in ES modules
+
 import * as otplib from 'otplib';
 const { authenticator } = otplib;
 import { generateSessionId, signAccessToken, signRefreshToken, verifyRefreshToken, generateSecureToken, hashToken } from '../../utils/token.js';
 import { AuditService } from '../audit/audit.service.js';
 import { notificationService } from '../notifications/notification.service.js';
-import { ROLES, MFA_REQUIRED_ROLES, type Role } from '../../shared/constants/roles.js';
+import { ROLES, type Role } from '../../shared/constants/roles.js';
 import { env } from '../../config/env.js';
 import { encrypt, decrypt } from '../../utils/crypto.js';
 import { logger } from '../../utils/logger.js';
@@ -137,7 +137,7 @@ export class AuthService {
     delCache(attemptsKey);
 
     // Check MFA
-    const mfaRequired = MFA_REQUIRED_ROLES.includes(user.role) || user.mfaEnabled;
+    const mfaRequired = user.mfaEnabled;
 
     if (mfaRequired) {
       // Issue temporary token for MFA step

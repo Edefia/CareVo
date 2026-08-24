@@ -2,43 +2,66 @@
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { ArrowLeft, Calendar, AlertCircle, CheckCircle2, Info, FileText, ArrowRight, Stethoscope } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useInterpretation } from "@/hooks/useInterpretations"
+import { LoadingState } from "@/components/shared/LoadingState"
 
 export function ResultDetail() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   
-  // Mock Data aligned with Image 3 Requirements
-  const resultData = {
-    id: id || "R-8842",
-    package: "Comprehensive Wellness Screen",
-    date: "Oct 12, 2025",
-    overallRisk: "MODERATE",
-    interpreterName: "Dr. Michael Chen",
-    interpretationSummary: "Your overall profile is good, but there are a few areas of concern. Blood pressure and LDL cholesterol are slightly elevated. This increases your cardiovascular risk profile. Kidney and metabolic panels are within healthy limits.",
-    recommendations: [
-      "Adopt a heart-healthy diet low in saturated fats and sodium.",
-      "Engage in at least 150 minutes of moderate-intensity aerobic exercise per week.",
-      "Consider a follow-up appointment in 3 months to re-check lipid panel."
-    ],
-    tests: [
-      { category: "Cardiovascular", name: "Systolic Blood Pressure", result: "135", unit: "mmHg", refRange: "< 120", risk: "HIGH", isOutlier: true },
-      { category: "Cardiovascular", name: "Diastolic Blood Pressure", result: "88", unit: "mmHg", refRange: "< 80", risk: "MODERATE", isOutlier: true },
-      { category: "Cardiovascular", name: "Total Cholesterol", result: "4.8", unit: "mmol/L", refRange: "< 5.0", risk: "LOW", isOutlier: false },
-      { category: "Cardiovascular", name: "LDL Cholesterol", result: "3.2", unit: "mmol/L", refRange: "< 3.0", risk: "MODERATE", isOutlier: true },
-      { category: "Renal", name: "Creatinine", result: "85", unit: "μmol/L", refRange: "60 - 110", risk: "LOW", isOutlier: false },
-      { category: "Renal", name: "eGFR", result: "95", unit: "mL/min/1.73m²", refRange: "> 90", risk: "LOW", isOutlier: false },
-      { category: "Metabolic", name: "Fasting Glucose", result: "5.1", unit: "mmol/L", refRange: "3.9 - 5.5", risk: "LOW", isOutlier: false },
-      { category: "Metabolic", name: "HbA1c", result: "5.4", unit: "%", refRange: "< 5.7", risk: "LOW", isOutlier: false },
-    ]
-  }
+  const { data: response, isLoading } = useInterpretation(id!)
+  const interpretation = response?.data || response
 
   const getRiskStyles = (risk: string) => {
     switch (risk) {
-      case 'LOW': return { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: <CheckCircle2 className="h-5 w-5" /> }
+      case 'LOW':
+      case 'NORMAL': return { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: <CheckCircle2 className="h-5 w-5" /> }
       case 'MODERATE': return { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', icon: <Info className="h-5 w-5" /> }
-      case 'HIGH': return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: <AlertCircle className="h-5 w-5" /> }
+      case 'HIGH': 
+      case 'CRITICAL': return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: <AlertCircle className="h-5 w-5" /> }
       default: return { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', icon: <Info className="h-5 w-5" /> }
     }
+  }
+
+  if (isLoading) return <LoadingState message="Loading your interpretation..." />
+
+  if (!interpretation) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <AlertCircle className="h-10 w-10 text-slate-400 mb-4" />
+        <h2 className="text-lg font-semibold text-slate-700">Result Not Found</h2>
+        <Button onClick={() => navigate(-1)} variant="outline" className="mt-4">Go Back</Button>
+      </div>
+    )
+  }
+
+  const resultRecord = interpretation.resultId || {}
+  const interpreter = interpretation.interpreterId || {}
+
+  const resultData = {
+    id: resultRecord.referralCode || interpretation._id,
+    package: resultRecord.panelName || "Health Screen",
+    date: new Date(resultRecord.collectionDate || interpretation.createdAt).toLocaleDateString(),
+    // Calculate overall risk based on biomarkers
+    overallRisk: resultRecord.biomarkers?.some((b: any) => b.flag === 'CRITICAL' || b.flag === 'HIGH') 
+      ? 'HIGH' 
+      : resultRecord.biomarkers?.some((b: any) => b.flag === 'LOW' || b.flag === 'ABNORMAL') 
+        ? 'MODERATE' 
+        : 'LOW',
+    interpreterName: interpreter.firstName ? `${interpreter.firstName} ${interpreter.lastName}` : "CareVo Clinical Team",
+    interpretationSummary: interpretation.summary || interpretation.clinicalNotes || "No summary provided.",
+    recommendations: interpretation.recommendations 
+      ? interpretation.recommendations.split('\n').filter((r: string) => r.trim() !== '')
+      : ["No specific recommendations provided."],
+    tests: resultRecord.biomarkers?.map((b: any) => ({
+      category: b.name.includes("Cholesterol") ? "Cardiovascular" : "Laboratory Panel", // simplified category logic
+      name: b.name,
+      result: b.value,
+      unit: b.unit,
+      refRange: b.referenceRange,
+      risk: b.flag,
+      isOutlier: b.flag !== 'NORMAL'
+    })) || []
   }
 
   const overallRisk = getRiskStyles(resultData.overallRisk)
