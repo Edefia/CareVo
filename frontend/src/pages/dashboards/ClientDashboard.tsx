@@ -486,7 +486,11 @@ function ReturningUserView({ userName, results, bookings }: { userName: string; 
               Overall Health Risk: {overallRisk}
             </h3>
             <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">
+<<<<<<< HEAD
               Based on your most recent CareVo screening results.
+=======
+              Based on your most recent CareBis Prime screening.
+>>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
             </p>
           </div>
         </div>

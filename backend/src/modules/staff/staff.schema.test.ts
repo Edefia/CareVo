@@ -6,7 +6,7 @@ describe('Staff Validation Schemas', () => {
   describe('inviteStaffSchema', () => {
     it('should validate a correct payload for non-lab roles without laboratoryId', () => {
       const payload = {
-        email: 'admin@carevo.com',
+        email: 'admin@carebis-prime.com',
         role: ROLES.ADMIN,
       };
 

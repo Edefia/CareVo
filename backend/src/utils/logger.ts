@@ -31,7 +31,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL ?? 'info',
-  defaultMeta: { service: 'carevo-api' },
+  defaultMeta: { service: 'carebis-prime-api' },
   format: winston.format.combine(
     redactFormat(),
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),

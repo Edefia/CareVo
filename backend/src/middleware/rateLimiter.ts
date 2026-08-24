@@ -45,7 +45,7 @@ export const uploadLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req, res),
+  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req as any, res as any),
   message: {
     success: false,
     error: {
@@ -64,7 +64,7 @@ export const generalLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req, res),
+  keyGenerator: (req, res) => (req as any).user?.id ?? ipKeyGenerator(req as any, res as any),
   message: {
     success: false,
     error: {

@@ -1,12 +1,19 @@
 import { useState, useRef } from "react"
+<<<<<<< HEAD
 import { Building2, Users, Bell, Shield, Database, LayoutDashboard, User, Camera, Loader2, CheckCircle2 } from "lucide-react"
 
+=======
+import { Building2, Users, Bell, Shield, Database, LayoutDashboard, User, Camera, Loader2, CheckCircle2, History } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+>>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuthStore } from "@/store/auth"
 import { userService } from "@/api/services/user"
 import toast from "react-hot-toast"
+import { useAuditLogs } from "@/hooks/useAuditLogs"
+import { DataTable } from "@/components/shared/DataTable"
 
 export function SettingsDashboard() {
   const { user, setUser } = useAuthStore()
@@ -16,7 +23,12 @@ export function SettingsDashboard() {
   
   const [isLoading, setIsLoading] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [auditPage, setAuditPage] = useState(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  const { data: auditLogsData, isLoading: auditLogsLoading } = useAuditLogs({ page: auditPage, limit: 15 })
+  const auditLogs = auditLogsData?.data?.items || auditLogsData?.items || []
+  const auditTotalPages = auditLogsData?.data?.totalPages || auditLogsData?.totalPages || 1
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -40,6 +52,7 @@ export function SettingsDashboard() {
     { id: "users", label: "User Management", icon: Users, showFor: ['ADMIN'] },
     { id: "notifications", label: "Notifications", icon: Bell, showFor: ['ADMIN', 'LAB'] },
     { id: "integrations", label: "Integrations", icon: Database, showFor: ['ADMIN'] },
+    { id: "audit", label: "Audit Logs", icon: History, showFor: ['ADMIN'] },
     { id: "appearance", label: "Appearance", icon: LayoutDashboard, showFor: ['ADMIN', 'CLIENT', 'INTERPRETER', 'LAB'] },
   ]
 
@@ -335,6 +348,82 @@ export function SettingsDashboard() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* AUDIT LOGS TAB */}
+          {activeTab === "audit" && (
+            <Card className="border shadow-sm">
+              <CardHeader>
+                <CardTitle>System Audit Logs</CardTitle>
+                <CardDescription>
+                  Track all actions performed across the platform.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {auditLogsLoading ? (
+                  <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
+                ) : (
+                  <>
+                    <DataTable 
+                      columns={[
+                        { 
+                          header: "Timestamp", 
+                          cell: (row) => new Date(row.timestamp).toLocaleString()
+                        },
+                        { 
+                          header: "Action", 
+                          cell: (row) => <span className="font-semibold text-slate-700">{row.action}</span>
+                        },
+                        { 
+                          header: "Actor ID", 
+                          cell: (row) => <span className="font-mono text-xs bg-slate-100 p-1 rounded">{row.actorId}</span>
+                        },
+                        { 
+                          header: "Resource Type", 
+                          cell: (row) => <span className="text-sm">{row.resourceType}</span>
+                        },
+                        { 
+                          header: "Details", 
+                          cell: (row) => (
+                            <span className="text-xs text-muted-foreground truncate max-w-[200px] block" title={JSON.stringify(row.details)}>
+                              {JSON.stringify(row.details)}
+                            </span>
+                          )
+                        },
+                      ]}
+                      data={auditLogs}
+                    />
+                    
+                    {/* Pagination Controls */}
+                    {auditTotalPages > 1 && (
+                      <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--color-border)] bg-gray-50/50">
+                        <div className="text-sm text-slate-500">
+                          Page {auditPage} of {auditTotalPages}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setAuditPage(p => Math.max(1, p - 1))}
+                            disabled={auditPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setAuditPage(p => Math.min(auditTotalPages, p + 1))}
+                            disabled={auditPage === auditTotalPages}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* ADMIN TABS (PLACEHOLDERS) */}

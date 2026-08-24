@@ -17,7 +17,7 @@ export class AuditService {
         actorRole: entry.actorRole,
         action: entry.action,
         resourceType: entry.resourceType,
-        resourceId: new mongoose.Types.ObjectId(entry.resourceId),
+        resourceId: entry.resourceId,
         previousState: entry.previousState ?? null,
         newState: entry.newState ?? null,
         ipAddress: entry.ipAddress,

@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'carevo-api',
+      name: 'carebis-prime-api',
       script: 'dist/server.js',
       instances: 'max',
       exec_mode: 'cluster',

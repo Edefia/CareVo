@@ -52,8 +52,8 @@ export const staffService = {
     // Send email
     await notificationService.sendEmail(
       email.toLowerCase(),
-      'CareVo Staff Invitation',
-      `<p>You have been invited to join CareVo as a ${role}. Click <a href="${env.FRONTEND_URL}/accept-invite?token=${token}">here</a> to accept your invitation.</p>`
+      'CareBis Prime Staff Invitation',
+      `<p>You have been invited to join CareBis Prime as a ${role}. Click <a href="${env.FRONTEND_URL}/accept-invite?token=${token}">here</a> to accept your invitation.</p>`
     );
   },
 

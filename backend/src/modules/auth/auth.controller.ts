@@ -36,7 +36,12 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    sendSuccess(res, { user: (result as any).user });
+    sendSuccess(res, { 
+      user: (result as any).user,
+      token: (result as any).accessToken,
+      accessToken: (result as any).accessToken,
+      refreshToken: (result as any).refreshToken
+    });
   }
 
   static async refresh(req: Request, res: Response): Promise<void> {
@@ -59,7 +64,12 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    sendSuccess(res, { message: 'Tokens refreshed successfully' });
+    sendSuccess(res, { 
+      message: 'Tokens refreshed successfully',
+      token: tokens.accessToken,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken
+    });
   }
 
   static async logout(req: Request, res: Response): Promise<void> {
@@ -111,7 +121,12 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    sendSuccess(res, { user: (result as any).user });
+    sendSuccess(res, { 
+      user: (result as any).user,
+      token: (result as any).accessToken,
+      accessToken: (result as any).accessToken,
+      refreshToken: (result as any).refreshToken
+    });
   }
 
   static async resendMfaCode(req: Request, res: Response): Promise<void> {

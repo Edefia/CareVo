@@ -24,7 +24,7 @@ export function LandingPage() {
           
           {/* Left: Brand */}
           <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[22px] font-semibold text-[var(--color-forest)]">CareVo</span>
+            <span className="font-serif text-[22px] font-semibold text-[var(--color-forest)]">CareBis Prime</span>
             <sup className="text-[10px] font-bold text-[var(--color-forest)] mt-1">®</sup>
           </Link>
 
@@ -91,7 +91,7 @@ export function LandingPage() {
 
                 {/* Sub-heading */}
                 <p className="mb-[40px] max-w-[440px] font-sans text-[16px] md:text-[18px] font-normal leading-[1.7] text-[var(--color-text-secondary)]">
-                  CareVo monitors your Cardio, Renal, and Metabolic health — delivering early screening, expert interpretation, and personalised guidance before illness takes hold.
+                  CareBis Prime monitors your Cardio, Renal, and Metabolic health — delivering early screening, expert interpretation, and personalised guidance before illness takes hold.
                 </p>
 
                 {/* CTA Row */}
@@ -200,10 +200,10 @@ export function LandingPage() {
               {/* Left Column: Title & Photo */}
               <div className="w-full lg:w-[45%] lg:sticky lg:top-[120px]">
                 <div className="mb-[24px] inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-[14px] py-[4px] font-sans text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-forest)]">
-                  The CareVo Journey
+                  The CareBis Prime Journey
                 </div>
                 <h2 className="mb-[16px] font-serif text-[42px] leading-tight text-[var(--color-text-primary)]">
-                  How CareVo works
+                  How CareBis Prime works
                 </h2>
                 <p className="mb-[48px] max-w-[380px] font-sans text-[16px] text-[var(--color-text-muted)] leading-[1.6]">
                   From booking to understanding your results in 7 clear steps.
@@ -250,7 +250,7 @@ export function LandingPage() {
                     <div className="pt-2">
                       <h3 className="font-sans text-[18px] font-semibold text-[var(--color-text-primary)] mb-2">Choose a Laboratory</h3>
                       <p className="font-sans text-[15px] text-[var(--color-text-muted)] leading-[1.6]">
-                        Select a CareVo partner laboratory near you that offers your chosen package.
+                        Select a CareBis Prime partner laboratory near you that offers your chosen package.
                       </p>
                     </div>
                   </div>
@@ -276,7 +276,7 @@ export function LandingPage() {
                     <div className="pt-2">
                       <h3 className="font-sans text-[18px] font-semibold text-[var(--color-forest)] mb-2">Get Your Referral Code</h3>
                       <p className="font-sans text-[15px] text-[var(--color-text-muted)] leading-[1.6]">
-                        Receive your unique CareVo Referral Code — your digital key that connects your booking to the laboratory securely.
+                        Receive your unique CareBis Prime Referral Code — your digital key that connects your booking to the laboratory securely.
                       </p>
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export function LandingPage() {
                     <div className="pt-2">
                       <h3 className="font-sans text-[18px] font-semibold text-[var(--color-text-primary)] mb-2">Expert Interpretation</h3>
                       <p className="font-sans text-[15px] text-[var(--color-text-muted)] leading-[1.6]">
-                        CareVo's clinical interpreters review your raw results and deliver a plain-English health report with risk classification.
+                        CareBis Prime's clinical interpreters review your raw results and deliver a plain-English health report with risk classification.
                       </p>
                     </div>
                   </div>
@@ -324,7 +324,7 @@ export function LandingPage() {
                     <div className="pt-2">
                       <h3 className="font-sans text-[18px] font-semibold text-[var(--color-text-primary)] mb-2">Receive & Act</h3>
                       <p className="font-sans text-[15px] text-[var(--color-text-muted)] leading-[1.6]">
-                        Access your personalised report in your dashboard. Book follow-up care if recommended — all within CareVo.
+                        Access your personalised report in your dashboard. Book follow-up care if recommended — all within CareBis Prime.
                       </p>
                     </div>
                   </div>
@@ -411,7 +411,7 @@ export function LandingPage() {
                 </div>
                 <h3 className="mb-[8px] font-sans text-[17px] font-semibold text-white">Clinical Interpretation</h3>
                 <p className="font-sans text-[14px] leading-[1.7] text-white/65">
-                  Your raw results are reviewed by trained CareVo interpreters who translate complex data into personalised health guidance.
+                  Your raw results are reviewed by trained CareBis Prime interpreters who translate complex data into personalised health guidance.
                 </p>
               </div>
 
@@ -443,7 +443,7 @@ export function LandingPage() {
                   For Laboratory Partners
                 </div>
                 <h2 className="mb-[24px] font-serif text-[44px] leading-tight text-[var(--color-text-primary)]">
-                  Join the CareVo laboratory network.
+                  Join the CareBis Prime laboratory network.
                 </h2>
                 <p className="mb-[40px] max-w-[440px] font-sans text-[16px] text-[var(--color-text-secondary)] leading-[1.7]">
                   Expand your reach and streamline your operations with our digital-first platform built specifically for modern labs.
@@ -453,7 +453,7 @@ export function LandingPage() {
                   {[
                     "Accept pre-paid bookings via Referral Codes",
                     "Digital result entry for Cardio, Renal & Metabolic panels",
-                    "Automatic result routing to CareVo Interpreters",
+                    "Automatic result routing to CareBis Prime Interpreters",
                     "Real-time analytics on your lab's performance"
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-[12px]">
@@ -472,7 +472,7 @@ export function LandingPage() {
                   {/* Fake Topbar */}
                   <div className="bg-[var(--color-forest)] px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-serif text-[14px] font-semibold text-white">CareVo</span>
+                      <span className="font-serif text-[14px] font-semibold text-white">CareBis Prime</span>
                       <span className="text-[10px] text-white/70 uppercase">Laboratory</span>
                     </div>
                     <div className="flex gap-2">
@@ -552,7 +552,7 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-[48px] mb-[64px]">
             {/* Column 1: Brand */}
             <div>
-              <div className="mb-4 font-serif text-[24px] font-semibold text-white">CareVo</div>
+              <div className="mb-4 font-serif text-[24px] font-semibold text-white">CareBis Prime</div>
               <p className="font-sans text-[14px] leading-relaxed mb-6">Preventive care for everyone.</p>
               <div className="flex gap-[16px]">
                 {/* Social Placeholders */}
@@ -597,7 +597,7 @@ export function LandingPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between border-t border-white/10 pt-[24px] font-sans text-[13px] gap-4">
-            <div>&copy; {new Date().getFullYear()} CareVo Health. All rights reserved.</div>
+            <div>&copy; {new Date().getFullYear()} CareBis Prime Health. All rights reserved.</div>
             <div>Made with care in Ghana 🇬🇭</div>
           </div>
 

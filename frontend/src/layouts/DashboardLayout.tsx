@@ -22,9 +22,14 @@ import {
   Bell,
   ChevronRight,
   Settings,
-  User as UserIcon
+  User as UserIcon,
+  Send
 } from "lucide-react"
+<<<<<<< HEAD
 import toast from "react-hot-toast"
+=======
+import { NotificationPopover } from "@/components/shared/NotificationPopover"
+>>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 
 type NavItem = { href: string; label: string; icon: any; badge?: number }
 type NavGroup = { title: string; items: NavItem[] }
@@ -140,7 +145,7 @@ export function DashboardLayout() {
           {isSidebarExpanded || isMobileOpen ? (
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1">
-                <span className="font-serif text-[20px] font-semibold text-white">CareVo</span>
+                <span className="font-serif text-[20px] font-semibold text-white">CareBis Prime</span>
                 <sup className="mt-1 text-[10px] font-bold text-[var(--color-lime)]">®</sup>
               </div>
               {myLab && (
@@ -326,6 +331,7 @@ export function DashboardLayout() {
             </Link>
             
             {/* Notifications */}
+<<<<<<< HEAD
             <div className="relative">
               <button 
                 onClick={() => toast.success("You're all caught up! No new notifications.")}
@@ -336,6 +342,9 @@ export function DashboardLayout() {
               </button>
               <div className="absolute right-0 top-0 h-[8px] w-[8px] rounded-full border-2 border-white bg-[var(--color-danger)] animate-pulse"></div>
             </div>
+=======
+            <NotificationPopover />
+>>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 
             <div className="h-[24px] w-[1px] bg-[var(--color-border)] mx-1"></div>
 
@@ -367,6 +376,7 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number, pendin
           title: "SYSTEM",
           items: [
             { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/notifications/broadcast", label: "Broadcast", icon: Send },
             { href: "/admin/packages", label: "Packages", icon: FileText },
             { href: "/admin/users", label: "Users", icon: Users },
             { href: "/audit", label: "Audit Logs", icon: Activity },
@@ -394,7 +404,11 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number, pendin
           title: "MAIN",
           items: [
             { href: "/lab/dashboard", label: "Dashboard", icon: LayoutDashboard },
+<<<<<<< HEAD
             { href: "/lab/services", label: "Catalog", icon: FileText },
+=======
+            { href: "/notifications/broadcast", label: "Broadcast", icon: Send },
+>>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
             { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: pendingBookingsCount || undefined },
             { href: "/patients", label: "Clients", icon: Users },
             { href: "/settings", label: "Settings", icon: Settings },
@@ -407,6 +421,7 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number, pendin
           title: "MAIN",
           items: [
             { href: "/interpreter/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/notifications/broadcast", label: "Broadcast", icon: Send },
           ]
         },
         {

@@ -4,7 +4,7 @@ import { ValidationError } from '../shared/errors/index.js';
 
 type ValidationSource = 'body' | 'params' | 'query';
 
-export function validate(schema: z.AnyZodObject, source: ValidationSource = 'body') {
+export function validate(schema: z.ZodObject<any, any>, source: ValidationSource = 'body') {
   return (req: Request, _res: Response, next: NextFunction): void => {
     // Check if the schema uses the wrapped format (has body, query, or params keys)
     const isWrapped = 'body' in schema.shape || 'query' in schema.shape || 'params' in schema.shape;
@@ -21,7 +21,7 @@ export function validate(schema: z.AnyZodObject, source: ValidationSource = 'bod
     }
 
     if (!result.success) {
-      const details = result.error.issues.map((issue) => ({
+      const details = result.error.issues.map((issue: z.ZodIssue) => ({
         field: issue.path.join('.'),
         message: issue.message,
       }));

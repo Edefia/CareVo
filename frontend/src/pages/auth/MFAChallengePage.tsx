@@ -120,7 +120,7 @@ export function MFAChallengePage() {
       <div className="relative hidden w-[48%] flex-col justify-between overflow-hidden bg-[var(--color-forest)] p-[48px] lg:flex sticky top-0 h-screen">
         <div>
           <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[26px] font-semibold text-white">CareVo</span>
+            <span className="font-serif text-[26px] font-semibold text-white">CareBis Prime</span>
             <sup className="mt-1 text-[12px] font-bold text-[var(--color-lime)]">®</sup>
           </Link>
         </div>

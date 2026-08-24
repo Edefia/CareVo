@@ -3,12 +3,13 @@ import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
 import { logger } from './utils/logger.js';
 import mongoose from 'mongoose';
+import { initSocket } from './config/socket.js';
 
 let server: import('http').Server;
 
 async function bootstrap() {
   try {
-    logger.info(`Starting CareVo backend in ${env.NODE_ENV} mode...`);
+    logger.info(`Starting CareBis Prime backend in ${env.NODE_ENV} mode...`);
 
     await connectDatabase();
     
@@ -22,6 +23,10 @@ async function bootstrap() {
     server = app.listen(env.PORT, () => {
       logger.info(`🚀 Server running on port ${env.PORT}`);
     });
+
+    // Initialize Socket.io
+    initSocket(server);
+    logger.info('WebSocket server initialized');
 
   } catch (error) {
     logger.error('Failed to start server', { error });

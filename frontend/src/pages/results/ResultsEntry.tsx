@@ -132,7 +132,7 @@ export function ResultsEntry() {
           <div className="bg-[#EFF6FF] border border-[#0F76E0]/20 rounded-[var(--radius-lg)] p-5 flex items-start gap-3 shadow-sm">
             <Info className="h-5 w-5 text-[#0F76E0] shrink-0 mt-0.5" />
             <p className="text-[14px] text-[#0F76E0] font-medium leading-snug">
-              Please enter the exact raw values from your laboratory equipment. CareVo's clinical interpreters will automatically calculate the risk levels based on these inputs.
+              Please enter the exact raw values from your laboratory equipment. CareBis Prime's clinical interpreters will automatically calculate the risk levels based on these inputs.
             </p>
           </div>
 

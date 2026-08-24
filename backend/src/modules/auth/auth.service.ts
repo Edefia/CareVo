@@ -149,7 +149,7 @@ export class AuthService {
 
       await notificationService.sendEmail(
         user.email,
-        'CareVo Login Code',
+        'CareBis Prime Login Code',
         `<p>Your login code is: <strong>${emailCode}</strong>. It will expire in 5 minutes.</p>`
       );
 
@@ -259,7 +259,7 @@ export class AuthService {
     if (user.mfaEnabled) throw new ConflictError('MFA is already enabled.');
 
     const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(user.email, 'CareVo', secret);
+    const otpauthUrl = authenticator.keyuri(user.email, 'CareBis Prime', secret);
 
     // Encrypt the secret before saving
     user.mfaSecret = encrypt(secret);
@@ -320,7 +320,7 @@ export class AuthService {
 
     await notificationService.sendEmail(
       user.email,
-      'CareVo Login Code',
+      'CareBis Prime Login Code',
       `<p>Your new login code is: <strong>${emailCode}</strong>. It will expire in 5 minutes.</p>`
     );
   }
@@ -391,7 +391,7 @@ export class AuthService {
 
     await notificationService.sendEmail(
       user.email,
-      'CareVo Password Reset',
+      'CareBis Prime Password Reset',
       `<p>Click <a href="${resetLink}">here</a> to reset your password. Valid for 15 minutes.</p>`
     );
 

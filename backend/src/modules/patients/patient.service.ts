@@ -35,7 +35,7 @@ export const patientService = {
         role: ROLES.CLIENT
       }, ipAddress || 'unknown', userAgent || 'unknown');
       
-      finalUserId = (newUser.user as any).id;
+      finalUserId = newUser.id.toString();
     }
 
     const existingPatient = await PatientModel.findOne({ userId: finalUserId });

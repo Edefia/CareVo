@@ -9,8 +9,13 @@ export async function authenticate(
   next: NextFunction,
 ): Promise<void> {
   try {
-    // Extract access token from HttpOnly cookie
-    const token = req.cookies?.accessToken as string | undefined;
+    // Extract access token from header or cookie
+    const authHeader = req.headers.authorization;
+    let token = req.cookies?.accessToken as string | undefined;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
 
     if (!token) {
       throw new UnauthorizedError('Access token is missing.');

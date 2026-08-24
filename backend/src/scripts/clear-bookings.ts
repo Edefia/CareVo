@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 
-const MONGODB_URI = env.MONGODB_URI || 'mongodb://localhost:27017/carevo';
+const MONGODB_URI = env.MONGODB_URI || 'mongodb://localhost:27017/carebis-prime';
 
 async function clearBookings() {
   try {

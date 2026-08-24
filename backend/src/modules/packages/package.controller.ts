@@ -44,7 +44,7 @@ export const packageController = {
     try {
       const pkg = await PackageModel.findById(req.params.id);
       if (!pkg) {
-        return res.status(404).json({ success: false, message: 'Package not found' });
+        res.status(404).json({ success: false, message: 'Package not found' }); return;
       }
       sendSuccess(res, pkg);
     } catch (error) {
@@ -67,7 +67,7 @@ export const packageController = {
     try {
       const pkg = await PackageModel.findById(req.params.id);
       if (!pkg) {
-        return res.status(404).json({ success: false, message: 'Package not found' });
+        res.status(404).json({ success: false, message: 'Package not found' }); return;
       }
 
       Object.assign(pkg, req.body);
@@ -83,7 +83,7 @@ export const packageController = {
     try {
       const pkg = await PackageModel.findByIdAndDelete(req.params.id);
       if (!pkg) {
-        return res.status(404).json({ success: false, message: 'Package not found' });
+        res.status(404).json({ success: false, message: 'Package not found' }); return;
       }
       res.status(204).send();
     } catch (error) {

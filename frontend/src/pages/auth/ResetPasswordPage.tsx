@@ -9,11 +9,11 @@ import { Input, Label } from "@/components/ui/input"
 import toast from "react-hot-toast"
 import { Loader2, AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react"
 
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
 
 const resetPasswordSchema = z.object({
   password: z.string()
-    .min(12, "Password must be at least 12 characters")
+    .min(8, "Password must be at least 8 characters")
     .regex(passwordRegex, "Must contain uppercase, lowercase, number, and special character"),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
@@ -84,7 +84,7 @@ export function ResetPasswordPage() {
       <div className="relative hidden w-[48%] flex-col justify-between overflow-hidden bg-[var(--color-forest)] p-[48px] lg:flex sticky top-0 h-screen">
         <div>
           <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[26px] font-semibold text-white">CareVo</span>
+            <span className="font-serif text-[26px] font-semibold text-white">CareBis Prime</span>
             <sup className="mt-1 text-[12px] font-bold text-[var(--color-lime)]">®</sup>
           </Link>
         </div>

@@ -230,7 +230,7 @@ export function BookingWizard() {
                         <MapPin className="h-4 w-4" /> {lab.location?.address}
                       </div>
                       <div className="flex items-center gap-2 text-[12px]">
-                        <span className="font-medium text-[var(--color-forest)] bg-[#7EE8A2]/20 px-2 py-1 rounded">Certified for CareVo</span>
+                        <span className="font-medium text-[var(--color-forest)] bg-[#7EE8A2]/20 px-2 py-1 rounded">Certified for CareBis Prime</span>
                         <span className="flex items-center text-[#D97706] font-medium">★ {lab.rating}</span>
                       </div>
                     </div>
@@ -446,7 +446,7 @@ export function BookingWizard() {
                 </div>
                 
                 <div className="relative z-10">
-                  <div className="text-[12px] font-bold uppercase tracking-widest text-white/60 mb-4">Official CareVo Booking</div>
+                  <div className="text-[12px] font-bold uppercase tracking-widest text-white/60 mb-4">Official CareBis Prime Booking</div>
                   <div className="font-serif text-[40px] sm:text-[48px] font-bold tracking-[0.15em] text-[var(--color-lime)] break-all leading-tight mb-4">
                     {formData.referralCode}
                   </div>

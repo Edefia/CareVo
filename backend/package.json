@@ -1,12 +1,12 @@
 {
-  "name": "carevo-backend",
+  "name": "carebis-prime-backend",
   "version": "1.0.0",
-  "description": "CareVo Health — Preventive Healthcare Platform API",
+  "description": "CareBis Prime Health — Preventive Healthcare Platform API",
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/server.ts",
-    "build": "tsc",
+    "build": "npm install --include=dev && tsc",
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -34,6 +34,7 @@
     "otplib": "^12.0.1",
     "qrcode": "^1.5.4",
     "resend": "^6.12.4",
+    "socket.io": "^4.8.3",
     "uuid": "^11.1.0",
     "winston": "^3.19.0",
     "zod": "^4.4.3"

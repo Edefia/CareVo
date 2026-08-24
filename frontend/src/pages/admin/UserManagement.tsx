@@ -8,11 +8,23 @@ import { StatCard } from "@/components/shared/StatCard"
 import { useUsers, useUserCounts, useUpdateUserStatus, useDeleteUser } from "@/hooks/useUsers"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "react-hot-toast"
+import { UserFormDialog } from "./UserFormDialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Edit, Mail } from "lucide-react"
 
 export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("ALL")
   const [page, setPage] = useState(1)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<any>(null)
 
   const { data: usersResponse, isLoading: usersLoading } = useUsers({
     page,
@@ -76,8 +88,11 @@ export function UserManagement() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button className="h-[44px] bg-[var(--color-forest)] hover:bg-[var(--color-forest)]/90 flex items-center gap-2">
-            <Shield className="h-4 w-4" /> Provision New Admin
+          <Button 
+            onClick={() => { setEditingUser(null); setIsFormOpen(true); }}
+            className="flex items-center gap-2"
+          >
+            <Shield className="h-4 w-4" /> Create New User
           </Button>
         </div>
       </div>
@@ -203,9 +218,28 @@ export function UserManagement() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-500">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-500">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => { setEditingUser(row); setIsFormOpen(true); }}>
+                              <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={async () => {
+                                // TODO: Optional manual trigger for password reset email
+                                toast.success("Password reset email sent (placeholder)")
+                              }}
+                            >
+                              <Mail className="mr-2 h-4 w-4" /> Send Password Reset
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     )
                   },
@@ -243,6 +277,12 @@ export function UserManagement() {
           )}
         </CardContent>
       </Card>
+
+      <UserFormDialog 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        user={editingUser} 
+      />
     </div>
   )
 }

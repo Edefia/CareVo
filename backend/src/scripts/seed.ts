@@ -8,10 +8,10 @@ import { BookingModel } from '../modules/bookings/booking.model.js';
 import { PatientModel } from '../modules/patients/patient.model.js';
 import { PackageModel } from '../modules/packages/package.model.js';
 
-const MONGODB_URI = env.MONGODB_URI || 'mongodb://localhost:27017/carevo';
+const MONGODB_URI = env.MONGODB_URI || 'mongodb://localhost:27017/carebis-prime';
 
 async function runSeed() {
-  console.log('🌱 Starting CareVo database seed...');
+  console.log('🌱 Starting CareBis Prime database seed...');
   
   try {
     await mongoose.connect(MONGODB_URI);
@@ -127,7 +127,7 @@ async function runSeed() {
     );
 
     // Admin
-    const adminUser = await UserModel.findOneAndUpdate(
+    await UserModel.findOneAndUpdate(
       { email: 'dieudonneladzekpo@gmail.com' },
       {
         email: 'dieudonneladzekpo@gmail.com',

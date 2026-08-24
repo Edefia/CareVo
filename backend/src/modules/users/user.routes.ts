@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { UserController } from './user.controller.js';
 import { validate } from '../../middleware/validate.js';
-import { updateProfileSchema, changePasswordSchema, uploadAvatarSchema } from './user.schema.js';
+import { updateProfileSchema, changePasswordSchema, uploadAvatarSchema, adminCreateUserSchema, adminUpdateUserSchema } from './user.schema.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import { PERMISSIONS } from '../../shared/constants/permissions.js';
@@ -17,6 +17,8 @@ router.patch('/me/avatar', validate(uploadAvatarSchema), UserController.uploadAv
 router.post('/me/password', validate(changePasswordSchema), UserController.changePassword);
 
 // Admin endpoints
+router.post('/', authorize([PERMISSIONS.USERS_INVITE]), validate(adminCreateUserSchema), UserController.adminCreateUser);
+router.put('/:id', authorize([PERMISSIONS.USERS_INVITE]), validate(adminUpdateUserSchema), UserController.adminUpdateUser);
 router.get('/', authorize([PERMISSIONS.USERS_INVITE]), UserController.getAllUsers);
 router.get('/counts', authorize([PERMISSIONS.USERS_INVITE]), UserController.getUserCounts);
 router.get('/:id', authorize([PERMISSIONS.USERS_INVITE]), UserController.getUserById);

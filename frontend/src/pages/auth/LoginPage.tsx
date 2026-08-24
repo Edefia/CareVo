@@ -70,7 +70,7 @@ export function LoginPage() {
         {/* Top: Brand */}
         <div>
           <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[26px] font-semibold text-white">CareVo</span>
+            <span className="font-serif text-[26px] font-semibold text-white">CareBis Prime</span>
             <sup className="mt-1 text-[12px] font-bold text-[var(--color-lime)]">®</sup>
           </Link>
         </div>
@@ -127,7 +127,7 @@ export function LoginPage() {
         <div className="mx-auto w-full max-w-[400px] my-auto py-12">
           
           <h1 className="mb-2 font-serif text-[32px] font-semibold text-[var(--color-forest)]">Welcome back.</h1>
-          <p className="mb-[32px] font-sans text-[15px] text-[var(--color-text-muted)]">Sign in to your CareVo account.</p>
+          <p className="mb-[32px] font-sans text-[15px] text-[var(--color-text-muted)]">Sign in to your CareBis Prime account.</p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-[20px]">
             

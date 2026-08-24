@@ -16,7 +16,8 @@ export function NewLabModal({ open, onOpenChange }: { open: boolean, onOpenChang
       street: "",
       city: "",
       state: "",
-      zipCode: ""
+      zipCode: "",
+      country: "Ghana",
     }
   })
 
@@ -30,7 +31,7 @@ export function NewLabModal({ open, onOpenChange }: { open: boolean, onOpenChang
       onOpenChange(false)
       setFormData({
         name: "", code: "", contactEmail: "", contactPhone: "", 
-        address: { street: "", city: "", state: "", zipCode: "" }
+        address: { street: "", city: "", state: "", zipCode: "", country: "Ghana" }
       })
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to register laboratory")

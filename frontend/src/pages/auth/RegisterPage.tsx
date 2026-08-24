@@ -93,7 +93,7 @@ export function RegisterPage() {
         {/* Top: Brand */}
         <div>
           <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[26px] font-semibold text-white">CareVo</span>
+            <span className="font-serif text-[26px] font-semibold text-white">CareBis Prime</span>
             <sup className="mt-1 text-[12px] font-bold text-[var(--color-lime)]">®</sup>
           </Link>
         </div>
