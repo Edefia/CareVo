@@ -2,6 +2,7 @@ import mongoose, { Schema, type Document } from 'mongoose';
 
 export interface ILabService extends Document {
   laboratoryId: mongoose.Types.ObjectId;
+  packageId?: mongoose.Types.ObjectId;
   name: string;
   description?: string;
   category: string;
@@ -20,6 +21,11 @@ const labServiceSchema = new Schema<ILabService>(
       type: Schema.Types.ObjectId,
       ref: 'Laboratory',
       required: true,
+      index: true,
+    },
+    packageId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Package',
       index: true,
     },
     name: {

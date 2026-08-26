@@ -25,11 +25,7 @@ import {
   User as UserIcon,
   Send
 } from "lucide-react"
-<<<<<<< HEAD
-import toast from "react-hot-toast"
-=======
 import { NotificationPopover } from "@/components/shared/NotificationPopover"
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 
 type NavItem = { href: string; label: string; icon: any; badge?: number }
 type NavGroup = { title: string; items: NavItem[] }
@@ -331,20 +327,7 @@ export function DashboardLayout() {
             </Link>
             
             {/* Notifications */}
-<<<<<<< HEAD
-            <div className="relative">
-              <button 
-                onClick={() => toast.success("You're all caught up! No new notifications.")}
-                className="group flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-all hover:bg-orange-50 hover:text-orange-500 shadow-sm hover:shadow"
-                title="Notifications"
-              >
-                <Bell className="h-[18px] w-[18px] transition-transform group-hover:rotate-12" />
-              </button>
-              <div className="absolute right-0 top-0 h-[8px] w-[8px] rounded-full border-2 border-white bg-[var(--color-danger)] animate-pulse"></div>
-            </div>
-=======
             <NotificationPopover />
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 
             <div className="h-[24px] w-[1px] bg-[var(--color-border)] mx-1"></div>
 
@@ -404,11 +387,8 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number, pendin
           title: "MAIN",
           items: [
             { href: "/lab/dashboard", label: "Dashboard", icon: LayoutDashboard },
-<<<<<<< HEAD
             { href: "/lab/services", label: "Catalog", icon: FileText },
-=======
             { href: "/notifications/broadcast", label: "Broadcast", icon: Send },
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
             { href: "/bookings", label: "Bookings", icon: CalendarCheck, badge: pendingBookingsCount || undefined },
             { href: "/patients", label: "Clients", icon: Users },
             { href: "/settings", label: "Settings", icon: Settings },

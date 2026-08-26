@@ -18,7 +18,9 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   let textColor = "text-[#475569]"
   let dotColor = "bg-[#94A3B8]"
 
-  const normalized = status.toUpperCase()
+  if (!status) return null;
+
+  const normalized = String(status).toUpperCase()
 
   switch (normalized) {
     case "ACTIVE":

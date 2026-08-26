@@ -118,12 +118,7 @@ export function BroadcastNotification() {
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in max-w-[1200px] mx-auto pb-24">
-      <div>
-        <h1 className="font-serif text-3xl font-bold text-[var(--color-forest)]">Advanced Broadcast System</h1>
-        <p className="text-muted-foreground mt-1">
-          Send smart multi-channel notifications to users and external contacts.
-        </p>
-      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         

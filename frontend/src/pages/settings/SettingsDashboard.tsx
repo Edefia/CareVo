@@ -1,11 +1,6 @@
 import { useState, useRef } from "react"
-<<<<<<< HEAD
-import { Building2, Users, Bell, Shield, Database, LayoutDashboard, User, Camera, Loader2, CheckCircle2 } from "lucide-react"
-
-=======
 import { Building2, Users, Bell, Shield, Database, LayoutDashboard, User, Camera, Loader2, CheckCircle2, History } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -368,23 +363,38 @@ export function SettingsDashboard() {
                       columns={[
                         { 
                           header: "Timestamp", 
-                          cell: (row) => new Date(row.timestamp).toLocaleString()
+                          cell: (row) => {
+                            const timeVal = row.timestamp || row.createdAt
+                            if (!timeVal) return "N/A"
+                            const d = new Date(timeVal)
+                            return isNaN(d.getTime()) ? "Invalid" : d.toLocaleString()
+                          }
                         },
                         { 
                           header: "Action", 
-                          cell: (row) => <span className="font-semibold text-slate-700">{row.action}</span>
+                          cell: (row: any) => <span className="font-semibold text-slate-700">{row.action}</span>
                         },
                         { 
                           header: "Actor ID", 
-                          cell: (row) => <span className="font-mono text-xs bg-slate-100 p-1 rounded">{row.actorId}</span>
+                          cell: (row: any) => <span className="font-mono text-xs bg-slate-100 p-1 rounded">{row.actorId}</span>
                         },
                         { 
-                          header: "Resource Type", 
-                          cell: (row) => <span className="text-sm">{row.resourceType}</span>
+                          header: "Role", 
+                          cell: (row: any) => <span className="text-xs uppercase font-medium">{row.actorRole}</span>
+                        },
+                        { 
+                          header: "Target", 
+                          cell: (row: any) => <span className="text-xs">{row.resourceType} ({row.resourceId})</span>
+                        },
+                        { 
+                          header: "Status", 
+                          cell: (row: any) => row.success ? 
+                            <span className="text-emerald-600 text-xs font-bold">SUCCESS</span> : 
+                            <span className="text-red-600 text-xs font-bold">FAILED</span>
                         },
                         { 
                           header: "Details", 
-                          cell: (row) => (
+                          cell: (row: any) => (
                             <span className="text-xs text-muted-foreground truncate max-w-[200px] block" title={JSON.stringify(row.details)}>
                               {JSON.stringify(row.details)}
                             </span>

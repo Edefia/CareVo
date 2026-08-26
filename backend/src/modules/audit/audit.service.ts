@@ -1,4 +1,5 @@
 import { AuditLogModel } from './audit.model.js';
+import { UserModel } from '../auth/auth.model.js';
 import type { IAuditLogEntry } from '../../shared/types/index.js';
 import { logger } from '../../utils/logger.js';
 import mongoose from 'mongoose';
@@ -44,17 +45,36 @@ export class AuditService {
     const query: any = {};
 
     if (filters.actorId) query.actorId = filters.actorId;
+    if (filters.actorRole) query.actorRole = filters.actorRole;
     if (filters.action) query.action = filters.action;
     if (filters.resourceType) query.resourceType = filters.resourceType;
     if (filters.resourceId) query.resourceId = filters.resourceId;
-    if (filters.startDate || filters.endDate) {
-      query.createdAt = {};
-      if (filters.startDate) query.createdAt.$gte = new Date(filters.startDate);
-      if (filters.endDate) query.createdAt.$lte = new Date(filters.endDate);
+    
+    if (filters.search) {
+      const searchRegex = new RegExp(filters.search, 'i');
+      query.$or = [
+        { action: searchRegex },
+        { resourceType: searchRegex },
+        { ipAddress: searchRegex },
+        { actorRole: searchRegex },
+      ];
     }
 
+    if (filters.startDate || filters.endDate) {
+      query.timestamp = {};
+      if (filters.startDate) query.timestamp.$gte = new Date(filters.startDate);
+      if (filters.endDate) query.timestamp.$lte = new Date(filters.endDate);
+    }
+
+    // Ensure UserModel is registered for populate
+    void UserModel;
+
     const [logs, total] = await Promise.all([
-      AuditLogModel.find(query).skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      AuditLogModel.find(query)
+        .populate({ path: 'actorId', select: 'firstName lastName email name' })
+        .skip(skip)
+        .limit(limitNum)
+        .sort({ timestamp: -1 }),
       AuditLogModel.countDocuments(query),
     ]);
 

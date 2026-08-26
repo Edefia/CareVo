@@ -132,7 +132,7 @@ export function ResultDetail() {
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {resultData.tests.map((test, idx) => (
+                  {resultData.tests.map((test: any, idx: number) => (
                     <tr key={idx} className={`border-b last:border-0 ${test.isOutlier ? 'bg-red-50/30' : 'hover:bg-slate-50'}`}>
                       <td className="px-6 py-4">
                         <div className="font-medium text-slate-900">{test.name}</div>
@@ -184,7 +184,7 @@ export function ResultDetail() {
               Personalized Recommendations
             </h3>
             <ul className="space-y-3">
-              {resultData.recommendations.map((rec, idx) => (
+              {resultData.recommendations.map((rec: any, idx: number) => (
                 <li key={idx} className="flex gap-3 text-sm text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <div className="shrink-0 mt-0.5">
                     <div className="h-5 w-5 rounded-full bg-[var(--color-lime)] text-[var(--color-forest)] flex items-center justify-center text-[10px] font-bold">

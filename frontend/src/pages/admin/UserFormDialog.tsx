@@ -13,9 +13,11 @@ interface UserFormDialogProps {
   isOpen: boolean
   onClose: () => void
   user?: any // null if creating, object if editing
+  lockedRole?: string
+  lockedLaboratoryId?: string
 }
 
-export function UserFormDialog({ isOpen, onClose, user }: UserFormDialogProps) {
+export function UserFormDialog({ isOpen, onClose, user, lockedRole, lockedLaboratoryId }: UserFormDialogProps) {
   const isEditing = !!user
 
   const [formData, setFormData] = useState({
@@ -30,28 +32,30 @@ export function UserFormDialog({ isOpen, onClose, user }: UserFormDialogProps) {
 
   useEffect(() => {
     if (user && isOpen) {
+      // eslint-disable-next-line
       setFormData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         email: user.email || "",
-        role: user.role || "CLIENT",
+        role: lockedRole || user.role || "CLIENT",
         password: "",
-        laboratoryId: user.laboratoryId || "none",
+        laboratoryId: lockedLaboratoryId || user.laboratoryId || "none",
         sendResetEmail: false,
       })
     } else if (isOpen) {
       // Reset form
+      // eslint-disable-next-line
       setFormData({
         firstName: "",
         lastName: "",
         email: "",
-        role: "LABORATORY", // Default for admin provisioning
+        role: lockedRole || "LABORATORY", // Default for admin provisioning
         password: Math.random().toString(36).slice(-12) + "A1!", // Generate temporary random password
-        laboratoryId: "none",
+        laboratoryId: lockedLaboratoryId || "none",
         sendResetEmail: true,
       })
     }
-  }, [user, isOpen])
+  }, [user, isOpen, lockedRole, lockedLaboratoryId])
 
   const { data: labsData } = useLaboratories()
   const labs = labsData?.data || labsData || []
@@ -141,6 +145,7 @@ export function UserFormDialog({ isOpen, onClose, user }: UserFormDialogProps) {
             <Select 
               value={formData.role} 
               onValueChange={(val) => setFormData(prev => ({ ...prev, role: val }))}
+              disabled={!!lockedRole}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
@@ -160,6 +165,7 @@ export function UserFormDialog({ isOpen, onClose, user }: UserFormDialogProps) {
               <Select 
                 value={formData.laboratoryId} 
                 onValueChange={(val) => setFormData(prev => ({ ...prev, laboratoryId: val }))}
+                disabled={!!lockedLaboratoryId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a laboratory" />

@@ -16,7 +16,8 @@ export const laboratoryController = {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      const paginatedData = await laboratoryService.getLaboratories(page, limit);
+      const packageId = req.query.packageId as string | undefined;
+      const paginatedData = await laboratoryService.getLaboratories(page, limit, packageId);
       res.status(200).json(paginatedData);
     } catch (error) {
       next(error);
@@ -119,7 +120,16 @@ export const laboratoryController = {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
-      const paginatedData = await laboratoryService.getAllLabServices(page, limit);
+      
+      const filters: any = {};
+      if (req.query.laboratoryId) {
+        filters.laboratoryId = req.query.laboratoryId;
+      }
+      if (req.query.status) {
+        filters.approvalStatus = req.query.status;
+      }
+
+      const paginatedData = await laboratoryService.getAllLabServices(page, limit, filters);
       res.status(200).json(paginatedData);
     } catch (error) {
       next(error);

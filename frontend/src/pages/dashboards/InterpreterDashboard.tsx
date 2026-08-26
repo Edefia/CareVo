@@ -9,10 +9,7 @@ import { useState } from "react"
 
 export function InterpreterDashboard() {
   const { user } = useAuthStore()
-<<<<<<< HEAD
   const { pendingInterpretations, completedInterpretationsCount } = useResultsStore()
-=======
-  const { pendingInterpretations } = useResultsStore()
   const [selectedLabName, setSelectedLabName] = useState<string>("ALL")
   
   const { data: laboratoriesData } = useLaboratories()
@@ -22,7 +19,6 @@ export function InterpreterDashboard() {
   const filteredInterpretations = selectedLabName === "ALL" 
     ? pendingInterpretations 
     : pendingInterpretations.filter((item: any) => item.lab === selectedLabName)
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 
   const renderPillarIcon = (pillar: string) => {
     switch(pillar) {
@@ -54,15 +50,9 @@ export function InterpreterDashboard() {
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-50 border border-orange-100 shrink-0">
             <Clock className="h-5 w-5 text-orange-500" />
           </div>
-<<<<<<< HEAD
-          <div>
-            <div className="font-serif text-2xl font-bold text-[var(--color-text-primary)] leading-none">{pendingInterpretations.length}</div>
-            <div className="font-sans text-[13px] text-[var(--color-text-secondary)] font-medium mt-1 uppercase tracking-wider">Pending Review</div>
-=======
           <div className="relative z-10">
             <div className="font-serif text-[36px] font-bold text-[var(--color-text-primary)] leading-none">{filteredInterpretations.length}</div>
             <div className="font-sans text-[15px] text-[var(--color-text-secondary)] font-medium mt-1">Pending Review</div>
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
           </div>
         </div>
 
@@ -78,21 +68,6 @@ export function InterpreterDashboard() {
       </div>
 
       {/* QUEUE TABLE */}
-<<<<<<< HEAD
-      <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--color-border)] bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <h2 className="font-sans text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-            Pending Interpretations
-            {pendingInterpretations.length > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-red-600 text-[11px] font-bold">
-                {pendingInterpretations.length}
-              </span>
-            )}
-          </h2>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Results securely submitted by partner laboratories awaiting your review.
-          </p>
-=======
       <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-[var(--shadow-card)] overflow-hidden">
         <div className="px-[24px] py-[24px] border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-surface-2)] to-white flex justify-between items-center">
           <div>
@@ -121,7 +96,7 @@ export function InterpreterDashboard() {
               </SelectContent>
             </Select>
           </div>
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
+
         </div>
 
         <div className="overflow-x-auto">

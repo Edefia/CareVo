@@ -36,6 +36,7 @@ export function EditPatientModal({ open, onOpenChange, patient }: EditPatientMod
   // Prepopulate form when modal opens
   useEffect(() => {
     if (open && patient) {
+      // eslint-disable-next-line
       setFormData({
         firstName: patient.userId?.firstName || patient.user?.firstName || "",
         lastName: patient.userId?.lastName || patient.user?.lastName || "",

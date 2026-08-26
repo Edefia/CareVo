@@ -84,21 +84,6 @@ export default function App() {
                 <Route path="/setup-password" element={<SetupPasswordPage />} />
               </Route>
 
-<<<<<<< HEAD
-          {/* Protected Dashboard Routes */}
-          <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            
-            {/* Dashboards (4 Roles) */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/payments" element={<AdminPayments />} />
-            <Route path="/admin/users" element={<UserManagement />} />
-            <Route path="/admin/packages" element={<PackageManagement />} />
-            <Route path="/admin/advocacy" element={<AdminHealthAdvocacy />} />
-            <Route path="/lab/dashboard" element={<LabDashboard />} />
-            <Route path="/lab/services" element={<LabServices />} />
-            <Route path="/interpreter/dashboard" element={<InterpreterDashboard />} />
-            <Route path="/client/dashboard" element={<ClientDashboard />} />
-=======
               {/* Protected Dashboard Routes */}
               <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 
@@ -109,9 +94,9 @@ export default function App() {
                 <Route path="/admin/packages" element={<PackageManagement />} />
                 <Route path="/admin/advocacy" element={<AdminHealthAdvocacy />} />
                 <Route path="/lab/dashboard" element={<LabDashboard />} />
+                <Route path="/lab/services" element={<LabServices />} />
                 <Route path="/interpreter/dashboard" element={<InterpreterDashboard />} />
                 <Route path="/client/dashboard" element={<ClientDashboard />} />
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
 
                 {/* Modules Placeholders */}
                 <Route path="/patients" element={<PatientList />} />

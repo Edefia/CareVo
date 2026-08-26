@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Search, Plus, Edit2, Trash2, CheckCircle, Clock, AlertCircle, RefreshCw } from "lucide-react"
 import { useLabServices, useCreateLabService, useUpdateLabService, useDeleteLabService } from "@/hooks/useLabServices"
+import { usePackages } from "@/hooks/usePackages"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import toast from "react-hot-toast"
@@ -15,6 +16,11 @@ import { Label } from "@/components/ui/label"
 
 export function LabServices() {
   const { data: servicesData, isLoading } = useLabServices()
+  const { data: packagesResponse } = usePackages()
+  
+  const packagesRaw = packagesResponse?.data || packagesResponse
+  const packages = packagesRaw?.data || packagesRaw || []
+  
   const services = servicesData?.items || servicesData?.data || servicesData || []
   const createService = useCreateLabService()
   const updateService = useUpdateLabService()
@@ -30,7 +36,8 @@ export function LabServices() {
     description: "",
     category: "",
     labPrice: "",
-    turnaroundTime: ""
+    turnaroundTime: "",
+    packageId: "",
   })
 
   const filteredServices = Array.isArray(services) ? services.filter((s: any) => 
@@ -51,7 +58,8 @@ export function LabServices() {
       description: service.description || "",
       category: service.category,
       labPrice: service.labPrice.toString(),
-      turnaroundTime: service.turnaroundTime
+      turnaroundTime: service.turnaroundTime,
+      packageId: service.packageId || "",
     })
     setIsAddModalOpen(true)
   }
@@ -218,6 +226,37 @@ export function LabServices() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveService} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="packageId">Link to Platform Package (Optional)</Label>
+              <select
+                id="packageId"
+                className="flex h-[40px] w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={formData.packageId}
+                onChange={(e) => {
+                  const pkgId = e.target.value
+                  const pkg = packages.find((p: any) => p._id === pkgId || p.id === pkgId)
+                  if (pkg) {
+                    setFormData({
+                      ...formData,
+                      packageId: pkgId,
+                      name: pkg.name,
+                      category: pkg.pillarIcon,
+                    })
+                  } else {
+                    setFormData({ ...formData, packageId: pkgId })
+                  }
+                }}
+              >
+                <option value="">-- No Package Link --</option>
+                {packages.map((pkg: any) => (
+                  <option key={pkg._id || pkg.id} value={pkg._id || pkg.id}>
+                    {pkg.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[12px] text-gray-500">If linked, this service will appear to clients when they book this package.</p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Service Name <span className="text-red-500">*</span></Label>
               <Input id="name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Comprehensive Lipid Panel" />

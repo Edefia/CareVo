@@ -45,6 +45,7 @@ export const getLaboratoryParamsSchema = z.object({
 
 export const createLabServiceSchema = z.object({
   body: z.object({
+    packageId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid package ID').optional(),
     name: z.string().min(2, 'Name must be at least 2 characters').max(150, 'Name is too long'),
     description: z.string().max(500, 'Description is too long').optional(),
     category: z.string().min(2, 'Category must be at least 2 characters').max(50, 'Category is too long'),
@@ -58,6 +59,7 @@ export const updateLabServiceSchema = z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid service ID'),
   }),
   body: z.object({
+    packageId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid package ID').optional(),
     name: z.string().min(2, 'Name must be at least 2 characters').max(150, 'Name is too long').optional(),
     description: z.string().max(500, 'Description is too long').optional(),
     category: z.string().min(2, 'Category must be at least 2 characters').max(50, 'Category is too long').optional(),

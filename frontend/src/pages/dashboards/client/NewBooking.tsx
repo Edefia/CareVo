@@ -60,11 +60,6 @@ export function NewBooking() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { data: packagesResponse, isLoading: packagesLoading } = usePackages()
-  const { data: labsData } = useLaboratories()
-
-  const packagesRaw = packagesResponse?.data || packagesResponse
-  const packages = packagesRaw?.data || packagesRaw || []
-  const labs = labsData?.items || labsData?.data || labsData || []
 
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -76,6 +71,13 @@ export function NewBooking() {
   const [selectedLab, setSelectedLab] = useState("")
   const [date, setDate] = useState("")
   const [time, setTime] = useState("")
+
+  const packagesRaw = packagesResponse?.data || packagesResponse
+  const packages = packagesRaw?.data || packagesRaw || []
+  const selectedPkg = packages.find((p: any) => (p._id || p.id) === selectedPackage)
+
+  const { data: labsData } = useLaboratories(selectedPkg ? { packageId: selectedPkg._id || selectedPkg.id } : undefined)
+  const labs = labsData?.items || labsData?.data || labsData || []
 
   // Patient info (pre-filled from auth)
   const [patientInfo, setPatientInfo] = useState({
@@ -118,7 +120,6 @@ export function NewBooking() {
   }, [user])
 
   // Derived data
-  const selectedPkg = packages.find((p: any) => (p._id || p.id) === selectedPackage)
   const selectedLabData = labs.find((l: any) => (l._id || l.id) === selectedLab)
   const requiresFasting = selectedPkg?.requiresFasting || selectedPkg?.features?.some((f: string) => f.toLowerCase().includes('fasting'))
 
@@ -126,7 +127,7 @@ export function NewBooking() {
   const getDisplayPrice = (pkg: any) => {
     if (!pkg) return "0.00"
     const price = pkg.price || 0
-    return price >= 100 ? (price / 100).toFixed(2) : price.toFixed(2)
+    return (price / 100).toFixed(2)
   }
 
   // ─── Validation ─────────────────────────────────────────────────────────

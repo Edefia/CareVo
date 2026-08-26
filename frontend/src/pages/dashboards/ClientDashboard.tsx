@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/auth"
 import { Button } from "@/components/ui/button"
 import { useResults } from "@/hooks/useResults"
 import { useBookings } from "@/hooks/useBookings"
+import { usePackages } from "@/hooks/usePackages"
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -72,36 +73,13 @@ function extractLatestBiomarker(
 
 // ─── Onboarding View (First Visit) ──────────────────────────────────────────
 
-function OnboardingView({ userName }: { userName: string }) {
-  const pillars = [
-    {
-      icon: Heart,
-      title: "Cardiovascular Health",
-      color: "#DC2626",
-      bgColor: "rgba(220,38,38,0.06)",
-      description: "Your heart pumps over 100,000 times a day. CareVo screens for early signs of heart disease by measuring blood pressure, cholesterol levels, and triglycerides.",
-      biomarkers: ["Blood Pressure", "Total Cholesterol", "LDL/HDL Ratio", "Triglycerides"],
-      fact: "Heart disease is the #1 cause of death worldwide. Early screening can reduce risk by up to 80%."
-    },
-    {
-      icon: Droplets,
-      title: "Renal (Kidney) Health",
-      color: "#0F76E0",
-      bgColor: "rgba(15,118,224,0.06)",
-      description: "Your kidneys filter 200 litres of blood daily. CareVo checks kidney function through creatinine, eGFR, and urine analysis to catch issues before symptoms appear.",
-      biomarkers: ["Creatinine", "eGFR", "Urea", "Urine Protein"],
-      fact: "1 in 10 adults has chronic kidney disease, but most don't know until it's advanced."
-    },
-    {
-      icon: Activity,
-      title: "Metabolic Health",
-      color: "#D97706",
-      bgColor: "rgba(217,119,6,0.06)",
-      description: "Metabolic health affects how your body processes energy. CareVo screens for diabetes and metabolic syndrome through glucose, HbA1c, and insulin levels.",
-      biomarkers: ["Fasting Glucose", "HbA1c", "Insulin", "BMI"],
-      fact: "Over 530 million adults live with diabetes. Early detection through screening is key to prevention."
-    }
-  ]
+function OnboardingView({ userName, packages }: { userName: string, packages: any[] }) {
+  const iconMap: Record<string, any> = {
+    CARDIO: Heart,
+    RENAL: Droplets,
+    METABOLIC: Activity,
+    COMPREHENSIVE: Shield
+  }
 
   const steps = [
     {
@@ -158,43 +136,53 @@ function OnboardingView({ userName }: { userName: string }) {
       {/* ── THE 3 HEALTH PILLARS ── */}
       <div>
         <div className="mb-[24px]">
-          <h2 className="font-serif text-[26px] font-semibold text-[var(--color-forest)]">What We Screen For</h2>
-          <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">Three health pillars that form the foundation of preventive care.</p>
+          <h2 className="font-serif text-[26px] font-semibold text-[var(--color-forest)]">Available Health Packages</h2>
+          <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">Health packages that form the foundation of preventive care.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-[20px]">
-          {pillars.map((pillar) => (
-            <div key={pillar.title} className="flex flex-col rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white overflow-hidden shadow-sm hover:shadow-md transition-all group">
-              <div className="p-[28px] flex-1" style={{ backgroundColor: pillar.bgColor }}>
-                <div className="flex items-center gap-[12px] mb-[20px]">
-                  <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full" style={{ backgroundColor: `${pillar.color}15` }}>
-                    <pillar.icon className="h-[22px] w-[22px]" style={{ color: pillar.color }} />
+          {packages?.map((pkg) => {
+            const Icon = iconMap[pkg.pillarIcon] || Heart
+            const color = pkg.color?.replace('text-[', '')?.replace(']', '') || '#DC2626'
+            const bgColor = pkg.bgColor?.replace('bg-[', '')?.replace(']/10', '') || 'rgba(220,38,38,0.06)'
+            
+            return (
+              <div key={pkg._id || pkg.id} className="flex flex-col rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                <div className="p-[28px] flex-1" style={{ backgroundColor: bgColor.includes('rgba') ? bgColor : `${bgColor}15` }}>
+                  <div className="flex items-center justify-between mb-[20px]">
+                    <div className="flex items-center gap-[12px]">
+                      <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full" style={{ backgroundColor: bgColor.includes('rgba') ? bgColor : `${bgColor}30` }}>
+                        <Icon className="h-[22px] w-[22px]" style={{ color }} />
+                      </div>
+                      <h3 className="font-sans text-[17px] font-bold text-[var(--color-forest)]">{pkg.name}</h3>
+                    </div>
                   </div>
-                  <h3 className="font-sans text-[17px] font-bold text-[var(--color-forest)]">{pillar.title}</h3>
-                </div>
-                <p className="font-sans text-[14px] text-[var(--color-text-secondary)] leading-relaxed mb-[20px]">
-                  {pillar.description}
-                </p>
-                <div className="space-y-[8px] mb-[16px]">
-                  <div className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Key Biomarkers</div>
-                  <div className="flex flex-wrap gap-[6px]">
-                    {pillar.biomarkers.map((b) => (
-                      <span key={b} className="inline-flex items-center px-[10px] py-[4px] rounded-full text-[12px] font-medium bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)]">
-                        {b}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white border-t border-[var(--color-border)] px-[28px] py-[16px]">
-                <div className="flex items-start gap-[8px]">
-                  <BookOpen className="h-4 w-4 text-[var(--color-text-muted)] shrink-0 mt-[2px]" />
-                  <p className="text-[13px] text-[var(--color-text-muted)] leading-snug italic">
-                    {pillar.fact}
+                  <p className="font-sans text-[14px] text-[var(--color-text-secondary)] leading-relaxed mb-[20px]">
+                    {pkg.description}
                   </p>
+                  <div className="space-y-[8px] mb-[16px]">
+                    <div className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Key Biomarkers</div>
+                    <div className="flex flex-wrap gap-[6px]">
+                      {(pkg.features || []).map((b: string) => (
+                        <span key={b} className="inline-flex items-center px-[10px] py-[4px] rounded-full text-[12px] font-medium bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)]">
+                          {b}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white border-t border-[var(--color-border)] px-[28px] py-[16px] flex justify-between items-center">
+                  <div className="font-serif text-[18px] font-bold text-[var(--color-forest)]">
+                    GH₵{(pkg.price / 100).toFixed(2)}
+                  </div>
+                  <Link to={`/client/bookings/new?package=${pkg._id || pkg.id}`}>
+                    <Button variant="ghost" className="h-[32px] px-3 text-[13px] text-[var(--color-forest)] gap-1">
+                      Select <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -486,11 +474,7 @@ function ReturningUserView({ userName, results, bookings }: { userName: string; 
               Overall Health Risk: {overallRisk}
             </h3>
             <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">
-<<<<<<< HEAD
-              Based on your most recent CareVo screening results.
-=======
               Based on your most recent CareBis Prime screening.
->>>>>>> bd51494230ae3f46a5b12de7b5135f8179699274
             </p>
           </div>
         </div>
@@ -586,6 +570,7 @@ export function ClientDashboard() {
   const { user } = useAuthStore()
   const { data: resultsData, isLoading: resultsLoading } = useResults()
   const { data: bookingsData, isLoading: bookingsLoading } = useBookings()
+  const { data: packagesResponse, isLoading: packagesLoading } = usePackages()
 
   const userName = user?.firstName || 'Client'
 
@@ -597,10 +582,14 @@ export function ClientDashboard() {
   const bookings: any[] = bookingsData?.items || bookingsData?.data || bookingsData || []
   const actualBookings = Array.isArray(bookings) ? bookings : []
 
+  // Extract packages array
+  const packagesRaw = packagesResponse?.data || packagesResponse
+  const actualPackages = packagesRaw?.data || packagesRaw || []
+
   const hasResults = actualResults.length > 0
 
   // Loading state
-  if (resultsLoading || bookingsLoading) {
+  if (resultsLoading || bookingsLoading || packagesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -615,5 +604,5 @@ export function ClientDashboard() {
     return <ReturningUserView userName={userName} results={actualResults} bookings={actualBookings} />
   }
 
-  return <OnboardingView userName={userName} />
+  return <OnboardingView userName={userName} packages={actualPackages} />
 }

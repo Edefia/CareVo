@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/shared/DataTable"
 import { StatCard } from "@/components/shared/StatCard"
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import { useUsers, useUserCounts, useUpdateUserStatus, useDeleteUser } from "@/hooks/useUsers"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "react-hot-toast"
@@ -26,6 +27,20 @@ export function UserManagement() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
 
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    action: () => void;
+    destructive?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    action: () => {},
+  })
+
   const { data: usersResponse, isLoading: usersLoading } = useUsers({
     page,
     limit: 20,
@@ -43,23 +58,40 @@ export function UserManagement() {
   const countsData = countsResponse?.data || countsResponse
   const counts = countsData || { total: 0, active: 0, suspended: 0, byRole: {} }
 
-  const handleToggleStatus = async (userId: string, currentActive: boolean) => {
-    try {
-      await updateStatusMutation.mutateAsync({ id: userId, isActive: !currentActive })
-      toast.success(`User ${currentActive ? 'suspended' : 'reactivated'} successfully`)
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update user status")
-    }
+  const handleToggleStatus = (userId: string, currentActive: boolean) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: `${currentActive ? 'Suspend' : 'Reactivate'} User`,
+      description: `Are you sure you want to ${currentActive ? 'suspend' : 'reactivate'} this user?`,
+      destructive: currentActive,
+      confirmText: currentActive ? 'Suspend' : 'Reactivate',
+      action: async () => {
+        try {
+          await updateStatusMutation.mutateAsync({ id: userId, isActive: !currentActive })
+          toast.success(`User ${currentActive ? 'suspended' : 'reactivated'} successfully`)
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || "Failed to update user status")
+        }
+      }
+    })
   }
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm("Are you sure you want to permanently delete this user?")) return;
-    try {
-      await deleteMutation.mutateAsync(userId)
-      toast.success("User deleted successfully")
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete user")
-    }
+  const handleDelete = (userId: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete User",
+      description: "Are you sure you want to permanently delete this user? This action cannot be undone.",
+      destructive: true,
+      confirmText: "Delete",
+      action: async () => {
+        try {
+          await deleteMutation.mutateAsync(userId)
+          toast.success("User deleted successfully")
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || "Failed to delete user")
+        }
+      }
+    })
   }
 
   const getRoleBadge = (role: string) => {
@@ -75,26 +107,13 @@ export function UserManagement() {
   return (
     <div className="space-y-[32px] md:space-y-[48px] max-w-[1400px] mx-auto pb-[96px] animate-in fade-in duration-500">
       
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          PAGE HEADER
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[24px]">
-        <div>
-          <h1 className="font-serif text-[32px] md:text-[36px] font-semibold text-[var(--color-forest)] leading-tight mb-[8px]">
-            User Management
-          </h1>
-          <p className="font-sans text-[16px] text-[var(--color-text-secondary)]">
-            Control access, roles, and security for all platform users.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button 
-            onClick={() => { setEditingUser(null); setIsFormOpen(true); }}
-            className="flex items-center gap-2"
-          >
-            <Shield className="h-4 w-4" /> Create New User
-          </Button>
-        </div>
+      <div className="flex justify-end gap-3">
+        <Button 
+          onClick={() => { setEditingUser(null); setIsFormOpen(true); }}
+          className="flex items-center gap-2"
+        >
+          <Shield className="h-4 w-4" /> Create New User
+        </Button>
       </div>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -189,7 +208,7 @@ export function UserManagement() {
                           <Button 
                             size="icon" 
                             variant="ghost" 
-                            className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50" 
+                            className="h-8 w-8 text-slate-500 hover:text-red-700 hover:bg-red-50" 
                             title="Suspend User"
                             onClick={() => handleToggleStatus(row._id, row.isActive)}
                             disabled={updateStatusMutation.isPending}
@@ -200,7 +219,7 @@ export function UserManagement() {
                           <Button 
                             size="icon" 
                             variant="ghost" 
-                            className="h-8 w-8 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50" 
+                            className="h-8 w-8 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50" 
                             title="Reactivate User"
                             onClick={() => handleToggleStatus(row._id, row.isActive)}
                             disabled={updateStatusMutation.isPending}
@@ -211,7 +230,7 @@ export function UserManagement() {
                         <Button 
                           size="icon" 
                           variant="ghost" 
-                          className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50" 
+                          className="h-8 w-8 text-slate-500 hover:text-red-700 hover:bg-red-50" 
                           title="Delete User"
                           onClick={() => handleDelete(row._id)}
                           disabled={deleteMutation.isPending}
@@ -282,6 +301,16 @@ export function UserManagement() {
         isOpen={isFormOpen} 
         onClose={() => setIsFormOpen(false)} 
         user={editingUser} 
+      />
+
+      <ConfirmDialog
+        open={confirmDialog.isOpen}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, isOpen: open }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.action}
+        destructive={confirmDialog.destructive}
+        confirmText={confirmDialog.confirmText}
       />
     </div>
   )

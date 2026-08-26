@@ -26,12 +26,19 @@ export const laboratoryService = {
     return lab;
   },
 
-  async getLaboratories(page: number, limit: number) {
+  async getLaboratories(page: number, limit: number, packageId?: string) {
     const { skip, limit: limitNum } = getPaginationOptions(page, limit);
 
+    let query: any = {};
+    if (packageId) {
+      const services = await LabServiceModel.find({ packageId, approvalStatus: 'APPROVED', isActive: true });
+      const labIds = services.map(s => s.laboratoryId);
+      query = { _id: { $in: labIds } };
+    }
+
     const [laboratories, total] = await Promise.all([
-      LaboratoryModel.find().skip(skip).limit(limitNum).sort({ createdAt: -1 }),
-      LaboratoryModel.countDocuments(),
+      LaboratoryModel.find(query).skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      LaboratoryModel.countDocuments(query),
     ]);
 
     return createPaginatedResponse(laboratories, page, limitNum, total);

@@ -2,7 +2,7 @@ import type { IPaginationOptions, IPaginationMeta } from '../shared/types/index.
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 50;
+const MAX_LIMIT = 100;
 
 export function parsePaginationParams(query: Record<string, unknown>): IPaginationOptions {
   let page = Number(query.page) || DEFAULT_PAGE;
@@ -33,7 +33,7 @@ export function getSkip(page: number, limit: number): number {
 
 export function getPaginationOptions(page: number, limit: number) {
   const p = Math.max(1, page);
-  const l = Math.min(Math.max(1, limit), 50);
+  const l = Math.min(Math.max(1, limit), 100);
   return {
     skip: (p - 1) * l,
     limit: l,

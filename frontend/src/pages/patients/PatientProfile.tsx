@@ -1,12 +1,9 @@
 
-import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { ArrowLeft, Edit, Activity, FileText, Clock, AlertCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, Activity, FileText, Clock, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import toast from "react-hot-toast"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { usePatient, usePatientResults, usePatientNotes } from "@/hooks/usePatients"
-import { EditPatientModal } from "./EditPatientModal"
 
 import { useAuthStore } from "@/store/auth"
 
@@ -14,14 +11,13 @@ export function PatientProfile() {
   const { user } = useAuthStore()
   const { id } = useParams()
   const navigate = useNavigate()
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const { data: patientResponse, isLoading } = usePatient(id!)
   const { data: resultsResponse } = usePatientResults(id!)
   const { data: notesResponse } = usePatientNotes(id!)
   
   const patientData = patientResponse?.data || patientResponse
-  const history = resultsResponse?.data || resultsResponse || []
+  const history: any[] = resultsResponse?.data || resultsResponse || []
   const notes = notesResponse?.data || notesResponse || []
 
   if (isLoading) {
@@ -64,14 +60,6 @@ export function PatientProfile() {
               </span>
             </p>
           </div>
-        </div>
-        <div className="flex gap-3">
-          {user?.role !== 'INTERPRETER' && (
-            <Button variant="outline" className="gap-2 border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] transition-colors" onClick={() => setIsEditModalOpen(true)}>
-              <Edit className="h-4 w-4 text-[var(--color-text-muted)]" />
-              <span className="font-medium">Edit Profile</span>
-            </Button>
-          )}
         </div>
       </div>
 
@@ -169,20 +157,36 @@ export function PatientProfile() {
                         <StatusBadge status={item.status || "PENDING"} />
                       </td>
                       <td className="px-[24px] py-[16px] text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-[var(--color-forest)] hover:text-[var(--color-forest-mid)] hover:bg-[var(--color-lime)]/20 font-medium"
-                          onClick={() => {
-                            if (user?.role === 'INTERPRETER') {
-                              navigate(`/interpreter/editor/${item.referralCode || item._id}`)
-                            } else {
-                              toast.info("Detailed results view coming soon")
-                            }
-                          }}
-                        >
-                          {user?.role === 'INTERPRETER' ? "Review Results" : "View Results"}
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          {user?.role === 'INTERPRETER' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-[var(--color-forest)] hover:text-[var(--color-forest-mid)] hover:bg-[var(--color-lime)]/20 font-medium"
+                              onClick={() => navigate(`/interpreter/editor/${item.referralCode || item._id}`)}
+                            >
+                              Interpret
+                            </Button>
+                          )}
+                          {(user?.role === 'ADMIN' || (user?.role as any) === 'SUPER_ADMIN' || user?.role === 'LABORATORY') && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
+                              onClick={() => navigate(`/lab/results/enter/${item.referralCode || item._id}`)}
+                            >
+                              Upload Data
+                            </Button>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] font-medium"
+                            onClick={() => navigate(`/client/results/${item._id || item.referralCode}`)}
+                          >
+                            View
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   )) : (
@@ -256,7 +260,7 @@ export function PatientProfile() {
 
         </div>
       </div>
-      <EditPatientModal open={isEditModalOpen} onOpenChange={setIsEditModalOpen} patient={patientData} />
     </div>
   )
 }
+

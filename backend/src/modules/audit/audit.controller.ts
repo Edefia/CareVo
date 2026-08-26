@@ -9,6 +9,8 @@ export const auditController = {
 
       const filters = {
         actorId: req.query.actorId,
+        actorRole: req.query.actorRole,
+        search: req.query.search,
         action: req.query.action,
         resourceType: req.query.resourceType,
         resourceId: req.query.resourceId,
