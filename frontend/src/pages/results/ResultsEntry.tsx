@@ -186,7 +186,7 @@ export function ResultsEntry() {
             })}
 
             <div className="flex justify-end pt-4 border-t border-[var(--color-border)]">
-              <Button type="submit" className="h-[52px] px-[32px] text-[16px] gap-2 shadow-md bg-[var(--color-forest)] hover:bg-[var(--color-forest-mid)] transition-all">
+              <Button type="submit" className="h-[52px] px-[32px] text-[16px] gap-2 shadow-md bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-mid)] transition-all">
                 <FileText className="h-5 w-5" />
                 Submit Results for Interpretation
               </Button>

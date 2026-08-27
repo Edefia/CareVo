@@ -205,7 +205,7 @@ export function UserFormDialog({ isOpen, onClose, user, lockedRole, lockedLabora
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-[var(--color-forest)]" disabled={isPending}>
+            <Button type="submit" className="bg-[var(--color-forest)] text-white" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Save Changes" : "Provision Account"}
             </Button>

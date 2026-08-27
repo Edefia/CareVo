@@ -103,7 +103,7 @@ export function ClientHealthAdvocacy() {
           <div className="bg-white border rounded-2xl p-6 shadow-sm text-center">
             <h4 className="font-semibold text-slate-900 mb-2">Need personalized advice?</h4>
             <p className="text-sm text-slate-500 mb-4">Book a consultation with our medical team to discuss your specific health goals.</p>
-            <Button className="w-full bg-[var(--color-forest)] hover:bg-[var(--color-forest-mid)]">Book Consultation</Button>
+            <Button className="w-full bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-mid)]">Book Consultation</Button>
           </div>
         </div>
 

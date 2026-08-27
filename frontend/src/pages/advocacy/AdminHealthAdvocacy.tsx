@@ -81,7 +81,7 @@ export function AdminHealthAdvocacy() {
               <h3 className="font-serif text-xl font-semibold text-[var(--color-forest)]">Editable Content System</h3>
               <p className="text-sm text-slate-500 mt-1">Manage Education Cards and Preventive Tips</p>
             </div>
-            <Button className="bg-[var(--color-forest)] hover:bg-[var(--color-forest-mid)] gap-2">
+            <Button className="bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-mid)] gap-2">
               <Plus className="h-4 w-4" /> Create New Content
             </Button>
           </div>
