@@ -107,15 +107,6 @@ export function UserManagement() {
   return (
     <div className="space-y-[32px] md:space-y-[48px] max-w-[1400px] mx-auto pb-[96px] animate-in fade-in duration-500">
       
-      <div className="flex justify-end gap-3">
-        <Button 
-          onClick={() => { setEditingUser(null); setIsFormOpen(true); }}
-          className="flex items-center gap-2"
-        >
-          <Shield className="h-4 w-4" /> Create New User
-        </Button>
-      </div>
-
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           OVERVIEW CARDS (KPIs)
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -166,6 +157,12 @@ export function UserManagement() {
                 <option value="LABORATORY">Laboratories</option>
                 <option value="ADMIN">Admins</option>
               </select>
+              <Button 
+                onClick={() => { setEditingUser(null); setIsFormOpen(true); }}
+                className="flex items-center gap-2 h-10 px-4 ml-2"
+              >
+                <Shield className="h-4 w-4" /> Create User
+              </Button>
             </div>
           </div>
         </CardHeader>
