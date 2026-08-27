@@ -1,18 +1,9 @@
 import { useState } from "react"
 
-import { Plus, Edit2, Archive, Activity, BookOpen } from "lucide-react"
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Plus, Activity, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-const MOCK_DISEASE_TRENDS = [
-  { month: 'Jan', hypertension: 40, diabetes: 24 },
-  { month: 'Feb', hypertension: 30, diabetes: 13 },
-  { month: 'Mar', hypertension: 20, diabetes: 58 },
-  { month: 'Apr', hypertension: 27, diabetes: 39 },
-  { month: 'May', hypertension: 18, diabetes: 48 },
-  { month: 'Jun', hypertension: 23, diabetes: 38 },
-  { month: 'Jul', hypertension: 34, diabetes: 43 },
-]
+
 
 export function AdminHealthAdvocacy() {
 

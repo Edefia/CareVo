@@ -1,18 +1,17 @@
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Search, Plus, Package as PackageIcon, Edit, Trash2, CheckCircle, XCircle, Loader2, FlaskConical, Clock, Building2, ShieldCheck, CheckSquare, XSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/shared/DataTable"
-import { EmptyState } from "@/components/shared/EmptyState"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { usePackages, useCreatePackage, useUpdatePackage, useDeletePackage } from "@/hooks/usePackages"
 import { useAdminLabServices, useUpdateLabServiceStatus } from "@/hooks/useLabServices"
-import { useLaboratories } from "@/hooks/useLaboratories"
+
 import toast from "react-hot-toast"
 
 export function PackageManagement() {
@@ -20,9 +19,8 @@ export function PackageManagement() {
   const initialLabId = searchParams.get("labId")
   
   const [activeTab, setActiveTab] = useState<'GLOBAL' | 'LAB_SERVICES'>(initialLabId ? 'LAB_SERVICES' : 'GLOBAL')
-  const [selectedLabId, setSelectedLabId] = useState<string>(initialLabId || "all")
-  const { data: laboratoriesData } = useLaboratories()
-  const labs = laboratoriesData?.data || laboratoriesData?.items || []
+  const [selectedLabId] = useState<string>(initialLabId || "all")
+  
   const [searchTerm, setSearchTerm] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPackage, setEditingPackage] = useState<any>(null)

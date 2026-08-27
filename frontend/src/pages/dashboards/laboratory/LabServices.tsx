@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 
@@ -47,7 +46,7 @@ export function LabServices() {
 
   const handleOpenAddModal = () => {
     setEditingService(null)
-    setFormData({ name: "", description: "", category: "", labPrice: "", turnaroundTime: "" })
+    setFormData({ name: "", description: "", category: "", labPrice: "", turnaroundTime: "", packageId: "" })
     setIsAddModalOpen(true)
   }
 

@@ -43,7 +43,7 @@ export function ClientBilling() {
         callbackUrl: window.location.href, // If redirect is needed
       })
 
-      const { access_code, reference } = response.data || response
+      const { reference } = response.data || response
 
       // 2. Open Paystack popup
       openPaystack({

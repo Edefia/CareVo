@@ -3,7 +3,7 @@ import {
   Heart, Droplets, Activity, Calendar, FileText, Bell,
   CheckCircle2, AlertTriangle, Info, ArrowRight, Shield,
   ClipboardList, FlaskConical, TrendingUp, Sparkles,
-  Stethoscope, BookOpen, ChevronRight
+  Stethoscope, ChevronRight
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { Button } from "@/components/ui/button"

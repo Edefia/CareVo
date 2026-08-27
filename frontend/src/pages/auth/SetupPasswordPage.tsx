@@ -52,7 +52,7 @@ export function SetupPasswordPage() {
     
     setIsLoading(true)
     try {
-      await authService.resetPassword(token, data.password);
+      await authService.resetPassword({ token, password: data.password });
       toast.success("Password setup successfully! Please login.")
       navigate("/login")
     } catch (error: any) {

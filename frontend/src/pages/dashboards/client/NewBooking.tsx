@@ -4,7 +4,7 @@ import {
   Calendar as CalendarIcon, Clock, Heart, Droplets,
   Activity, Copy, Download, Share2, Info, QrCode,
   Shield, User, Phone, Mail, AlertTriangle,
-  Stethoscope, Building2, Star, ChevronDown
+  Stethoscope, Building2, Star
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

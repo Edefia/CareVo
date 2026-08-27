@@ -18,8 +18,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronUp,
-  Search,
-  Bell,
   ChevronRight,
   Settings,
   User as UserIcon,

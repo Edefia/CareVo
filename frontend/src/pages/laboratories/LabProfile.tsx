@@ -51,7 +51,7 @@ export function LabProfile() {
   }
 
   // Fetch staff assigned to this lab
-  const { data: staffResponse, isLoading: isStaffLoading } = useUsers({
+  const { data: staffResponse } = useUsers({
     role: "LABORATORY",
     laboratoryId: id,
     limit: 100, // fetch all for now
@@ -237,7 +237,7 @@ export function LabProfile() {
                     { header: "Price", accessorKey: "price" },
                     { 
                       header: "Status", 
-                      cell: (row) => <StatusBadge status={row.status} />
+                      cell: (row: any) => <StatusBadge status={row.status} />
                     },
                   ]}
                   data={services}

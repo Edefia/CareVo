@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/store/auth";
 import { useBroadcastNotification } from "@/hooks/useNotifications";
 import { useUsers } from "@/hooks/useUsers";
-import { Send, Smartphone, Mail, BellRing, Users, UserPlus, FileText, Loader2, Plus, Trash2 } from "lucide-react";
+import { Send, Smartphone, Mail, BellRing, FileText, Loader2, Plus, Trash2 } from "lucide-react";
 
 const broadcastSchema = z.object({
   modes: z.array(z.string()).min(1, "Select at least one delivery mode"),

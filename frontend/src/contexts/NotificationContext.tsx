@@ -48,9 +48,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Handle incoming real-time notifications
     newSocket.on('new_notification', (notification) => {
       // Show toast
-      toast.success(notification.title, {
+      toast.success(`${notification.title} - ${notification.message}`, {
         icon: '🔔',
-        description: notification.message,
         duration: 5000,
       });
 
