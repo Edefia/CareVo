@@ -99,7 +99,7 @@ export const billingController = {
    * This endpoint receives POST requests from Paystack when payment events occur.
    * No authentication — Paystack sends directly. We verify using HMAC signature.
    */
-  async handleWebhook(req: Request, res: Response, next: NextFunction) {
+  async handleWebhook(req: Request, res: Response, _next: NextFunction) {
     try {
       // Verify the webhook signature
       const signature = req.headers['x-paystack-signature'] as string;
@@ -117,7 +117,7 @@ export const billingController = {
       const result = await billingService.handlePaystackWebhook(event);
 
       // Paystack expects a 200 response — always respond quickly
-      res.status(200).json({ status: true, ...result });
+      res.status(200).json({ ...result, status: true });
     } catch (error) {
       logger.error('Paystack webhook processing error', {
         error: error instanceof Error ? error.message : 'Unknown error',

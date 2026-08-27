@@ -131,7 +131,7 @@ export const notificationController = {
 
   async markAsRead(req: Request, res: Response, next: NextFunction) {
     try {
-      const notification = await notificationService.markAsRead(req.user!.id, req.params.id);
+      const notification = await notificationService.markAsRead(req.user!.id, req.params.id as string);
       if (!notification) throw new NotFoundError('Notification not found');
       sendSuccess(res, notification);
     } catch (error) {
@@ -150,7 +150,7 @@ export const notificationController = {
 
   async deleteNotification(req: Request, res: Response, next: NextFunction) {
     try {
-      const notification = await notificationService.deleteNotification(req.user!.id, req.params.id);
+      const notification = await notificationService.deleteNotification(req.user!.id, req.params.id as string);
       if (!notification) throw new NotFoundError('Notification not found');
       res.status(204).send();
     } catch (error) {

@@ -23,7 +23,7 @@ export const initSocket = (httpServer: HTTPServer) => {
     }
 
     try {
-      const decoded = jwt.verify(token, env.JWT_SECRET) as any;
+      const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as any;
       socket.data.user = decoded;
       next();
     } catch (err) {

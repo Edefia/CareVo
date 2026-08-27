@@ -7,7 +7,6 @@ import { UserModel } from '../auth/auth.model.js';
 import { PatientModel } from '../patients/patient.model.js';
 import { InterpretationModel } from '../interpretations/interpretation.model.js';
 import { getIO } from '../../config/socket.js';
-import mongoose from 'mongoose';
 
 export interface BroadcastPayload {
   modes: ('IN_APP' | 'EMAIL' | 'SMS')[];

@@ -29,6 +29,7 @@ const envSchema = z.object({
   // Email
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().email(),
+  MOOLRE_VASKEY: z.string().min(1).default('dummy-key'),
 
   // Payments (Paystack)
   PAYSTACK_SECRET_KEY: z.string().min(1),
