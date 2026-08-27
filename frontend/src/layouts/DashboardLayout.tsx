@@ -21,9 +21,18 @@ import {
   ChevronRight,
   Settings,
   User as UserIcon,
-  Send
+  Send,
+  LogOut as LogOutIcon
 } from "lucide-react"
 import { NotificationPopover } from "@/components/shared/NotificationPopover"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type NavItem = { href: string; label: string; icon: any; badge?: number }
 type NavGroup = { title: string; items: NavItem[] }
@@ -315,26 +324,54 @@ export function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-[16px]">
-            {/* Profile Settings */}
-            <Link 
-              to="/settings" 
-              className="group flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-all hover:bg-[rgba(126,232,162,0.15)] hover:text-[var(--color-forest)] shadow-sm hover:shadow"
-              title="My Profile"
-            >
-              <UserIcon className="h-[18px] w-[18px] transition-transform group-hover:scale-110" />
-            </Link>
-            
             {/* Notifications */}
             <NotificationPopover />
 
             <div className="h-[24px] w-[1px] bg-[var(--color-border)] mx-1"></div>
 
-            {/* Mobile User Avatar (duplicates sidebar bottom functionality for mobile convenience) */}
-            <div className="flex h-[36px] w-[36px] cursor-pointer items-center justify-center rounded-full bg-[rgba(26,58,42,0.1)] lg:hidden">
-              <span className="font-sans text-[14px] font-semibold text-[var(--color-forest)]">
-                {user?.firstName?.[0]}
-              </span>
-            </div>
+            {/* User Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex h-[36px] w-[36px] cursor-pointer items-center justify-center rounded-full bg-[rgba(26,58,42,0.1)] hover:bg-[rgba(26,58,42,0.15)] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-forest)]">
+                  <span className="font-sans text-[14px] font-semibold text-[var(--color-forest)]">
+                    {user?.firstName?.[0] || 'U'}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px] p-2 bg-white rounded-[var(--radius-md)] shadow-md border border-[var(--color-border)]">
+                <DropdownMenuLabel className="font-normal px-2 py-1.5">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-[14px] font-medium leading-none text-[var(--color-text-primary)]">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-[12px] leading-none text-[var(--color-text-muted)]">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-[var(--color-border)] my-1" />
+                <DropdownMenuItem asChild className="cursor-pointer hover:bg-[var(--color-surface-2)] focus:bg-[var(--color-surface-2)] py-2 rounded-sm text-[13px] font-medium text-[var(--color-text-primary)]">
+                  <Link to="/settings" className="w-full flex items-center">
+                    <UserIcon className="mr-2 h-4 w-4 text-[var(--color-text-secondary)]" />
+                    My Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer hover:bg-[var(--color-surface-2)] focus:bg-[var(--color-surface-2)] py-2 rounded-sm text-[13px] font-medium text-[var(--color-text-primary)]">
+                  <Link to="/settings" className="w-full flex items-center">
+                    <Settings className="mr-2 h-4 w-4 text-[var(--color-text-secondary)]" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[var(--color-border)] my-1" />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="cursor-pointer text-[var(--color-danger)] hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] focus:text-[var(--color-danger)] py-2 rounded-sm text-[13px] font-medium"
+                >
+                  <LogOutIcon className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

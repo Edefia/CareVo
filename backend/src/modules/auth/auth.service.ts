@@ -58,6 +58,78 @@ function deleteCachePattern(prefix: string) {
   keysToDelete.forEach(k => cache.delete(k));
 }
 
+function getOtpEmailTemplate(code: string) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #111827; }
+    .container { max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb; }
+    .header { background-color: #1A3A2A; padding: 32px 24px; text-align: center; }
+    .header h1 { margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.025em; font-family: Georgia, serif; }
+    .header span.prime { color: #7EE8A2; font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 600; }
+    .content { padding: 40px 32px; text-align: center; }
+    .title { font-size: 22px; font-weight: 700; margin-top: 0; margin-bottom: 12px; color: #111827; }
+    .message { font-size: 15px; color: #4b5563; line-height: 1.6; margin-bottom: 32px; }
+    
+    .otp-container { 
+      background-color: #f0fdf4; 
+      border: 2px dashed #86efac; 
+      border-radius: 12px; 
+      padding: 32px 24px; 
+      margin-bottom: 32px;
+    }
+    
+    .otp-code { 
+      font-size: 42px; 
+      font-weight: 800; 
+      letter-spacing: 0.25em; 
+      color: #166534; 
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    
+    .copy-hint {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #15803d;
+      background-color: #dcfce7;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+    
+    .footer { padding: 24px; background-color: #f9fafb; text-align: center; border-top: 1px solid #e5e7eb; }
+    .footer p { margin: 0; font-size: 13px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>CareBis <span class="prime">Prime</span></h1>
+    </div>
+    <div class="content">
+      <h2 class="title">Secure Login Code</h2>
+      <p class="message">Please use the verification code below to sign in. This code is valid for <strong>5 minutes</strong>.</p>
+      
+      <div class="otp-container">
+        <p class="otp-code">${code}</p>
+        <div class="copy-hint">Double-click code to copy</div>
+      </div>
+      
+      <p class="message" style="font-size: 14px; margin-bottom: 0;">If you didn't request this code, you can safely ignore this email.</p>
+    </div>
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} CareBis Prime Health. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 export class AuthService {
   static async register(data: Record<string, unknown>, ip: string, userAgent: string) {
     const existing = await UserModel.findOne({ email: data.email as string });
@@ -150,7 +222,7 @@ export class AuthService {
       await notificationService.sendEmail(
         user.email,
         'CareBis Prime Login Code',
-        `<p>Your login code is: <strong>${emailCode}</strong>. It will expire in 5 minutes.</p>`
+        getOtpEmailTemplate(emailCode)
       );
 
       return { mfaRequired: true, token: tempToken };
@@ -321,7 +393,7 @@ export class AuthService {
     await notificationService.sendEmail(
       user.email,
       'CareBis Prime Login Code',
-      `<p>Your new login code is: <strong>${emailCode}</strong>. It will expire in 5 minutes.</p>`
+      getOtpEmailTemplate(emailCode)
     );
   }
 

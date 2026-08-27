@@ -9,11 +9,15 @@ import {
   TrendingUp,
   CheckCircle2,
   Menu,
+  X,
   ChevronDown
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
 
 export function LandingPage() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-off-white)] font-sans text-[var(--color-text-primary)]">
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -61,10 +65,34 @@ export function LandingPage() {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <button className="md:hidden p-2 text-[var(--color-text-secondary)]">
-            <Menu className="h-6 w-6" />
+          <button 
+            className="md:hidden p-2 text-[var(--color-text-secondary)]"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-[var(--color-border)] bg-white px-[24px] py-[16px] shadow-lg animate-in slide-in-from-top-2">
+            <nav className="flex flex-col gap-[16px] text-[15px] font-medium text-[var(--color-text-secondary)] mb-4">
+              <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-forest)]">How It Works</a>
+              <a href="#services" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-forest)]">Services</a>
+              <a href="#for-labs" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-forest)]">For Labs</a>
+              <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-forest)]">About</a>
+              <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-forest)]">Contact</a>
+            </nav>
+            <div className="flex flex-col gap-[12px] pt-4 border-t border-[var(--color-border)]">
+              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="secondary" className="w-full h-[44px]">Log In</Button>
+              </Link>
+              <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button className="w-full h-[44px]">Get Started</Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="flex-1">
