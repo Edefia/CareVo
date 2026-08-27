@@ -78,7 +78,7 @@ export const billingService = {
    * Called when Paystack sends a charge.success event.
    */
   async handlePaystackWebhook(event: any) {
-    if (event.event !== 'charge.success') {
+    if (event.event !== 'charge.success' && event.event !== 'charge.failed') {
       return { status: 'ignored', event: event.event };
     }
 
@@ -94,6 +94,32 @@ export const billingService = {
 
     if (invoice.status === 'PAID') {
       return { status: 'already_paid', reference };
+    }
+
+    if (event.event === 'charge.failed') {
+      // Notify patient of failure
+      try {
+        const patient = await PatientModel.findById(invoice.patientId).populate('userId');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const patientUser = patient?.userId as any;
+        if (patientUser) {
+          const displayAmount = (invoice.amount / 100).toFixed(2);
+          await notificationService.sendEmail(
+            patientUser.email,
+            'Payment Failed - Action Required',
+            'paymentFailed',
+            {
+              clientName: patientUser.firstName,
+              invoiceId: invoice._id.toString().slice(-6).toUpperCase(),
+              amount: displayAmount,
+              packageName: invoice.description || 'Health Package',
+            }
+          );
+        }
+      } catch (e) {
+        console.error('Failed to send payment failure notification', e);
+      }
+      return { status: 'payment_failed', reference };
     }
 
     // Verify the transaction with Paystack to be safe
@@ -124,20 +150,28 @@ export const billingService = {
       });
 
       // Notify patient
-      const patient = await PatientModel.findById(invoice.patientId);
-      if (patient) {
-        const patientUser = await UserModel.findById(patient.userId);
+      try {
+        const patient = await PatientModel.findById(invoice.patientId).populate('userId');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const patientUser = patient?.userId as any;
         if (patientUser) {
-          const prefs = await NotificationPreferenceModel.findOne({ userId: patientUser._id });
-          if (!prefs || prefs.emailEnabled) {
-            const displayAmount = (invoice.amount / 100).toFixed(2);
-            await notificationService.add('sendEmail', {
-              to: patientUser.email,
-              subject: 'Payment Receipt — CareVo Health',
-              body: `Hello ${patientUser.firstName},<br><br>We have successfully received your payment of ${invoice.currency} ${displayAmount} for "${invoice.description}".<br><br>Thank you for choosing CareVo Health.`,
-            });
-          }
+          const displayAmount = (invoice.amount / 100).toFixed(2);
+          await notificationService.sendEmail(
+            patientUser.email,
+            'Payment Receipt — CareBis Prime',
+            'paymentReceipt',
+            {
+              clientName: patientUser.firstName,
+              amount: displayAmount,
+              invoiceId: invoice._id.toString().slice(-6).toUpperCase(),
+              packageName: invoice.description || 'Health Package',
+              paymentMethod: 'Paystack Card',
+              date: invoice.paidAt.toLocaleString(),
+            }
+          );
         }
+      } catch (e) {
+        console.error('Failed to send payment receipt notification', e);
       }
 
       return { status: 'success', reference };

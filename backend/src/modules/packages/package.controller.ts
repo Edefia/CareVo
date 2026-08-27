@@ -7,7 +7,7 @@ export const packageController = {
   // Public: Get active packages only (for clients)
   async getActivePackages(_req: Request, res: Response, next: NextFunction) {
     try {
-      const packages = await PackageModel.find({ isActive: true }).sort({ price: 1 });
+      const packages = await PackageModel.find({ isActive: true }).sort({ name: 1 });
       sendSuccess(res, packages);
     } catch (error) {
       next(error);
@@ -56,6 +56,31 @@ export const packageController = {
   async createPackage(req: Request, res: Response, next: NextFunction) {
     try {
       const newPackage = await PackageModel.create(req.body);
+
+      // Notify all active laboratories about the new package
+      try {
+        const { LaboratoryModel } = await import('../laboratories/laboratory.model.js');
+        const { notificationService } = await import('../notifications/notification.service.js');
+        const labs = await LaboratoryModel.find({ isActive: true }).select('name contactEmail');
+
+        for (const lab of labs) {
+          if (lab.contactEmail) {
+            notificationService.sendEmail(
+              lab.contactEmail,
+              `New Package Available: ${newPackage.name}`,
+              'newGlobalPackage',
+              {
+                labName: lab.name,
+                packageName: newPackage.name,
+                category: newPackage.category || 'General',
+                description: newPackage.description,
+                testsIncluded: newPackage.testsIncluded || [],
+              }
+            ).catch(() => {}); // Fire and forget
+          }
+        }
+      } catch { /* Don't block package creation */ }
+
       sendSuccess(res, newPackage, 201);
     } catch (error) {
       next(error);

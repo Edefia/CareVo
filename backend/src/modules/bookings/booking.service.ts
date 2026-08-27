@@ -8,8 +8,8 @@ import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagin
 import { encrypt, decrypt } from '../../utils/crypto.js';
 import { AuditService } from '../audit/audit.service.js';
 import { notificationService } from '../notifications/notification.service.js';
-import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
 import { LaboratoryModel } from '../laboratories/laboratory.model.js';
+import { LabServiceModel } from '../laboratories/lab-service.model.js';
 
 function generateReferralCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -60,11 +60,24 @@ export const bookingService = {
 
     const saved = await booking.save();
 
-    // Automatically generate an invoice
+    // Automatically generate an invoice — price comes from the lab's approved service, not the global package
+    let invoiceAmount = 0;
+    if (data.laboratoryId) {
+      const labService = await LabServiceModel.findOne({
+        laboratoryId: data.laboratoryId,
+        packageId: pkg._id,
+        approvalStatus: 'APPROVED',
+        isActive: true,
+      });
+      if (labService) {
+        invoiceAmount = labService.platformPrice * 100; // pesewas
+      }
+    }
+
     await InvoiceModel.create({
       patientId: patient._id,
-      issuedBy: creatorId, // System or whoever created it
-      amount: pkg.price * 100, // Storing in pesewas (smallest unit)
+      issuedBy: creatorId,
+      amount: invoiceAmount,
       currency: 'GHS',
       status: 'PENDING',
       description: `Payment for ${pkg.name} (${data.locationType === 'HOME' ? 'Home Collection' : 'In-Clinic'})`,
@@ -160,7 +173,7 @@ export const bookingService = {
   },
 
   async updateBookingStatus(id: string, status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED', meetingLink: string | undefined, userId: string, userRole: string, ipAddress: string, userAgent: string) {
-    const booking = await BookingModel.findById(id);
+    const booking = await BookingModel.findById(id).populate('packageId');
     if (!booking) throw new NotFoundError('Booking not found.');
 
     const oldStatus = booking.status;
@@ -185,32 +198,64 @@ export const bookingService = {
       newState: { status: booking.status },
     });
 
-    // Notify patient
-    if (status === 'CONFIRMED' || status === 'CANCELLED') {
-      const patient = await PatientModel.findById(booking.patientId);
-      if (patient) {
-        const patientUser = await UserModel.findById(patient.userId);
-        if (patientUser) {
-          const prefs = await NotificationPreferenceModel.findOne({ userId: patientUser._id });
-          if (!prefs || prefs.emailEnabled) {
-            let body = '';
-            if (status === 'CONFIRMED') {
-              body = `Hello ${patientUser.firstName},<br><br>Your appointment scheduled for ${booking.scheduledAt.toLocaleString()} has been confirmed.`;
-              if (booking.meetingLink) {
-                body += `<br><br>Meeting Link: <a href="${booking.meetingLink}">${booking.meetingLink}</a>`;
-              }
-            } else if (status === 'CANCELLED') {
-              body = `Hello ${patientUser.firstName},<br><br>Your appointment scheduled for ${booking.scheduledAt.toLocaleString()} has been cancelled. Please contact us to reschedule.`;
-            }
-            await notificationService.sendEmail(
-              patientUser.email,
-              `Appointment ${status === 'CONFIRMED' ? 'Confirmed' : 'Cancelled'}`,
-              'appointment_status',
-              { firstName: patientUser.firstName, body }
-            );
+    // Handle Notifications
+    try {
+      const patient = await PatientModel.findById(booking.patientId).populate('userId');
+      const lab = booking.laboratoryId ? await LaboratoryModel.findById(booking.laboratoryId) : null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pkg = booking.packageId as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const patientUser = patient?.userId as any;
+      const actingUser = await UserModel.findById(userId);
+
+      if (status === 'CANCELLED' && patientUser) {
+        // Notify the client
+        await notificationService.sendEmail(
+          patientUser.email,
+          `Booking Cancelled - ${pkg?.name}`,
+          'bookingCancelled',
+          {
+            recipientName: patientUser.firstName,
+            bookingId: booking._id.toString().slice(-6).toUpperCase(),
+            packageName: pkg?.name || 'Service',
+            date: booking.scheduledAt.toLocaleString(),
+            canceledBy: actingUser ? actingUser.firstName : 'Admin',
+            reason: 'Booking was cancelled. Please reschedule if needed.',
           }
+        );
+
+        // Notify the lab if it was cancelled by someone other than the lab
+        if (lab && lab.contactEmail && userRole !== 'LABORATORY') {
+           await notificationService.sendEmail(
+             lab.contactEmail,
+             `Booking Cancelled - #${booking._id.toString().slice(-6).toUpperCase()}`,
+             'bookingCancelled',
+             {
+               recipientName: lab.name,
+               bookingId: booking._id.toString().slice(-6).toUpperCase(),
+               packageName: pkg?.name || 'Service',
+               date: booking.scheduledAt.toLocaleString(),
+               canceledBy: actingUser ? actingUser.firstName : 'Client',
+               reason: 'The client cancelled this appointment.',
+             }
+           );
         }
+      } else if (status === 'COMPLETED' && patientUser && lab) {
+        // Request feedback from client
+        await notificationService.sendEmail(
+          patientUser.email,
+          `How was your screening at ${lab.name}?`,
+          'feedbackRequest',
+          {
+            clientName: patientUser.firstName,
+            labName: lab.name,
+            packageName: pkg?.name || 'Service',
+          }
+        );
       }
+    } catch (e) {
+      // Non-blocking notification error
+      console.error('Failed to send booking status notification:', e);
     }
 
     return this.getBookingById(id, userRole, userId);

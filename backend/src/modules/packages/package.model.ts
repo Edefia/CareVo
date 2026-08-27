@@ -3,12 +3,9 @@ import mongoose, { Schema, type Document } from 'mongoose';
 export interface IPackage extends Document {
   name: string;
   description: string;
-  price: number;
-  currency: string;
-  features: string[];
-  pillarIcon: 'CARDIO' | 'RENAL' | 'METABOLIC' | 'COMPREHENSIVE';
-  color: string;
-  bgColor: string;
+  category: string;
+  testsIncluded: string[];
+  turnaroundTime?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -26,34 +23,19 @@ const packageSchema = new Schema<IPackage>(
       type: String,
       required: true,
     },
-    price: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    currency: {
+    category: {
       type: String,
-      default: 'GHS',
       required: true,
+      trim: true,
     },
-    features: [
+    testsIncluded: [
       {
         type: String,
-        required: true,
       },
     ],
-    pillarIcon: {
+    turnaroundTime: {
       type: String,
-      enum: ['CARDIO', 'RENAL', 'METABOLIC', 'COMPREHENSIVE'],
-      required: true,
-    },
-    color: {
-      type: String,
-      default: 'text-[#DC2626]',
-    },
-    bgColor: {
-      type: String,
-      default: 'bg-[#DC2626]/10',
+      trim: true,
     },
     isActive: {
       type: Boolean,

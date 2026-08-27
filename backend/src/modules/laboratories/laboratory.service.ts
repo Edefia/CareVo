@@ -123,14 +123,62 @@ export const laboratoryService = {
     return await service.save();
   },
 
-  async updateLabServiceStatus(id: string, updateData: Partial<ILabService>): Promise<ILabService> {
-    const service = await LabServiceModel.findById(id);
+  async updateLabServiceStatus(id: string, updateData: Partial<ILabService> & { adminComment?: string }): Promise<ILabService> {
+    const service = await LabServiceModel.findById(id).populate('laboratoryId', 'name contactEmail');
     if (!service) {
       throw new NotFoundError('Lab service not found.');
     }
 
+    const previousStatus = service.approvalStatus;
     Object.assign(service, updateData);
-    return await service.save();
+    const savedService = await service.save();
+
+    // --- Send Notification ---
+    const lab = service.laboratoryId as any;
+    if (lab?.contactEmail && updateData.approvalStatus && updateData.approvalStatus !== previousStatus) {
+      try {
+        const { notificationService } = await import('../notifications/notification.service.js');
+        const status = updateData.approvalStatus;
+
+        if (status === 'APPROVED') {
+          await notificationService.sendEmail(
+            lab.contactEmail,
+            `Service Approved: ${service.name}`,
+            'labServiceApproved',
+            {
+              labName: lab.name,
+              serviceName: service.name,
+              category: service.category,
+              labPrice: service.labPrice.toFixed(2),
+              platformPrice: service.platformPrice.toFixed(2),
+              adminComment: updateData.adminComment || undefined,
+            }
+          );
+        } else if (status === 'REJECTED') {
+          const wasApproved = previousStatus === 'APPROVED';
+          const templateKey = wasApproved ? 'labServiceRevoked' : 'labServiceRejected';
+          const subject = wasApproved ? `Service Revoked: ${service.name}` : `Service Review: ${service.name}`;
+
+          await notificationService.sendEmail(
+            lab.contactEmail,
+            subject,
+            templateKey,
+            {
+              labName: lab.name,
+              serviceName: service.name,
+              category: service.category,
+              adminComment: updateData.adminComment || undefined,
+            }
+          );
+        }
+      } catch (emailErr) {
+        // Log but don't block the status update
+        const { logger } = await import('../../utils/logger.js');
+        logger.error('Failed to send lab service notification email', { error: (emailErr as Error).message });
+      }
+    }
+
+    return savedService;
   },
 
   async deleteLabService(id: string, laboratoryId: string): Promise<void> {

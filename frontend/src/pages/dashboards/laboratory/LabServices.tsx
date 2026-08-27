@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Search, Plus, Edit2, Trash2, CheckCircle, Clock, AlertCircle, RefreshCw, Loader2 } from "lucide-react"
+import { Search, Plus, Edit2, Trash2, CheckCircle, Clock, AlertCircle, RefreshCw, Loader2, MessageSquare } from "lucide-react"
 import { useLabServices, useCreateLabService, useUpdateLabService, useDeleteLabService } from "@/hooks/useLabServices"
 import { usePackages } from "@/hooks/usePackages"
+import { useCategories } from "@/hooks/useCategories"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import toast from "react-hot-toast"
@@ -16,9 +17,13 @@ import { Label } from "@/components/ui/label"
 export function LabServices() {
   const { data: servicesData, isLoading } = useLabServices()
   const { data: packagesResponse } = usePackages()
+  const { data: categoriesResponse } = useCategories('LAB_SERVICES')
   
   const packagesRaw = packagesResponse?.data || packagesResponse
   const packages = packagesRaw?.data || packagesRaw || []
+
+  const categoriesData = categoriesResponse?.data || categoriesResponse
+  const categories = Array.isArray(categoriesData) ? categoriesData : []
   
   const services = servicesData?.items || servicesData?.data || servicesData || []
   const createService = useCreateLabService()
@@ -30,6 +35,7 @@ export function LabServices() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingService, setEditingService] = useState<any>(null)
+  const [commentViewing, setCommentViewing] = useState<any>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -48,7 +54,7 @@ export function LabServices() {
 
   const handleOpenAddModal = () => {
     setEditingService(null)
-    setFormData({ name: "", description: "", category: "", labPrice: "", turnaroundTime: "", packageId: "" })
+    setFormData({ name: "", description: "", category: categories[0]?.name || "", labPrice: "", turnaroundTime: "", packageId: "" })
     setIsAddModalOpen(true)
   }
 
@@ -193,7 +199,18 @@ export function LabServices() {
                     </td>
                     <td className="px-[24px] py-[20px] text-[14px] text-[var(--color-text-secondary)]">{service.turnaroundTime}</td>
                     <td className="px-[24px] py-[20px]">
-                      {renderStatusBadge(service.approvalStatus)}
+                      <div className="flex items-center gap-2">
+                        {renderStatusBadge(service.approvalStatus)}
+                        {service.adminComment && (
+                          <button
+                            onClick={() => setCommentViewing(service)}
+                            className="text-slate-400 hover:text-slate-600 transition-colors"
+                            title="View admin comment"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-[24px] py-[20px] text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -225,6 +242,30 @@ export function LabServices() {
         </div>
       </div>
 
+      {/* Admin Comment Viewer */}
+      <Dialog open={!!commentViewing} onOpenChange={(open) => !open && setCommentViewing(null)}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-[var(--color-forest)]" />
+              Admin Review Comment
+            </DialogTitle>
+          </DialogHeader>
+          {commentViewing && (
+            <div className="space-y-4 py-4">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <div className="font-medium text-slate-800">{commentViewing.name}</div>
+                <div className="text-sm text-slate-500">Status: {commentViewing.approvalStatus}</div>
+              </div>
+              <div className="bg-emerald-50/50 border-l-4 border-[var(--color-forest)] rounded-r-lg p-4">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Comment from Admin</p>
+                <p className="text-sm text-slate-800 leading-relaxed">{commentViewing.adminComment}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* ADD/EDIT MODAL */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -248,7 +289,7 @@ export function LabServices() {
                       ...formData,
                       packageId: pkgId,
                       name: pkg.name,
-                      category: pkg.pillarIcon,
+                      category: pkg.category || formData.category,
                     })
                   } else {
                     setFormData({ ...formData, packageId: pkgId })
@@ -272,7 +313,18 @@ export function LabServices() {
             
             <div className="space-y-2">
               <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-              <Input id="category" required value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="e.g. Cardiology, Hematology..." />
+              <select
+                id="category"
+                required
+                className="flex h-[40px] w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={formData.category}
+                onChange={(e) => setFormData({...formData, category: e.target.value})}
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat: any) => (
+                  <option key={cat._id} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

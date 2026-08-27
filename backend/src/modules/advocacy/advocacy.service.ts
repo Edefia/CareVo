@@ -6,6 +6,8 @@ import { NotFoundError } from '../../shared/errors/index.js';
 import { getPaginationOptions, createPaginatedResponse } from '../../utils/pagination.js';
 import { encrypt, decrypt } from '../../utils/crypto.js';
 import { AuditService } from '../audit/audit.service.js';
+import { notificationService } from '../notifications/notification.service.js';
+import { NotificationPreferenceModel } from '../notifications/notification-preference.model.js';
 
 export const advocacyService = {
   // Content Management (Cards & Tips)
@@ -40,6 +42,34 @@ export const advocacyService = {
       newState: { title: saved.title, type: saved.type },
     });
 
+    if (saved.status === 'PUBLISHED') {
+      try {
+        const patients = await PatientModel.find().populate('userId');
+        for (const p of patients) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pu = p.userId as any;
+          if (pu) {
+            const prefs = await NotificationPreferenceModel.findOne({ userId: pu._id });
+            if (!prefs || prefs.emailEnabled) {
+               await notificationService.sendEmail(
+                 pu.email,
+                 saved.type === 'PREVENTIVE_TIP' ? 'New Preventive Health Tip' : 'New Health Education Card',
+                 'newEducationalContent',
+                 {
+                   clientName: pu.firstName,
+                   title: saved.title,
+                   type: saved.type,
+                   summary: saved.content.substring(0, 150) + '...',
+                 }
+               );
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to send educational content notifications', e);
+      }
+    }
+
     return saved;
   },
 
@@ -64,6 +94,34 @@ export const advocacyService = {
       previousState: { status: oldStatus },
       newState: { status: content.status },
     });
+
+    if (oldStatus !== 'PUBLISHED' && status === 'PUBLISHED') {
+      try {
+        const patients = await PatientModel.find().populate('userId');
+        for (const p of patients) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pu = p.userId as any;
+          if (pu) {
+            const prefs = await NotificationPreferenceModel.findOne({ userId: pu._id });
+            if (!prefs || prefs.emailEnabled) {
+               await notificationService.sendEmail(
+                 pu.email,
+                 content.type === 'PREVENTIVE_TIP' ? 'New Preventive Health Tip' : 'New Health Education Card',
+                 'newEducationalContent',
+                 {
+                   clientName: pu.firstName,
+                   title: content.title,
+                   type: content.type,
+                   summary: content.content.substring(0, 150) + '...',
+                 }
+               );
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to send educational content notifications', e);
+      }
+    }
 
     return content;
   },
@@ -103,6 +161,29 @@ export const advocacyService = {
       success: true,
       newState: { title: saved.title, patientId: saved.patientId.toString() },
     });
+
+    if (data.assignedTo) {
+      try {
+        const assignee = await UserModel.findById(data.assignedTo);
+        const patientUser = await UserModel.findById(patient.userId);
+        if (assignee && patientUser) {
+          await notificationService.sendEmail(
+            assignee.email,
+            `New Patient Task Assigned: ${saved.title}`,
+            'advocacyTaskAssigned',
+            {
+              staffName: assignee.firstName,
+              patientName: `${patientUser.firstName} ${patientUser.lastName}`,
+              taskTitle: saved.title,
+              priority: saved.priority,
+              dueDate: saved.dueDate ? saved.dueDate.toLocaleDateString() : 'No due date',
+            }
+          );
+        }
+      } catch (e) {
+        console.error('Failed to send task assignment notification', e);
+      }
+    }
 
     return saved;
   },

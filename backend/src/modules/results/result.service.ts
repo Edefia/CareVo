@@ -9,6 +9,8 @@ import { NotificationPreferenceModel } from '../notifications/notification-prefe
 import { SubscriptionModel } from '../notifications/subscription.model.js';
 import { UserModel } from '../auth/auth.model.js';
 import { BookingModel } from '../bookings/booking.model.js';
+import { PackageModel } from '../packages/package.model.js';
+import { LaboratoryModel } from '../laboratories/laboratory.model.js';
 
 export const resultService = {
   async createResult(
@@ -78,6 +80,44 @@ export const resultService = {
     });
 
     const resultObj = savedResult.toObject();
+
+    // Check for critical/abnormal results and alert admins
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hasCriticalParameter = ((data as any).parameters || []).some((p: any) => p.isAbnormal === true);
+      
+      if (hasCriticalParameter) {
+        // Find all admins
+        const admins = await UserModel.find({ role: 'ADMIN', isActive: true });
+        const lab = await LaboratoryModel.findById(staffLabId);
+        const pkg = await PackageModel.findById(booking.packageId);
+        
+        // Notify all admins
+        const adminEmails = admins.map(admin => admin.email).filter(Boolean);
+        if (adminEmails.length > 0 && patient) {
+          const patientUser = await UserModel.findById(patient.userId);
+          if (patientUser) {
+            // Send individual emails so we can personalize with admin name
+            for (const admin of admins) {
+              await notificationService.sendEmail(
+                admin.email,
+                `URGENT: Critical Result - ${patientUser.firstName} ${patientUser.lastName}`,
+                'criticalResultAlert',
+                {
+                  adminName: admin.firstName,
+                  patientName: `${patientUser.firstName} ${patientUser.lastName}`,
+                  labName: lab?.name || 'Unknown Lab',
+                  packageName: pkg?.name || savedResult.panelName,
+                  resultId: savedResult._id.toString(),
+                }
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to process critical result alerts', e);
+    }
 
     // Decrypt notes before returning
     if (resultObj.notes) {

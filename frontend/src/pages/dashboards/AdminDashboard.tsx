@@ -44,7 +44,7 @@ export function AdminDashboard() {
               title="Total Platform Users"
               value={metrics?.totalUsers?.toLocaleString() || "0"}
               icon={Users}
-              description={`${metrics?.totalPatients || 0} clients enrolled`}
+              description={`${metrics?.totalPatients || 0} patients registered`}
               className="border-t-4 border-t-blue-500"
             />
             <StatCard
@@ -63,9 +63,9 @@ export function AdminDashboard() {
             />
             <StatCard
               title="Monthly Revenue"
-              value={`GHS ${(metrics?.monthlyRevenue / 100 || 0).toLocaleString()}`}
+              value={`GHS ${(metrics?.monthlyRevenue || 0).toLocaleString()}`}
               icon={TrendingUp}
-              description={`GHS ${(metrics?.pendingPaymentsAmount / 100 || 0).toLocaleString()} pending`}
+              description={`GHS ${(metrics?.pendingPaymentsAmount || 0).toLocaleString()} pending`}
               className="border-t-4 border-t-violet-500"
             />
           </>

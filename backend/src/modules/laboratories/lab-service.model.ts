@@ -10,6 +10,7 @@ export interface ILabService extends Document {
   platformPrice: number;
   turnaroundTime: string;
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminComment?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -61,6 +62,11 @@ const labServiceSchema = new Schema<ILabService>(
       type: String,
       enum: ['PENDING', 'APPROVED', 'REJECTED'],
       default: 'PENDING',
+    },
+    adminComment: {
+      type: String,
+      trim: true,
+      default: null,
     },
     isActive: {
       type: Boolean,

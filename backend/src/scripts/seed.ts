@@ -36,32 +36,23 @@ async function runSeed() {
       {
         name: 'Comprehensive Wellness Screen',
         description: 'A complete overview of your health including cardiovascular, renal, and metabolic markers.',
-        price: 450,
-        currency: 'GHS',
-        features: ['Cardio', 'Renal', 'Metabolic'],
-        pillarIcon: 'COMPREHENSIVE',
-        color: 'text-[#DC2626]',
-        bgColor: 'bg-[#DC2626]/10'
+        category: 'General Health',
+        testsIncluded: ['Complete Blood Count', 'Lipid Panel', 'Renal Function', 'Liver Function', 'Fasting Glucose', 'Urinalysis'],
+        turnaroundTime: '48 hours',
       },
       {
         name: 'Cardio Essentials',
         description: 'Focused screening on heart health and lipid profile.',
-        price: 250,
-        currency: 'GHS',
-        features: ['Lipid Panel', 'ECG', 'Blood Pressure'],
-        pillarIcon: 'CARDIO',
-        color: 'text-[#0F76E0]',
-        bgColor: 'bg-[#0F76E0]/10'
+        category: 'Specialized',
+        testsIncluded: ['Lipid Panel', 'ECG', 'Blood Pressure', 'Troponin'],
+        turnaroundTime: '24 hours',
       },
       {
         name: 'Metabolic Check',
         description: 'Key indicators for diabetes and metabolic syndrome.',
-        price: 200,
-        currency: 'GHS',
-        features: ['Fasting Glucose', 'HbA1c', 'Insulin'],
-        pillarIcon: 'METABOLIC',
-        color: 'text-[#D97706]',
-        bgColor: 'bg-[#D97706]/10'
+        category: 'General Health',
+        testsIncluded: ['Fasting Glucose', 'HbA1c', 'Insulin', 'BMI Assessment'],
+        turnaroundTime: '24 hours',
       }
     ]);
 

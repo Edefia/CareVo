@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Search, Plus, Package as PackageIcon, Edit, Trash2, CheckCircle, XCircle, Loader2, FlaskConical, Clock, Building2, ShieldCheck, CheckSquare, XSquare } from "lucide-react"
+import { Search, Plus, Package as PackageIcon, Edit, Trash2, CheckCircle, XCircle, Loader2, FlaskConical, Clock, Building2, ShieldCheck, CheckSquare, XSquare, Tag, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { usePackages, useCreatePackage, useUpdatePackage, useDeletePackage } from "@/hooks/usePackages"
 import { useAdminLabServices, useUpdateLabServiceStatus } from "@/hooks/useLabServices"
+import { useCategories, useAllCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories"
 
 import toast from "react-hot-toast"
 
@@ -18,12 +19,34 @@ export function PackageManagement() {
   const [searchParams] = useSearchParams()
   const initialLabId = searchParams.get("labId")
   
-  const [activeTab, setActiveTab] = useState<'GLOBAL' | 'LAB_SERVICES'>(initialLabId ? 'LAB_SERVICES' : 'GLOBAL')
+  const [activeTab, setActiveTab] = useState<'GLOBAL' | 'LAB_SERVICES' | 'CATEGORIES'>(initialLabId ? 'LAB_SERVICES' : 'GLOBAL')
   const [selectedLabId] = useState<string>(initialLabId || "all")
   
   const [searchTerm, setSearchTerm] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPackage, setEditingPackage] = useState<any>(null)
+  
+  // Approval Comment Dialog
+  const [approvalDialog, setApprovalDialog] = useState<{
+    isOpen: boolean;
+    service: any;
+    status: 'APPROVED' | 'REJECTED';
+    comment: string;
+  }>({
+    isOpen: false,
+    service: null,
+    status: 'APPROVED',
+    comment: '',
+  })
+
+  // Category modal state
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+    description: "",
+    appliesTo: ["PACKAGES", "LAB_SERVICES"],
+  })
   
   // Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -43,18 +66,30 @@ export function PackageManagement() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: "",
-    category: "GENERAL",
+    category: "",
     testsIncluded: "",
     isActive: true,
     turnaroundTime: ""
   })
 
-  // Global Packages
+  // Data fetching
   const { data: packagesResponse, isLoading: pkgsLoading } = usePackages()
   const createMutation = useCreatePackage()
   const updateMutation = useUpdatePackage()
   const deleteMutation = useDeletePackage()
+
+  // Categories
+  const { data: categoriesResponse } = useCategories()
+  const { data: allCategoriesResponse, isLoading: categoriesLoading } = useAllCategories()
+  const createCategoryMutation = useCreateCategory()
+  const updateCategoryMutation = useUpdateCategory()
+  const deleteCategoryMutation = useDeleteCategory()
+
+  const categoriesData = categoriesResponse?.data || categoriesResponse
+  const categories = Array.isArray(categoriesData) ? categoriesData : []
+
+  const allCategoriesData = allCategoriesResponse?.data || allCategoriesResponse
+  const allCategories = Array.isArray(allCategoriesData) ? allCategoriesData : []
 
   const packagesData = packagesResponse?.data || packagesResponse
   const packages = packagesData?.data || packagesData || []
@@ -80,16 +115,15 @@ export function PackageManagement() {
       setFormData({
         name: pkg.name,
         description: pkg.description,
-        price: (pkg.price / 100).toString(),
-        category: pkg.category || "GENERAL",
-        testsIncluded: Array.isArray(pkg.testsIncluded) ? pkg.testsIncluded.join(", ") : pkg.testsIncluded,
+        category: pkg.category || "",
+        testsIncluded: Array.isArray(pkg.testsIncluded) ? pkg.testsIncluded.join(", ") : (pkg.testsIncluded || ""),
         isActive: pkg.isActive,
         turnaroundTime: pkg.turnaroundTime || ""
       })
     } else {
       setEditingPackage(null)
       setFormData({
-        name: "", description: "", price: "", category: "GENERAL", testsIncluded: "", isActive: true, turnaroundTime: ""
+        name: "", description: "", category: categories[0]?.name || "", testsIncluded: "", isActive: true, turnaroundTime: ""
       })
     }
     setIsModalOpen(true)
@@ -100,7 +134,6 @@ export function PackageManagement() {
     
     const payload = {
       ...formData,
-      price: Math.round(parseFloat(formData.price) * 100),
       testsIncluded: formData.testsIncluded.split(",").map(t => t.trim()).filter(Boolean)
     }
 
@@ -146,19 +179,76 @@ export function PackageManagement() {
   }
 
   // --- Handlers for Lab Services ---
-  const handleApproveService = (service: any, status: 'APPROVED' | 'REJECTED') => {
+  const handleOpenApprovalDialog = (service: any, status: 'APPROVED' | 'REJECTED') => {
+    setApprovalDialog({
+      isOpen: true,
+      service,
+      status,
+      comment: '',
+    })
+  }
+
+  const handleSubmitApproval = async () => {
+    try {
+      await updateServiceStatus.mutateAsync({
+        id: approvalDialog.service._id,
+        data: {
+          approvalStatus: approvalDialog.status,
+          adminComment: approvalDialog.comment || undefined,
+        }
+      })
+      toast.success(`Lab service ${approvalDialog.status.toLowerCase()} successfully`)
+      setApprovalDialog({ isOpen: false, service: null, status: 'APPROVED', comment: '' })
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update service status")
+    }
+  }
+
+  // --- Category Handlers ---
+  const handleOpenCategoryModal = (cat: any = null) => {
+    if (cat) {
+      setEditingCategory(cat)
+      setCategoryForm({
+        name: cat.name,
+        description: cat.description || "",
+        appliesTo: cat.appliesTo || ["PACKAGES", "LAB_SERVICES"],
+      })
+    } else {
+      setEditingCategory(null)
+      setCategoryForm({ name: "", description: "", appliesTo: ["PACKAGES", "LAB_SERVICES"] })
+    }
+    setIsCategoryModalOpen(true)
+  }
+
+  const handleSaveCategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      if (editingCategory) {
+        await updateCategoryMutation.mutateAsync({ id: editingCategory._id, data: categoryForm })
+        toast.success("Category updated")
+      } else {
+        await createCategoryMutation.mutateAsync(categoryForm)
+        toast.success("Category created")
+      }
+      setIsCategoryModalOpen(false)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to save category")
+    }
+  }
+
+  const handleDeleteCategory = (id: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: `${status === 'APPROVED' ? 'Approve' : 'Reject'} Lab Service`,
-      description: `Are you sure you want to ${status.toLowerCase()} this laboratory service?`,
-      destructive: status === 'REJECTED',
-      confirmText: status === 'APPROVED' ? "Approve" : "Reject",
+      title: "Delete Category",
+      description: "Are you sure you want to delete this category?",
+      destructive: true,
+      confirmText: "Delete",
       action: async () => {
         try {
-          await updateServiceStatus.mutateAsync({ id: service._id, data: { approvalStatus: status } })
-          toast.success(`Lab service ${status.toLowerCase()} successfully`)
+          await deleteCategoryMutation.mutateAsync(id)
+          toast.success("Category deleted")
         } catch (error: any) {
-          toast.error(error.response?.data?.message || "Failed to update service status")
+          toast.error(error.response?.data?.message || "Failed to delete category")
         }
       }
     })
@@ -169,7 +259,7 @@ export function PackageManagement() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Package & Service Management</h2>
-          <p className="text-muted-foreground">Manage global health packages and review laboratory-submitted services.</p>
+          <p className="text-muted-foreground">Manage global health packages, review laboratory-submitted services, and configure categories.</p>
         </div>
         <div className="mt-4 md:mt-0">
           {activeTab === 'GLOBAL' && (
@@ -178,10 +268,16 @@ export function PackageManagement() {
               Create Package
             </Button>
           )}
+          {activeTab === 'CATEGORIES' && (
+            <Button className="flex items-center gap-2" onClick={() => handleOpenCategoryModal()}>
+              <Plus className="h-4 w-4" />
+              Add Category
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="flex bg-slate-100 p-1 rounded-lg w-max">
+      <div className="flex bg-slate-100 p-1 rounded-lg w-max flex-wrap">
         <Button 
           variant={activeTab === 'GLOBAL' ? 'default' : 'ghost'} 
           onClick={() => setActiveTab('GLOBAL')}
@@ -201,23 +297,34 @@ export function PackageManagement() {
             </span>
           )}
         </Button>
+        <Button 
+          variant={activeTab === 'CATEGORIES' ? 'default' : 'ghost'} 
+          onClick={() => setActiveTab('CATEGORIES')}
+          className={activeTab === 'CATEGORIES' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}
+        >
+          <Tag className="w-4 h-4 mr-2" /> Categories
+        </Button>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle>{activeTab === 'GLOBAL' ? 'All Health Packages' : 'Laboratory Submitted Services'}</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder={activeTab === 'GLOBAL' ? "Search packages by name..." : "Search services or labs..."}
-                  className="pl-8" 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <CardTitle>
+              {activeTab === 'GLOBAL' ? 'All Health Packages' : activeTab === 'LAB_SERVICES' ? 'Laboratory Submitted Services' : 'Service Categories'}
+            </CardTitle>
+            {activeTab !== 'CATEGORIES' && (
+              <div className="flex items-center gap-2">
+                <div className="relative w-full md:w-80">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder={activeTab === 'GLOBAL' ? "Search packages by name..." : "Search services or labs..."}
+                    className="pl-8" 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -243,15 +350,11 @@ export function PackageManagement() {
                   },
                   { 
                     header: "Category", 
-                    cell: (row) => <span className="text-sm font-medium">{row.category}</span>
+                    cell: (row) => <span className="text-sm font-medium">{row.category || '—'}</span>
                   },
                   { 
                     header: "Tests Included", 
                     cell: (row) => <span className="text-sm text-muted-foreground">{Array.isArray(row.testsIncluded) ? row.testsIncluded.length : 0} tests</span>
-                  },
-                  { 
-                    header: "Price", 
-                    cell: (row) => <span className="font-bold text-slate-900">GHS {(row.price / 100).toFixed(2)}</span>
                   },
                   { 
                     header: "Turnaround Time", 
@@ -281,7 +384,7 @@ export function PackageManagement() {
                 data={filteredPackages}
               />
             )
-          ) : (
+          ) : activeTab === 'LAB_SERVICES' ? (
             // LAB SERVICES TAB
             labServicesLoading ? (
               <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
@@ -308,11 +411,11 @@ export function PackageManagement() {
                   },
                   { 
                     header: "Lab Price", 
-                    cell: (row) => <span className="font-bold text-slate-600">GHS {row.labPrice.toFixed(2)}</span>
+                    cell: (row) => <span className="font-bold text-slate-600">GHS {row.labPrice?.toFixed(2)}</span>
                   },
                   { 
                     header: "Platform Price", 
-                    cell: (row) => <span className="font-bold text-emerald-600">GHS {row.platformPrice.toFixed(2)}</span>
+                    cell: (row) => <span className="font-bold text-emerald-600">GHS {row.platformPrice?.toFixed(2)}</span>
                   },
                   { 
                     header: "Turnaround", 
@@ -332,29 +435,92 @@ export function PackageManagement() {
                       <div className="flex items-center gap-2">
                         {row.approvalStatus === 'PENDING' && (
                           <>
-                            <Button variant="outline" size="sm" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800" onClick={() => handleApproveService(row, 'APPROVED')} disabled={updateServiceStatus.isPending}>
+                            <Button variant="outline" size="sm" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800" onClick={() => handleOpenApprovalDialog(row, 'APPROVED')} disabled={updateServiceStatus.isPending}>
                               <CheckSquare className="w-3 h-3 mr-1" /> Approve
                             </Button>
-                            <Button variant="outline" size="sm" className="h-7 text-xs border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => handleApproveService(row, 'REJECTED')} disabled={updateServiceStatus.isPending}>
+                            <Button variant="outline" size="sm" className="h-7 text-xs border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => handleOpenApprovalDialog(row, 'REJECTED')} disabled={updateServiceStatus.isPending}>
                               <XSquare className="w-3 h-3 mr-1" /> Reject
                             </Button>
                           </>
                         )}
                         {row.approvalStatus === 'APPROVED' && (
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleApproveService(row, 'REJECTED')} disabled={updateServiceStatus.isPending}>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleOpenApprovalDialog(row, 'REJECTED')} disabled={updateServiceStatus.isPending}>
                             Revoke
                           </Button>
                         )}
                         {row.approvalStatus === 'REJECTED' && (
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700" onClick={() => handleApproveService(row, 'APPROVED')} disabled={updateServiceStatus.isPending}>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700" onClick={() => handleOpenApprovalDialog(row, 'APPROVED')} disabled={updateServiceStatus.isPending}>
                             Approve
                           </Button>
+                        )}
+                        {row.adminComment && (
+                          <span title={row.adminComment} className="text-slate-400 cursor-help">
+                            <MessageSquare className="w-4 h-4" />
+                          </span>
                         )}
                       </div>
                     )
                   },
                 ]}
                 data={filteredLabServices}
+              />
+            )
+          ) : (
+            // CATEGORIES TAB
+            categoriesLoading ? (
+              <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
+            ) : allCategories.length === 0 ? (
+              <div className="p-12 text-center text-muted-foreground">
+                <Tag className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="font-medium text-lg text-gray-600">No categories yet</p>
+                <p className="text-sm text-gray-400 mt-1">Create your first category to organize packages and lab services.</p>
+              </div>
+            ) : (
+              <DataTable
+                columns={[
+                  {
+                    header: "Category Name",
+                    cell: (row) => (
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-600 shrink-0">
+                          <Tag className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-900">{row.name}</div>
+                          {row.description && <div className="text-xs text-muted-foreground truncate max-w-[250px]">{row.description}</div>}
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    header: "Applies To",
+                    cell: (row) => (
+                      <div className="flex flex-wrap gap-1">
+                        {(row.appliesTo || []).map((a: string) => (
+                          <span key={a} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-medium">{a.replace('_', ' ')}</span>
+                        ))}
+                      </div>
+                    )
+                  },
+                  {
+                    header: "Status",
+                    cell: (row) => <StatusBadge status={row.isActive ? "ACTIVE" : "INACTIVE"} />
+                  },
+                  {
+                    header: "Actions",
+                    cell: (row) => (
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="hover:bg-blue-50" onClick={() => handleOpenCategoryModal(row)}>
+                          <Edit className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-red-50" onClick={() => handleDeleteCategory(row._id)}>
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    )
+                  },
+                ]}
+                data={allCategories}
               />
             )
           )}
@@ -380,10 +546,10 @@ export function PackageManagement() {
                   value={formData.category}
                   onChange={e => setFormData({...formData, category: e.target.value})}
                 >
-                  <option value="GENERAL">General Health</option>
-                  <option value="SPECIALIZED">Specialized</option>
-                  <option value="PRENATAL">Prenatal</option>
-                  <option value="CORPORATE">Corporate</option>
+                  <option value="">Select a category</option>
+                  {categories.map((cat: any) => (
+                    <option key={cat._id} value={cat.name}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -398,15 +564,9 @@ export function PackageManagement() {
               <textarea required value={formData.testsIncluded} onChange={(e: any) => setFormData({...formData, testsIncluded: e.target.value})} placeholder="e.g. Complete Blood Count, Lipid Panel, Urinalysis" className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Price (GHS)</Label>
-                <Input type="number" step="0.01" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="0.00" />
-              </div>
-              <div className="space-y-2">
-                <Label>Estimated Turnaround Time</Label>
-                <Input required value={formData.turnaroundTime} onChange={e => setFormData({...formData, turnaroundTime: e.target.value})} placeholder="e.g. 24-48 hours" />
-              </div>
+            <div className="space-y-2">
+              <Label>Estimated Turnaround Time</Label>
+              <Input value={formData.turnaroundTime} onChange={e => setFormData({...formData, turnaroundTime: e.target.value})} placeholder="e.g. 24-48 hours" />
             </div>
 
             <div className="flex items-center gap-2 pt-2">
@@ -423,7 +583,81 @@ export function PackageManagement() {
             <DialogFooter className="pt-4">
               <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                {createMutation.isPending || updateMutation.isPending ? "Saving..." : "Save Package"}
+                {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingPackage ? "Update Package" : "Save Package"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Approval Comment Dialog */}
+      <Dialog open={approvalDialog.isOpen} onOpenChange={(open) => setApprovalDialog(prev => ({ ...prev, isOpen: open }))}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {approvalDialog.status === 'APPROVED' ? (
+                <><CheckSquare className="h-5 w-5 text-emerald-600" /> Approve Service</>
+              ) : (
+                <><XSquare className="h-5 w-5 text-red-600" /> {approvalDialog.service?.approvalStatus === 'APPROVED' ? 'Revoke' : 'Reject'} Service</>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {approvalDialog.service && (
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <div className="font-medium text-slate-800">{approvalDialog.service.name}</div>
+                <div className="text-sm text-slate-500">{approvalDialog.service.laboratoryId?.name} • GHS {approvalDialog.service.labPrice?.toFixed(2)}</div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="adminComment">Admin Comment (Optional)</Label>
+              <textarea
+                id="adminComment"
+                value={approvalDialog.comment}
+                onChange={(e) => setApprovalDialog(prev => ({ ...prev, comment: e.target.value }))}
+                placeholder={approvalDialog.status === 'APPROVED' 
+                  ? "e.g. Approved. Pricing looks good. Welcome aboard!" 
+                  : "e.g. Please revise your pricing to be competitive with market rates."}
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+              <p className="text-xs text-muted-foreground">This comment will be sent to the laboratory via email and visible in their dashboard.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApprovalDialog(prev => ({ ...prev, isOpen: false }))}>Cancel</Button>
+            <Button 
+              onClick={handleSubmitApproval} 
+              disabled={updateServiceStatus.isPending}
+              className={approvalDialog.status === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
+            >
+              {updateServiceStatus.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {approvalDialog.status === 'APPROVED' ? 'Confirm Approval' : 'Confirm Rejection'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Modal */}
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Edit Category' : 'Create New Category'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveCategory} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Category Name</Label>
+              <Input required value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} placeholder="e.g. General Health, Prenatal, Corporate" />
+            </div>
+            <div className="space-y-2">
+              <Label>Description (Optional)</Label>
+              <textarea value={categoryForm.description} onChange={(e: any) => setCategoryForm({...categoryForm, description: e.target.value})} placeholder="Brief description of this category..." className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setIsCategoryModalOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}>
+                {(createCategoryMutation.isPending || updateCategoryMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingCategory ? "Update Category" : "Create Category"}
               </Button>
             </DialogFooter>
           </form>
