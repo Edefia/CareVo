@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Search, Plus, Edit2, Trash2, CheckCircle, Clock, AlertCircle, RefreshCw } from "lucide-react"
+import { Search, Plus, Edit2, Trash2, CheckCircle, Clock, AlertCircle, RefreshCw, Loader2 } from "lucide-react"
 import { useLabServices, useCreateLabService, useUpdateLabService, useDeleteLabService } from "@/hooks/useLabServices"
 import { usePackages } from "@/hooks/usePackages"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,8 @@ export function LabServices() {
   const createService = useCreateLabService()
   const updateService = useUpdateLabService()
   const deleteService = useDeleteLabService()
+  
+  const isPending = createService.isPending || updateService.isPending
 
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -71,9 +73,16 @@ export function LabServices() {
       return
     }
 
-    const payload = {
-      ...formData,
+    const payload: any = {
+      name: formData.name,
+      description: formData.description,
+      category: formData.category,
+      turnaroundTime: formData.turnaroundTime,
       labPrice: parseFloat(formData.labPrice)
+    }
+    
+    if (formData.packageId) {
+      payload.packageId = formData.packageId
     }
 
     try {
@@ -289,8 +298,9 @@ export function LabServices() {
             </div>
 
             <div className="pt-4 flex justify-end gap-3 border-t">
-              <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-[var(--color-forest)] hover:bg-[var(--color-forest-mid)] text-white">
+              <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)} disabled={isPending}>Cancel</Button>
+              <Button type="submit" disabled={isPending} className="bg-[var(--color-forest)] hover:bg-[var(--color-forest-mid)] text-white">
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {editingService ? "Update Service" : "Submit for Approval"}
               </Button>
             </div>
