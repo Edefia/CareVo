@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[var(--color-lime)] text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-lime-dark)] hover:-translate-y-[1px] active:translate-y-0",
+          "bg-[var(--color-lime)] text-white font-semibold rounded-full hover:bg-[var(--color-lime-dark)] hover:-translate-y-[1px] active:translate-y-0",
         secondary:
           "bg-transparent border-[1.5px] border-[var(--color-forest)] text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-forest)] hover:text-white",
         ghost:

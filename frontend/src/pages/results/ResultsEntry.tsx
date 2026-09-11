@@ -143,7 +143,7 @@ export function ResultsEntry() {
 
               return (
                 <div key={pillar} className="bg-white border border-[var(--color-border)] rounded-[var(--radius-xl)] shadow-sm overflow-hidden transition-all hover:shadow-md">
-                  <div className="px-[24px] py-[16px] bg-gradient-to-r from-[var(--color-surface-2)] to-white border-b border-[var(--color-border)]">
+                  <div className="px-[24px] py-[16px] bg-[var(--color-surface-2)] border-b border-[var(--color-border)]">
                     <h2 className="font-sans text-[16px] font-bold text-[var(--color-forest)] uppercase tracking-wider">
                       {pillar} Panel
                     </h2>

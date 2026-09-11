@@ -108,7 +108,7 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
     <div className="space-y-[40px] md:space-y-[56px]">
 
       {/* ── HERO BANNER ── */}
-      <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-gradient-to-br from-[var(--color-forest)] via-[#1E4D35] to-[#2D5A40] p-[32px] md:p-[48px] text-white shadow-lg">
+      <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-[var(--color-forest)] p-[32px] md:p-[48px] text-white shadow-lg">
         <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[var(--color-lime)]/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[var(--color-mint)]/10 rounded-full translate-y-1/2 -translate-x-1/3 blur-3xl"></div>
 
@@ -125,7 +125,7 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
             CareVo screens for early signs of cardiovascular, kidney, and metabolic disease — the three leading causes of preventable illness. Book your first screening to get your personalised health baseline.
           </p>
           <Link to="/client/bookings/new">
-            <Button className="h-[52px] px-[28px] text-[15px] bg-[var(--color-lime)] text-[var(--color-forest)] hover:bg-[var(--color-lime-dark)] shadow-md font-semibold gap-2">
+            <Button className="h-[52px] px-[28px] text-[15px] bg-[var(--color-lime)] text-white hover:bg-[var(--color-lime-dark)] shadow-md font-semibold gap-2">
               <Calendar className="h-4 w-4" />
               Book Your First Screening
             </Button>

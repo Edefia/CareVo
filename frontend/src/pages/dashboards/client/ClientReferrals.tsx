@@ -74,15 +74,15 @@ export function ClientReferrals() {
               <h3 className="font-semibold text-lg mb-2">How it works</h3>
               <ul className="space-y-3 mt-4 text-sm text-white/80">
                 <li className="flex items-start gap-3">
-                  <div className="h-5 w-5 rounded-full bg-[var(--color-lime)] text-[var(--color-forest)] flex items-center justify-center font-bold shrink-0 mt-0.5">1</div>
+                  <div className="h-5 w-5 rounded-full bg-[var(--color-lime)] text-white flex items-center justify-center font-bold shrink-0 mt-0.5">1</div>
                   <p>Share your code with friends, family, or colleagues.</p>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="h-5 w-5 rounded-full bg-[var(--color-lime)] text-[var(--color-forest)] flex items-center justify-center font-bold shrink-0 mt-0.5">2</div>
+                  <div className="h-5 w-5 rounded-full bg-[var(--color-lime)] text-white flex items-center justify-center font-bold shrink-0 mt-0.5">2</div>
                   <p>They use your code during booking to receive GH₵50 off.</p>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="h-5 w-5 rounded-full bg-[var(--color-lime)] text-[var(--color-forest)] flex items-center justify-center font-bold shrink-0 mt-0.5">3</div>
+                  <div className="h-5 w-5 rounded-full bg-[var(--color-lime)] text-white flex items-center justify-center font-bold shrink-0 mt-0.5">3</div>
                   <p>Once their screening is complete, you receive a GH₵50 credit applied to your next booking.</p>
                 </li>
               </ul>

@@ -147,9 +147,14 @@ export function DashboardLayout() {
         <div className="flex shrink-0 items-center justify-between px-[20px] py-[24px]">
           {isSidebarExpanded || isMobileOpen ? (
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1">
-                <span className="font-serif text-[20px] font-semibold text-white">CareBis Prime</span>
-                <sup className="mt-1 text-[10px] font-bold text-[var(--color-lime)]">®</sup>
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 items-center justify-center rounded-lg bg-white px-2 shadow-sm">
+                  <img src="/logo.jpeg" alt="CareBis Prime" className="h-6 w-auto object-contain" />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-serif text-[18px] font-semibold text-white">CareBis Prime</span>
+                  <sup className="text-[10px] font-bold text-[var(--color-lime)]">®</sup>
+                </div>
               </div>
               {myLab && (
                 <div className="text-[11px] font-medium text-[var(--color-lime)] truncate w-full max-w-[150px]">
@@ -158,8 +163,8 @@ export function DashboardLayout() {
               )}
             </div>
           ) : (
-            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded bg-white/10">
-              <span className="font-serif text-[16px] font-bold text-white">C</span>
+            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white p-1 shadow-sm">
+              <img src="/logo.jpeg" alt="CareBis Prime" className="h-full w-full object-contain" />
             </div>
           )}
           
@@ -190,7 +195,7 @@ export function DashboardLayout() {
                   className={({ isActive }) => cn(
                     "relative flex h-[42px] cursor-pointer items-center gap-[12px] rounded-[var(--radius-md)] px-[12px] transition-colors duration-150 group",
                     isActive 
-                      ? "bg-[rgba(126,232,162,0.15)] text-white font-semibold" 
+                      ? "bg-[rgba(73,136,207,0.25)] text-white font-semibold" 
                       : "text-white/75 font-medium hover:bg-white/5"
                   )}
                 >
@@ -217,7 +222,7 @@ export function DashboardLayout() {
                           </span>
                           
                           {item.badge && (
-                            <div className="ml-auto flex min-w-[20px] items-center justify-center rounded-full bg-[var(--color-lime)] px-[7px] py-[1px] font-sans text-[11px] font-bold text-[var(--color-forest)]">
+                            <div className="ml-auto flex min-w-[20px] items-center justify-center rounded-full bg-[var(--color-lime)] px-[7px] py-[1px] font-sans text-[11px] font-bold text-white">
                               {item.badge}
                             </div>
                           )}
@@ -262,7 +267,7 @@ export function DashboardLayout() {
               setIsUserMenuOpen(!isUserMenuOpen)
             }}
           >
-            <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[rgba(126,232,162,0.2)]">
+            <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[rgba(40,103,182,0.3)]">
               <span className="font-sans text-[14px] font-semibold text-white">
                 {user?.firstName?.[0]}{user?.lastName?.[0]}
               </span>
@@ -332,7 +337,7 @@ export function DashboardLayout() {
             {/* User Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex h-[36px] w-[36px] cursor-pointer items-center justify-center rounded-full bg-[rgba(26,58,42,0.1)] hover:bg-[rgba(26,58,42,0.15)] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-forest)]">
+                <button className="flex h-[36px] w-[36px] cursor-pointer items-center justify-center rounded-full bg-[rgba(4,47,100,0.1)] hover:bg-[rgba(4,47,100,0.15)] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-forest)]">
                   <span className="font-sans text-[14px] font-semibold text-[var(--color-forest)]">
                     {user?.firstName?.[0] || 'U'}
                   </span>

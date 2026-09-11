@@ -230,7 +230,7 @@ export function BookingWizard() {
                         <MapPin className="h-4 w-4" /> {lab.location?.address}
                       </div>
                       <div className="flex items-center gap-2 text-[12px]">
-                        <span className="font-medium text-[var(--color-forest)] bg-[#7EE8A2]/20 px-2 py-1 rounded">Certified for CareBis Prime</span>
+                        <span className="font-medium text-[var(--color-forest)] bg-[var(--color-lime)]/20 px-2 py-1 rounded">Certified for CareBis Prime</span>
                         <span className="flex items-center text-[#D97706] font-medium">★ {lab.rating}</span>
                       </div>
                     </div>

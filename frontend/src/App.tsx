@@ -7,8 +7,15 @@ import { useAuthStore } from "./store/auth"
 import { NotificationProvider } from "./contexts/NotificationContext"
 import { ErrorBoundary } from "./components/shared/ErrorBoundary"
 
-// Import Auth & Public Pages
+// Import Marketing Layout & Public Pages
+import { MarketingLayout } from "./layouts/MarketingLayout"
 import { LandingPage } from "./pages/LandingPage"
+import { AboutPage } from "./pages/AboutPage"
+import { ServicesPage } from "./pages/ServicesPage"
+import { TestPanelsPage } from "./pages/TestPanelsPage"
+import { FaqPage } from "./pages/FaqPage"
+import { BlogPage } from "./pages/BlogPage"
+import { ContactPage } from "./pages/ContactPage"
 import { LoginPage } from "./pages/auth/LoginPage"
 import { RegisterPage } from "./pages/auth/RegisterPage"
 import { MFAChallengePage } from "./pages/auth/MFAChallengePage"
@@ -71,8 +78,16 @@ export default function App() {
         <BrowserRouter>
           <ErrorBoundary>
             <Routes>
-              {/* Public Landing Page */}
-              <Route path="/" element={<LandingPage />} />
+              {/* Public Marketing Pages */}
+              <Route element={<MarketingLayout />}>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/services" element={<ServicesPage />} />
+                <Route path="/test-panels" element={<TestPanelsPage />} />
+                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+              </Route>
 
               {/* Auth Routes */}
               <Route element={<AuthLayout />}>

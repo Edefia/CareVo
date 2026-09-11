@@ -199,13 +199,12 @@ export function ResultDetail() {
 
           {/* FOLLOW-UP ACTION BUTTON */}
           <div className="bg-[var(--color-forest)] text-white rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 to-white/10 group-hover:to-white/20 transition-all"></div>
             <h3 className="font-serif text-xl font-semibold mb-2 relative z-10">Next Steps Required</h3>
             <p className="text-white/80 text-sm mb-6 relative z-10 leading-relaxed">
               Based on your moderate risk indicators, it is highly recommended to schedule a follow-up consultation.
             </p>
             <Link to={`/client/journey`} className="relative z-10 block">
-              <Button className="w-full h-12 bg-[var(--color-lime)] text-[var(--color-forest)] hover:bg-[var(--color-lime-dark)] font-bold shadow-lg shadow-[var(--color-lime)]/20 animate-pulse transition-all">
+              <Button className="w-full h-12 bg-[var(--color-lime)] text-white hover:bg-[var(--color-lime-dark)] font-bold shadow-lg shadow-[var(--color-lime)]/20 animate-pulse transition-all">
                 Plan Follow-Up Journey <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

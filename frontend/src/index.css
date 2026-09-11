@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand */
-  --color-forest:      #1A3A2A;   /* deep forest green — primary dark */
-  --color-forest-mid:  #2D5A40;   /* mid forest — hover states, gradients */
-  --color-mint:        #A8E6BC;   /* soft mint — accent, highlights */
-  --color-lime:        #7EE8A2;   /* lime green — CTA buttons, active states */
-  --color-lime-dark:   #5AC47E;   /* lime hover state */
+  /* Brand - Logo Blue Palette */
+  --color-forest:      #042F64;   /* deep navy blue — primary dark (from logo 'C' & 'CareBis') */
+  --color-forest-mid:  #14427D;   /* mid navy blue — hover states, interactive depth */
+  --color-mint:        #4988CF;   /* sky/cerulean accent (from logo 'r' diagonal) */
+  --color-lime:        #2867B6;   /* royal blue (from logo 'a', 'e', 'Prime') — CTA buttons, active states */
+  --color-lime-dark:   #1C5292;   /* royal blue hover state */
 
   /* Neutrals */
   --color-white:       #FFFFFF;
-  --color-off-white:   #F7F9F7;   /* page background */
+  --color-off-white:   #F8FAFC;   /* page background */
   --color-surface:     #FFFFFF;   /* card background */
-  --color-surface-2:   #F0F5F1;   /* secondary surface, sidebar bg */
-  --color-border:      #E2EBE5;   /* all borders */
-  --color-border-dark: #C5D5CB;   /* stronger dividers */
+  --color-surface-2:   #F1F5F9;   /* secondary surface, sidebar bg */
+  --color-border:      #E2E8F0;   /* all borders */
+  --color-border-dark: #CBD5E1;   /* stronger dividers */
 
   /* Text */
-  --color-text-primary:   #0F1F16;  /* nearly black, green-tinted */
-  --color-text-secondary: #4A6055;  /* medium green-grey */
-  --color-text-muted:     #8FA99A;  /* placeholder, metadata */
+  --color-text-primary:   #0F172A;  /* deep navy slate */
+  --color-text-secondary: #334155;  /* medium slate */
+  --color-text-muted:     #64748B;  /* placeholder, metadata */
   --color-text-inverse:   #FFFFFF;  /* text on dark backgrounds */
 
   /* Semantic */
@@ -35,7 +35,7 @@
   --color-risk-critical: #DC2626;
 
   /* Typography */
-  --font-display:  'Playfair Display', Georgia, serif;
+  --font-display:  'Instrument Serif', Georgia, serif;
   --font-body:     'Inter', system-ui, sans-serif;
 
   --text-xs:    0.75rem;   /* 12px */

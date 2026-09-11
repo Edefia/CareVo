@@ -92,9 +92,8 @@ export function RegisterPage() {
         
         {/* Top: Brand */}
         <div>
-          <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[26px] font-semibold text-white">CareBis Prime</span>
-            <sup className="mt-1 text-[12px] font-bold text-[var(--color-lime)]">®</sup>
+          <Link to="/" className="inline-flex items-center rounded-xl bg-white px-3 py-1.5 shadow-md transition-transform duration-150 hover:scale-[1.02]">
+            <img src="/logo.jpeg" alt="CareBis Prime" className="h-[36px] w-auto object-contain" />
           </Link>
         </div>
 
@@ -107,17 +106,17 @@ export function RegisterPage() {
           <div className="relative h-[240px] w-full max-w-[400px]">
             {/* Top-Left Photo */}
             <div className="absolute left-[5%] top-[20px] h-[180px] w-[200px] -rotate-[4deg] overflow-hidden rounded-[var(--radius-xl)] shadow-xl z-10 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?w=300&h=200&fit=crop" alt="Lab" className="h-full w-full object-cover" />
+              <img src="/images/lab-scientist.png" alt="Laboratory Diagnostics" className="h-full w-full object-cover" />
             </div>
             
             {/* Middle-Right Photo */}
             <div className="absolute right-[10%] top-[-20px] h-[160px] w-[220px] rotate-[2deg] overflow-hidden rounded-[var(--radius-lg)] shadow-2xl z-20 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=300&h=200&fit=crop" alt="Clinical" className="h-full w-full object-cover" />
+              <img src="/images/hero-doctor-consultation.jpg" alt="Clinical Consultation" className="h-full w-full object-cover" />
             </div>
 
             {/* Bottom-Left Photo */}
             <div className="absolute bottom-[-30px] right-[25%] h-[120px] w-[160px] rotate-[6deg] overflow-hidden rounded-[var(--radius-lg)] shadow-lg z-30 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=200&h=150&fit=crop" alt="Equipment" className="h-full w-full object-cover" />
+              <img src="/images/health-tracking.png" alt="Health Results Tracking" className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
@@ -149,6 +148,13 @@ export function RegisterPage() {
         {/* Form Container */}
         <div className="mx-auto w-full max-w-[420px] my-auto py-8">
           
+          {/* Mobile brand logo */}
+          <div className="lg:hidden mb-6">
+            <Link to="/" className="inline-block">
+              <img src="/logo.jpeg" alt="CareBis Prime" className="h-[44px] w-auto object-contain mix-blend-multiply" />
+            </Link>
+          </div>
+
           <h1 className="mb-2 font-serif text-[32px] font-semibold text-[var(--color-forest)]">Create your account.</h1>
           <p className="mb-[32px] font-sans text-[15px] text-[var(--color-text-muted)]">Join thousands already taking control of their health.</p>
 
@@ -280,7 +286,7 @@ export function RegisterPage() {
               <input 
                 type="checkbox" 
                 id="terms" 
-                className="mt-1 h-[18px] w-[18px] rounded-[4px] border-[1.5px] border-[var(--color-border)] accent-[var(--color-forest)] focus:ring-[3px] focus:ring-[rgba(26,58,42,0.08)]"
+                className="mt-1 h-[18px] w-[18px] rounded-[4px] border-[1.5px] border-[var(--color-border)] accent-[var(--color-forest)] focus:ring-[3px] focus:ring-[rgba(4,47,100,0.12)]"
                 required
               />
               <Label htmlFor="terms" className="mb-0 font-sans text-[13px] font-normal leading-[1.5] text-[var(--color-text-secondary)]">

@@ -144,7 +144,7 @@ export function BroadcastNotification() {
                           : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
-                    <div className={`p-2 rounded-lg ${watchModes.includes("IN_APP") && watchAudience !== "EXTERNAL_USERS" ? "bg-[var(--color-lime)] text-[var(--color-forest)]" : "bg-slate-100 text-slate-500"}`}>
+                    <div className={`p-2 rounded-lg ${watchModes.includes("IN_APP") && watchAudience !== "EXTERNAL_USERS" ? "bg-[var(--color-lime)] text-white" : "bg-slate-100 text-slate-500"}`}>
                       <BellRing className="h-5 w-5" />
                     </div>
                     <div>
@@ -161,7 +161,7 @@ export function BroadcastNotification() {
                         : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
-                    <div className={`p-2 rounded-lg ${watchModes.includes("EMAIL") ? "bg-[var(--color-lime)] text-[var(--color-forest)]" : "bg-slate-100 text-slate-500"}`}>
+                    <div className={`p-2 rounded-lg ${watchModes.includes("EMAIL") ? "bg-[var(--color-lime)] text-white" : "bg-slate-100 text-slate-500"}`}>
                       <Mail className="h-5 w-5" />
                     </div>
                     <div>
@@ -178,7 +178,7 @@ export function BroadcastNotification() {
                         : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
-                    <div className={`p-2 rounded-lg ${watchModes.includes("SMS") ? "bg-[var(--color-lime)] text-[var(--color-forest)]" : "bg-slate-100 text-slate-500"}`}>
+                    <div className={`p-2 rounded-lg ${watchModes.includes("SMS") ? "bg-[var(--color-lime)] text-white" : "bg-slate-100 text-slate-500"}`}>
                       <Smartphone className="h-5 w-5" />
                     </div>
                     <div>

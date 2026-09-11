@@ -49,9 +49,8 @@ export function ForgotPasswordPage() {
       {/* LEFT PANEL (Visual) */}
       <div className="relative hidden w-[48%] flex-col justify-between overflow-hidden bg-[var(--color-forest)] p-[48px] lg:flex sticky top-0 h-screen">
         <div>
-          <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[26px] font-semibold text-white">CareBis Prime</span>
-            <sup className="mt-1 text-[12px] font-bold text-[var(--color-lime)]">®</sup>
+          <Link to="/" className="inline-flex items-center rounded-xl bg-white px-3 py-1.5 shadow-md transition-transform duration-150 hover:scale-[1.02]">
+            <img src="/logo.jpeg" alt="CareBis Prime" className="h-[36px] w-auto object-contain" />
           </Link>
         </div>
 
@@ -63,13 +62,13 @@ export function ForgotPasswordPage() {
           <div className="relative h-[240px] w-full max-w-[400px]">
              {/* Simple visual placeholder, reused layout */}
             <div className="absolute left-[10%] top-0 h-[160px] w-[220px] overflow-hidden rounded-[var(--radius-xl)] shadow-xl z-10 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=300&h=200&fit=crop" alt="Clinical" className="h-full w-full object-cover" />
+              <img src="/images/hero-doctor-consultation.jpg" alt="Clinical Consultation" className="h-full w-full object-cover" />
             </div>
             <div className="absolute right-[5%] top-[40px] h-[140px] w-[180px] rotate-[3deg] overflow-hidden rounded-[var(--radius-lg)] shadow-2xl z-20 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?w=200&h=150&fit=crop" alt="Lab" className="h-full w-full object-cover" />
+              <img src="/images/lab-scientist.png" alt="Laboratory Diagnostics" className="h-full w-full object-cover" />
             </div>
             <div className="absolute bottom-[-20px] left-[20%] h-[120px] w-[160px] -rotate-[2deg] overflow-hidden rounded-[var(--radius-lg)] shadow-lg z-30 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=200&h=150&fit=crop" alt="Checkup" className="h-full w-full object-cover" />
+              <img src="/images/health-tracking.png" alt="Health Results Tracking" className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
@@ -95,6 +94,13 @@ export function ForgotPasswordPage() {
 
         <div className="mx-auto w-full max-w-[400px] my-auto py-12">
           
+          {/* Mobile brand logo */}
+          <div className="lg:hidden mb-6">
+            <Link to="/" className="inline-block">
+              <img src="/logo.jpeg" alt="CareBis Prime" className="h-[44px] w-auto object-contain mix-blend-multiply" />
+            </Link>
+          </div>
+
           <h1 className="mb-2 font-serif text-[32px] font-semibold text-[var(--color-forest)]">Forgot password?</h1>
           <p className="mb-[32px] font-sans text-[15px] text-[var(--color-text-muted)]">No worries, we'll send you reset instructions.</p>
 

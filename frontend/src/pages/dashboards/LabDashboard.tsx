@@ -120,7 +120,7 @@ export function LabDashboard() {
 
       {/* ASSIGNED CLIENTS QUEUE */}
       <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-[var(--shadow-card)] overflow-hidden">
-        <div className="px-[24px] py-[24px] border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-surface-2)] to-white">
+        <div className="px-[24px] py-[24px] border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
           <h2 className="font-serif text-[24px] font-semibold text-[var(--color-forest)]">
             Assigned Clients
           </h2>
@@ -157,7 +157,7 @@ export function LabDashboard() {
                   >
                     <td className="px-[24px] py-[20px]">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[14px] font-bold text-[var(--color-forest)] bg-[#7EE8A2]/20 px-2 py-1 rounded">
+                        <span className="font-mono text-[14px] font-bold text-[var(--color-forest)] bg-[var(--color-lime)]/20 px-2 py-1 rounded">
                           {client.referralCode || "N/A"}
                         </span>
                         {client.referralCode && (

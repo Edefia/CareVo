@@ -66,26 +66,26 @@ function getOtpEmailTemplate(code: string) {
   <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px; color: #111827; }
     .container { max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb; }
-    .header { background-color: #1A3A2A; padding: 32px 24px; text-align: center; }
+    .header { background-color: #042F64; padding: 32px 24px; text-align: center; }
     .header h1 { margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.025em; font-family: Georgia, serif; }
-    .header span.prime { color: #7EE8A2; font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 600; }
+    .header span.prime { color: #4988CF; font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 600; }
     .content { padding: 40px 32px; text-align: center; }
     .title { font-size: 22px; font-weight: 700; margin-top: 0; margin-bottom: 12px; color: #111827; }
     .message { font-size: 15px; color: #4b5563; line-height: 1.6; margin-bottom: 32px; }
     
     .otp-container { 
-      background-color: #f0fdf4; 
-      border: 2px dashed #86efac; 
+      background-color: #eff6ff; 
+      border: 2px dashed #93c5fd; 
       border-radius: 12px; 
       padding: 32px 24px; 
-      margin-bottom: 32px;
+      margin-bottom: 32px; 
     }
     
     .otp-code { 
       font-size: 42px; 
       font-weight: 800; 
       letter-spacing: 0.25em; 
-      color: #166534; 
+      color: #1e40af; 
       margin: 0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
@@ -94,8 +94,8 @@ function getOtpEmailTemplate(code: string) {
       display: inline-block;
       margin-top: 20px;
       font-size: 13px;
-      color: #15803d;
-      background-color: #dcfce7;
+      color: #1d4ed8;
+      background-color: #dbeafe;
       padding: 8px 16px;
       border-radius: 9999px;
       font-weight: 600;

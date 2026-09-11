@@ -65,7 +65,7 @@ export function SetupPasswordPage() {
   return (
     <Card className="w-full">
       <CardHeader className="space-y-2 text-center pb-6">
-        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(126,232,162,0.15)]">
+        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(40,103,182,0.15)]">
           <Lock className="h-6 w-6 text-[var(--color-forest)]" />
         </div>
         <CardTitle className="font-serif text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">

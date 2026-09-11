@@ -88,7 +88,7 @@ export function PatientJourney() {
 
         {/* RIGHT: REFERRAL MODULE */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-[var(--color-forest)] to-slate-900 rounded-2xl p-8 text-white shadow-xl">
+          <div className="bg-[var(--color-forest)] rounded-2xl p-8 text-white shadow-xl">
             <h2 className="font-serif text-2xl font-semibold mb-3">Schedule Follow-up</h2>
             <p className="text-white/80 text-sm mb-6 leading-relaxed">
               Based on Dr. Chen's interpretation, we've matched you with top-rated cardiovascular specialists in your area.
@@ -124,7 +124,7 @@ export function PatientJourney() {
             <div className="mt-8 pt-6 border-t border-white/10">
               <Button 
                 disabled={!selectedHospital}
-                className="w-full h-12 bg-[var(--color-lime)] text-[var(--color-forest)] hover:bg-[var(--color-lime-dark)] font-bold disabled:opacity-50 disabled:bg-slate-300"
+                className="w-full h-12 bg-[var(--color-lime)] text-white hover:bg-[var(--color-lime-dark)] font-bold disabled:opacity-50 disabled:bg-slate-300"
               >
                 {selectedHospital ? `Book at ${selectedHospital}` : 'Select a Facility to Book'} <Calendar className="ml-2 h-4 w-4" />
               </Button>

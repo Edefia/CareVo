@@ -69,7 +69,7 @@ export function InterpreterDashboard() {
 
       {/* QUEUE TABLE */}
       <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-[var(--shadow-card)] overflow-hidden">
-        <div className="px-[24px] py-[24px] border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-surface-2)] to-white flex justify-between items-center">
+        <div className="px-[24px] py-[24px] border-b border-[var(--color-border)] bg-[var(--color-surface-2)] flex justify-between items-center">
           <div>
             <h2 className="font-serif text-[24px] font-semibold text-[var(--color-forest)] flex items-center gap-2">
               Pending Interpretations
@@ -124,7 +124,7 @@ export function InterpreterDashboard() {
                     </div>
                   </td>
                   <td className="px-[24px] py-[20px]">
-                    <span className="font-mono text-[14px] font-bold text-[var(--color-forest)] bg-[#7EE8A2]/20 px-2 py-1 rounded">
+                    <span className="font-mono text-[14px] font-bold text-[var(--color-forest)] bg-[var(--color-lime)]/20 px-2 py-1 rounded">
                       {item.referralCode}
                     </span>
                   </td>

@@ -82,7 +82,7 @@ export function ClientHealthAdvocacy() {
 
         {/* RIGHT: PREVENTIVE TIPS SIDEBAR */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-[#0F76E0] to-blue-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-[var(--color-forest)] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
             <ShieldCheck className="absolute -right-6 -bottom-6 h-32 w-32 text-white/10" />
             
             <div className="relative z-10">

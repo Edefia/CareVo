@@ -83,9 +83,8 @@ export function ResetPasswordPage() {
       {/* LEFT PANEL (Visual) */}
       <div className="relative hidden w-[48%] flex-col justify-between overflow-hidden bg-[var(--color-forest)] p-[48px] lg:flex sticky top-0 h-screen">
         <div>
-          <Link to="/" className="flex items-center gap-1">
-            <span className="font-serif text-[26px] font-semibold text-white">CareBis Prime</span>
-            <sup className="mt-1 text-[12px] font-bold text-[var(--color-lime)]">®</sup>
+          <Link to="/" className="inline-flex items-center rounded-xl bg-white px-3 py-1.5 shadow-md transition-transform duration-150 hover:scale-[1.02]">
+            <img src="/logo.jpeg" alt="CareBis Prime" className="h-[36px] w-auto object-contain" />
           </Link>
         </div>
 
@@ -110,6 +109,13 @@ export function ResetPasswordPage() {
         
         <div className="mx-auto w-full max-w-[400px] my-auto py-12">
           
+          {/* Mobile brand logo */}
+          <div className="lg:hidden mb-6">
+            <Link to="/" className="inline-block">
+              <img src="/logo.jpeg" alt="CareBis Prime" className="h-[44px] w-auto object-contain mix-blend-multiply" />
+            </Link>
+          </div>
+
           <h1 className="mb-2 font-serif text-[32px] font-semibold text-[var(--color-forest)]">Set new password</h1>
           <p className="mb-[32px] font-sans text-[15px] text-[var(--color-text-muted)]">Please enter your new secure password.</p>
 
