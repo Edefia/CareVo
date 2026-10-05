@@ -17,7 +17,8 @@ export const laboratoryController = {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const packageId = req.query.packageId as string | undefined;
-      const paginatedData = await laboratoryService.getLaboratories(page, limit, packageId);
+      const testName = req.query.testName as string | undefined;
+      const paginatedData = await laboratoryService.getLaboratories(page, limit, packageId, testName);
       res.status(200).json(paginatedData);
     } catch (error) {
       next(error);

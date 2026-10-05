@@ -7,6 +7,7 @@ import { LaboratoryModel } from '../modules/laboratories/laboratory.model.js';
 import { BookingModel } from '../modules/bookings/booking.model.js';
 import { PatientModel } from '../modules/patients/patient.model.js';
 import { PackageModel } from '../modules/packages/package.model.js';
+import { LabServiceModel } from '../modules/laboratories/lab-service.model.js';
 
 const MONGODB_URI = env.MONGODB_URI || 'mongodb://localhost:27017/carebis-prime';
 
@@ -34,25 +35,66 @@ async function runSeed() {
 
     await PackageModel.create([
       {
-        name: 'Comprehensive Wellness Screen',
-        description: 'A complete overview of your health including cardiovascular, renal, and metabolic markers.',
+        name: 'General Health Panel',
+        description: 'Every test we offer serves a clear purpose — to screen for a real condition before symptoms appear.',
         category: 'General Health',
-        testsIncluded: ['Complete Blood Count', 'Lipid Panel', 'Renal Function', 'Liver Function', 'Fasting Glucose', 'Urinalysis'],
-        turnaroundTime: '48 hours',
+        testsIncluded: [
+          'Full Blood Count (FBC)',
+          'Fasting Blood Glucose',
+          'Lipid Profile',
+          'Kidney Function Test',
+          'Liver Function Test',
+          'Urinalysis',
+          'Blood Pressure Measurement',
+          'Blood Group and Rhesus Factor',
+        ],
+        turnaroundTime: '24 hours',
+        price: 35000, // 350.00 GHS in pesewas
       },
       {
-        name: 'Cardio Essentials',
-        description: 'Focused screening on heart health and lipid profile.',
-        category: 'Specialized',
-        testsIncluded: ['Lipid Panel', 'ECG', 'Blood Pressure', 'Troponin'],
+        name: 'Infectious Disease Panel',
+        description: 'Comprehensive screening for common infectious diseases.',
+        category: 'Infectious Disease',
+        testsIncluded: [
+          'HIV Rapid Test',
+          'Hepatitis B Surface Antigen (HBsAg)',
+          'Hepatitis C Antibody Test',
+          'Syphilis Screening (VDRL or RPR)',
+          'Malaria Rapid Diagnostic Test (RDT)',
+          'Typhoid Test (Widal)',
+        ],
         turnaroundTime: '24 hours',
+        price: 25000,
       },
       {
-        name: 'Metabolic Check',
-        description: 'Key indicators for diabetes and metabolic syndrome.',
-        category: 'General Health',
-        testsIncluded: ['Fasting Glucose', 'HbA1c', 'Insulin', 'BMI Assessment'],
+        name: 'Sexual & Reproductive Health Panel',
+        description: 'Screening for reproductive health and sexually transmitted infections.',
+        category: 'Sexual Health',
+        testsIncluded: [
+          'HIV Test',
+          'Syphilis',
+          'Hepatitis B and C Screening',
+          'Gonorrhoea',
+          'Chlamydia',
+          'Pregnancy Test',
+        ],
         turnaroundTime: '24 hours',
+        price: 30000,
+      },
+      {
+        name: 'Chronic Disease Risk Panel',
+        description: 'Evaluate your risk factors for chronic conditions like diabetes and heart disease.',
+        category: 'Chronic Disease',
+        testsIncluded: [
+          'HbA1c',
+          'Fasting Blood Glucose',
+          'Blood Pressure Measurement',
+          'Full Lipid Profile',
+          'BMI and Waist Circumference Assessment',
+          'Kidney Function Test',
+        ],
+        turnaroundTime: '24 hours',
+        price: 40000,
       }
     ]);
 
@@ -184,10 +226,38 @@ async function runSeed() {
     );
 
     // 3. Mock Bookings (Using Referral Codes instead of meetingLink or generic reason)
-    console.log('📅 Seeding Bookings...');
+    console.log('📅 Seeding Bookings & Lab Services...');
     
     const packages = await PackageModel.find({});
     if (packages.length < 2) throw new Error("Packages not seeded correctly");
+
+    console.log('🔬 Seeding Lab Services...');
+    await LabServiceModel.deleteMany({});
+    
+    for (const pkg of packages) {
+      // Add to Medican
+      await LabServiceModel.create({
+        laboratoryId: medicanLab._id,
+        packageId: pkg._id,
+        name: pkg.name,
+        category: pkg.category,
+        turnaroundTime: pkg.turnaroundTime || '24 hours',
+        labPrice: (pkg as any).price || 20000,
+        platformPrice: (pkg as any).price || 20000,
+        approvalStatus: 'APPROVED'
+      });
+      // Add to Synlab
+      await LabServiceModel.create({
+        laboratoryId: acculab._id,
+        packageId: pkg._id,
+        name: pkg.name,
+        category: pkg.category,
+        turnaroundTime: pkg.turnaroundTime || '24 hours',
+        labPrice: ((pkg as any).price || 20000) * 1.1, // Synlab is 10% more expensive
+        platformPrice: ((pkg as any).price || 20000) * 1.1,
+        approvalStatus: 'APPROVED'
+      });
+    }
 
     // Booking 1
     await BookingModel.findOneAndUpdate(

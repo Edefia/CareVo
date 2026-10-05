@@ -7,6 +7,8 @@ export interface IBooking extends Document {
   referralCode: string;
   staffId: Types.ObjectId | null;
   laboratoryId: Types.ObjectId | null;
+  orderedBy: Types.ObjectId | null;
+  orderedFrom: string | null;
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
   scheduledAt: Date;
   durationMinutes: number;
@@ -52,6 +54,16 @@ const bookingSchema = new Schema<IBooking>(
       ref: 'Laboratory',
       default: null,
       index: true,
+    },
+    orderedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    orderedFrom: {
+      type: String,
+      trim: true,
+      default: null,
     },
     status: {
       type: String,

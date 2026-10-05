@@ -37,3 +37,28 @@ export const useUpdateResult = () => {
     },
   });
 };
+
+export const useSubmitForApproval = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & Record<string, unknown>) =>
+      resultService.submitForApproval(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['result', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['results'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+};
+
+export const useUpdateResultStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      resultService.updateResultStatus(id, status),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['result', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['results'] });
+    },
+  });
+};

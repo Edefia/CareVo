@@ -40,7 +40,7 @@ export class PaymentService {
               {
                 display_name: 'Platform',
                 variable_name: 'platform',
-                value: 'CareVo Health',
+                value: 'CareBis Prime Health',
               },
             ],
           },

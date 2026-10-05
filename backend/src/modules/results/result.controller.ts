@@ -25,6 +25,8 @@ export const resultController = {
       const limit = parseInt(req.query.limit as string) || 10;
       const patientIdFilter = req.query.patientId as string | undefined;
       const statusFilter = req.query.status as string | undefined;
+      const testStatusFilter = req.query.testStatus as string | undefined;
+      const referralCodeFilter = req.query.referralCode as string | undefined;
 
       const userLabId = req.user!.role !== 'ADMIN' ? req.user!.laboratoryId : null;
 
@@ -35,7 +37,9 @@ export const resultController = {
         req.user!.id,
         userLabId,
         patientIdFilter,
-        statusFilter
+        statusFilter,
+        testStatusFilter,
+        referralCodeFilter
       );
       res.status(200).json(paginatedData);
     } catch (error) {
@@ -51,6 +55,40 @@ export const resultController = {
         req.user!.role,
         req.user!.id,
         userLabId
+      );
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateResult(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await resultService.updateResult(
+        req.params.id as string,
+        req.body,
+        req.user!.id,
+        req.user!.laboratoryId!,
+        req.user!.role,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
+      );
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async submitForApproval(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await resultService.submitForApproval(
+        req.params.id as string,
+        req.body,
+        req.user!.id,
+        req.user!.laboratoryId!,
+        req.user!.role,
+        req.ip || '127.0.0.1',
+        req.headers['user-agent'] || 'Unknown'
       );
       sendSuccess(res, result);
     } catch (error) {

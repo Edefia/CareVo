@@ -1,6 +1,5 @@
 import { useState, useRef } from "react"
 import { Building2, Users, Bell, Shield, Database, LayoutDashboard, User, Camera, Loader2, CheckCircle2, History } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -130,14 +129,14 @@ export function SettingsDashboard() {
   }
 
   return (
-    <div className="space-y-[32px] md:space-y-[48px] max-w-[1280px] mx-auto animate-fade-in-up">
+    <div className="space-y-[32px] md:space-y-[48px] max-w-7xl mx-auto animate-fade-in-up">
       {/* PAGE HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="font-serif text-[32px] md:text-[36px] font-semibold text-[var(--color-forest)] leading-tight mb-1">
+          <h1 className="text-[20px] md:text-[22px] font-bold text-[var(--color-lims-text)] font-sans tracking-tight mb-1">
             Settings
           </h1>
-          <p className="font-sans text-[15px] text-[var(--color-text-secondary)]">
+          <p className="text-[13px] text-[var(--color-lims-text-muted)]">
             Manage your personal account and system preferences.
           </p>
         </div>
@@ -153,11 +152,11 @@ export function SettingsDashboard() {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-[14px] font-medium rounded-lg transition-colors ${
                 activeTab === tab.id 
-                  ? "bg-[var(--color-forest)]/10 text-[var(--color-forest)]" 
-                  : "hover:bg-[var(--color-surface-2)] text-[var(--color-text-secondary)]"
+                  ? "bg-[var(--color-lims-accent)]/10 text-[var(--color-lims-accent)]" 
+                  : "hover:bg-gray-100 text-[var(--color-lims-text-muted)]"
               }`}
             >
-              <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'text-[var(--color-forest)]' : 'text-[var(--color-text-muted)]'}`} />
+              <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'text-[var(--color-lims-accent)]' : 'text-gray-400'}`} />
               {tab.label}
             </button>
           ))}
@@ -168,33 +167,33 @@ export function SettingsDashboard() {
           
           {/* PROFILE TAB */}
           {activeTab === "profile" && (
-            <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-              <div className="px-6 py-5 border-b border-[var(--color-border)] bg-gray-50/50">
-                <h2 className="font-sans text-base font-semibold text-[var(--color-text-primary)]">My Profile</h2>
-                <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5">
+            <div className="bg-white rounded-lg border border-[var(--color-lims-border)] shadow-sm overflow-hidden animate-fade-in-up">
+              <div className="px-6 py-5 border-b border-[var(--color-lims-border)] bg-gray-50/50">
+                <h2 className="font-sans text-[15px] font-bold text-[var(--color-lims-text)]">My Profile</h2>
+                <p className="text-[13px] text-[var(--color-lims-text-muted)] mt-0.5">
                   Update your personal information and profile picture.
                 </p>
               </div>
               <div className="p-6 md:p-8">
                 {/* Avatar Section */}
-                <div className="flex items-center gap-6 mb-8 pb-8 border-b border-[var(--color-border)]">
+                <div className="flex items-center gap-6 mb-8 pb-8 border-b border-[var(--color-lims-border)]">
                   <div className="relative group shrink-0">
-                    <div className="h-[88px] w-[88px] rounded-full bg-[var(--color-surface-2)] flex items-center justify-center overflow-hidden border border-[var(--color-border)]">
+                    <div className="h-[88px] w-[88px] rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-[var(--color-lims-border)]">
                       {isUploadingAvatar ? (
-                        <Loader2 className="h-8 w-8 text-[var(--color-text-muted)] animate-spin" />
+                        <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
                       ) : user?.avatarUrl ? (
                         <img src={user.avatarUrl} alt={user.firstName} className="h-full w-full object-cover" />
                       ) : (
-                        <User className="h-10 w-10 text-[var(--color-text-muted)]" />
+                        <User className="h-10 w-10 text-gray-400" />
                       )}
                     </div>
                     <button 
                       onClick={triggerFileInput}
                       disabled={isUploadingAvatar}
-                      className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-white border border-[var(--color-border)] shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+                      className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-white border border-[var(--color-lims-border)] shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
                       title="Upload photo"
                     >
-                      <Camera className="h-4 w-4 text-[var(--color-text-secondary)]" />
+                      <Camera className="h-4 w-4 text-[var(--color-lims-text-muted)]" />
                     </button>
                     <input 
                       type="file" 
@@ -205,9 +204,9 @@ export function SettingsDashboard() {
                     />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-[var(--color-text-primary)]">{user?.firstName} {user?.lastName}</h3>
-                    <p className="text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">{user?.role} ACCOUNT</p>
-                    <p className="text-xs text-[var(--color-text-muted)]">Recommended size: 400x400px. Max 5MB.</p>
+                    <h3 className="font-bold text-[16px] text-[var(--color-lims-text)]">{user?.firstName} {user?.lastName}</h3>
+                    <p className="text-[11px] font-bold text-[var(--color-lims-text-muted)] uppercase tracking-wider mb-2">{user?.role} ACCOUNT</p>
+                    <p className="text-[12px] text-gray-400">Recommended size: 400x400px. Max 5MB.</p>
                   </div>
                 </div>
 
@@ -215,44 +214,44 @@ export function SettingsDashboard() {
                 <form onSubmit={handleProfileUpdate} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-[13px] font-medium text-[var(--color-text-primary)]">First Name</Label>
+                      <Label htmlFor="firstName" className="text-[13px] font-bold text-[var(--color-lims-text)]">First Name</Label>
                       <Input 
                         id="firstName" 
                         value={profileData.firstName} 
                         onChange={e => setProfileData({...profileData, firstName: e.target.value})}
-                        className="focus:border-[var(--color-forest)] transition-colors h-10"
+                        className="focus:border-[var(--color-lims-accent)] focus:ring-1 focus:ring-[var(--color-lims-accent)] transition-colors h-10 bg-white border-[var(--color-lims-border)] text-[13px] shadow-sm"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-[13px] font-medium text-[var(--color-text-primary)]">Last Name</Label>
+                      <Label htmlFor="lastName" className="text-[13px] font-bold text-[var(--color-lims-text)]">Last Name</Label>
                       <Input 
                         id="lastName" 
                         value={profileData.lastName}
                         onChange={e => setProfileData({...profileData, lastName: e.target.value})}
-                        className="focus:border-[var(--color-forest)] transition-colors h-10"
+                        className="focus:border-[var(--color-lims-accent)] focus:ring-1 focus:ring-[var(--color-lims-accent)] transition-colors h-10 bg-white border-[var(--color-lims-border)] text-[13px] shadow-sm"
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-[13px] font-medium text-[var(--color-text-primary)]">Email Address</Label>
-                      <Input id="email" value={user?.email || ''} disabled className="bg-gray-50 h-10 text-[var(--color-text-muted)]" />
-                      <p className="text-xs text-[var(--color-text-muted)] mt-1">Email cannot be changed directly.</p>
+                      <Label htmlFor="email" className="text-[13px] font-bold text-[var(--color-lims-text)]">Email Address</Label>
+                      <Input id="email" value={user?.email || ''} disabled className="bg-gray-50/80 h-10 text-[var(--color-lims-text-muted)] border-[var(--color-lims-border)] text-[13px]" />
+                      <p className="text-[12px] text-gray-400 mt-1">Email cannot be changed directly.</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-[13px] font-medium text-[var(--color-text-primary)]">Phone Number</Label>
+                      <Label htmlFor="phone" className="text-[13px] font-bold text-[var(--color-lims-text)]">Phone Number</Label>
                       <Input 
                         id="phone" 
                         value={profileData.phone}
                         onChange={e => setProfileData({...profileData, phone: e.target.value})}
-                        className="focus:border-[var(--color-forest)] transition-colors h-10"
+                        className="focus:border-[var(--color-lims-accent)] focus:ring-1 focus:ring-[var(--color-lims-accent)] transition-colors h-10 bg-white border-[var(--color-lims-border)] text-[13px] shadow-sm"
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-6 border-t border-[var(--color-border)] mt-8">
-                    <Button type="submit" disabled={isLoading} className="bg-[var(--color-forest)] hover:bg-[var(--color-forest-mid)] text-white shadow-sm transition-all h-10 px-6">
+                  <div className="flex justify-end pt-6 border-t border-[var(--color-lims-border)] mt-8">
+                    <Button type="submit" disabled={isLoading} className="bg-[var(--color-lims-accent)] hover:bg-[var(--color-lims-accent)]/90 text-white shadow-sm transition-all h-10 px-6 text-[13px]">
                       {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Save Changes
                     </Button>
@@ -264,52 +263,52 @@ export function SettingsDashboard() {
 
           {/* SECURITY TAB */}
           {activeTab === "security" && (
-            <div className="space-y-[32px]">
-              <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-                <div className="px-6 py-5 border-b border-[var(--color-border)] bg-gray-50/50">
-                  <h2 className="font-sans text-base font-semibold text-[var(--color-text-primary)]">Change Password</h2>
-                  <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5">
+            <div className="space-y-[32px] animate-fade-in-up">
+              <div className="bg-white rounded-lg border border-[var(--color-lims-border)] shadow-sm overflow-hidden">
+                <div className="px-6 py-5 border-b border-[var(--color-lims-border)] bg-gray-50/50">
+                  <h2 className="font-sans text-[15px] font-bold text-[var(--color-lims-text)]">Change Password</h2>
+                  <p className="text-[13px] text-[var(--color-lims-text-muted)] mt-0.5">
                     Ensure your account is using a long, random password to stay secure.
                   </p>
                 </div>
                 <div className="p-6 md:p-8">
                   <form onSubmit={handlePasswordUpdate} className="space-y-5 max-w-md">
                     <div className="space-y-2">
-                      <Label htmlFor="currentPassword" className="text-[13px] font-medium text-[var(--color-text-primary)]">Current Password</Label>
+                      <Label htmlFor="currentPassword" className="text-[13px] font-bold text-[var(--color-lims-text)]">Current Password</Label>
                       <Input 
                         id="currentPassword" 
                         type="password"
                         required
                         value={passwordData.currentPassword}
                         onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                        className="focus:border-[var(--color-forest)] transition-colors h-10"
+                        className="focus:border-[var(--color-lims-accent)] focus:ring-1 focus:ring-[var(--color-lims-accent)] transition-colors h-10 bg-white border-[var(--color-lims-border)] text-[13px] shadow-sm"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword" className="text-[13px] font-medium text-[var(--color-text-primary)]">New Password</Label>
+                      <Label htmlFor="newPassword" className="text-[13px] font-bold text-[var(--color-lims-text)]">New Password</Label>
                       <Input 
                         id="newPassword" 
                         type="password"
                         required
                         value={passwordData.newPassword}
                         onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})}
-                        className="focus:border-[var(--color-forest)] transition-colors h-10"
+                        className="focus:border-[var(--color-lims-accent)] focus:ring-1 focus:ring-[var(--color-lims-accent)] transition-colors h-10 bg-white border-[var(--color-lims-border)] text-[13px] shadow-sm"
                       />
-                      <p className="text-[12px] text-[var(--color-text-muted)] mt-1">Min 12 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
+                      <p className="text-[12px] text-[var(--color-lims-text-muted)] mt-1">Min 12 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-[13px] font-medium text-[var(--color-text-primary)]">Confirm New Password</Label>
+                      <Label htmlFor="confirmPassword" className="text-[13px] font-bold text-[var(--color-lims-text)]">Confirm New Password</Label>
                       <Input 
                         id="confirmPassword" 
                         type="password"
                         required
                         value={passwordData.confirmPassword}
                         onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                        className="focus:border-[var(--color-forest)] transition-colors h-10"
+                        className="focus:border-[var(--color-lims-accent)] focus:ring-1 focus:ring-[var(--color-lims-accent)] transition-colors h-10 bg-white border-[var(--color-lims-border)] text-[13px] shadow-sm"
                       />
                     </div>
                     <div className="pt-2">
-                      <Button type="submit" disabled={isLoading} className="bg-[var(--color-forest)] hover:bg-[var(--color-forest-mid)] text-white shadow-sm transition-all h-10 px-6">
+                      <Button type="submit" disabled={isLoading} className="bg-[var(--color-lims-accent)] hover:bg-[var(--color-lims-accent)]/90 text-white shadow-sm transition-all h-10 px-6 text-[13px]">
                         {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         Update Password
                       </Button>
@@ -318,25 +317,25 @@ export function SettingsDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-                <div className="px-6 py-5 border-b border-[var(--color-border)] bg-gray-50/50">
-                  <h2 className="font-sans text-base font-semibold text-[var(--color-text-primary)]">Two-Factor Authentication</h2>
-                  <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5">
+              <div className="bg-white rounded-lg border border-[var(--color-lims-border)] shadow-sm overflow-hidden">
+                <div className="px-6 py-5 border-b border-[var(--color-lims-border)] bg-gray-50/50">
+                  <h2 className="font-sans text-[15px] font-bold text-[var(--color-lims-text)]">Two-Factor Authentication</h2>
+                  <p className="text-[13px] text-[var(--color-lims-text-muted)] mt-0.5">
                     Add an extra layer of security to your account.
                   </p>
                 </div>
                 <div className="p-6 md:p-8">
-                  <div className="flex items-center justify-between p-5 border border-[var(--color-border)] rounded-lg bg-gray-50/50">
+                  <div className="flex items-center justify-between p-5 border border-[var(--color-lims-border)] rounded-lg bg-gray-50/30">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-[#16A34A]/10 flex items-center justify-center shrink-0">
-                        <CheckCircle2 className="h-5 w-5 text-[#16A34A]" />
+                      <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm text-[var(--color-text-primary)]">Authenticator App</h4>
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">Secure your account with TOTP.</p>
+                        <h4 className="font-bold text-[14px] text-[var(--color-lims-text)]">Authenticator App</h4>
+                        <p className="text-[12px] text-[var(--color-lims-text-muted)] mt-0.5">Secure your account with TOTP.</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => toast.success("MFA Setup Wizard coming soon")} className="shadow-sm">
+                    <Button variant="outline" size="sm" onClick={() => toast.success("MFA Setup Wizard coming soon")} className="shadow-sm h-8 text-[12px] border-[var(--color-lims-border)] text-[var(--color-lims-text)]">
                       Manage MFA
                     </Button>
                   </div>
@@ -347,55 +346,57 @@ export function SettingsDashboard() {
 
           {/* AUDIT LOGS TAB */}
           {activeTab === "audit" && (
-            <Card className="border shadow-sm">
-              <CardHeader>
-                <CardTitle>System Audit Logs</CardTitle>
-                <CardDescription>
-                  Track all actions performed across the platform.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
+            <div className="bg-white rounded-lg border border-[var(--color-lims-border)] shadow-sm overflow-hidden animate-fade-in-up">
+              <div className="px-6 py-5 border-b border-[var(--color-lims-border)] bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-sans text-[15px] font-bold text-[var(--color-lims-text)]">System Audit Logs</h2>
+                  <p className="text-[13px] text-[var(--color-lims-text-muted)] mt-0.5">
+                    Track all actions performed across the platform.
+                  </p>
+                </div>
+              </div>
+              <div className="p-0">
                 {auditLogsLoading ? (
-                  <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
+                  <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-[var(--color-lims-accent)]" /></div>
                 ) : (
-                  <>
+                  <div className="overflow-x-auto">
                     <DataTable 
                       columns={[
                         { 
                           header: "Timestamp", 
                           cell: (row) => {
                             const timeVal = row.timestamp || row.createdAt
-                            if (!timeVal) return "N/A"
+                            if (!timeVal) return <span className="text-[12px] text-gray-400">N/A</span>
                             const d = new Date(timeVal)
-                            return isNaN(d.getTime()) ? "Invalid" : d.toLocaleString()
+                            return isNaN(d.getTime()) ? <span className="text-[12px] text-gray-400">Invalid</span> : <span className="text-[12px] text-[var(--color-lims-text-muted)]">{d.toLocaleString()}</span>
                           }
                         },
                         { 
                           header: "Action", 
-                          cell: (row: any) => <span className="font-semibold text-slate-700">{row.action}</span>
+                          cell: (row: any) => <span className="font-bold text-[13px] text-[var(--color-lims-text)]">{row.action}</span>
                         },
                         { 
                           header: "Actor ID", 
-                          cell: (row: any) => <span className="font-mono text-xs bg-slate-100 p-1 rounded">{row.actorId}</span>
+                          cell: (row: any) => <span className="font-mono text-[11px] bg-gray-100 p-1 rounded text-[var(--color-lims-text-muted)]">{row.actorId}</span>
                         },
                         { 
                           header: "Role", 
-                          cell: (row: any) => <span className="text-xs uppercase font-medium">{row.actorRole}</span>
+                          cell: (row: any) => <span className="text-[11px] uppercase font-bold text-gray-500">{row.actorRole}</span>
                         },
                         { 
                           header: "Target", 
-                          cell: (row: any) => <span className="text-xs">{row.resourceType} ({row.resourceId})</span>
+                          cell: (row: any) => <span className="text-[12px] text-[var(--color-lims-text)]">{row.resourceType} ({row.resourceId})</span>
                         },
                         { 
                           header: "Status", 
                           cell: (row: any) => row.success ? 
-                            <span className="text-emerald-600 text-xs font-bold">SUCCESS</span> : 
-                            <span className="text-red-600 text-xs font-bold">FAILED</span>
+                            <span className="text-emerald-600 text-[11px] font-bold tracking-wider">SUCCESS</span> : 
+                            <span className="text-red-600 text-[11px] font-bold tracking-wider">FAILED</span>
                         },
                         { 
                           header: "Details", 
                           cell: (row: any) => (
-                            <span className="text-xs text-muted-foreground truncate max-w-[200px] block" title={JSON.stringify(row.details)}>
+                            <span className="text-[11px] text-gray-400 truncate max-w-[200px] block" title={JSON.stringify(row.details)}>
                               {JSON.stringify(row.details)}
                             </span>
                           )
@@ -406,14 +407,15 @@ export function SettingsDashboard() {
                     
                     {/* Pagination Controls */}
                     {auditTotalPages > 1 && (
-                      <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--color-border)] bg-gray-50/50">
-                        <div className="text-sm text-slate-500">
+                      <div className="flex items-center justify-between p-4 border-t border-[var(--color-lims-border)] bg-gray-50/30">
+                        <div className="text-[12px] text-[var(--color-lims-text-muted)] font-medium">
                           Page {auditPage} of {auditTotalPages}
                         </div>
                         <div className="flex gap-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
+                            className="h-8 text-[12px] border-[var(--color-lims-border)] text-[var(--color-lims-text)] shadow-sm"
                             onClick={() => setAuditPage(p => Math.max(1, p - 1))}
                             disabled={auditPage === 1}
                           >
@@ -422,6 +424,7 @@ export function SettingsDashboard() {
                           <Button 
                             variant="outline" 
                             size="sm" 
+                            className="h-8 text-[12px] border-[var(--color-lims-border)] text-[var(--color-lims-text)] shadow-sm"
                             onClick={() => setAuditPage(p => Math.min(auditTotalPages, p + 1))}
                             disabled={auditPage === auditTotalPages}
                           >
@@ -430,25 +433,25 @@ export function SettingsDashboard() {
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* ADMIN TABS (PLACEHOLDERS) */}
           {["general", "users", "notifications", "integrations", "appearance"].includes(activeTab) && (
-            <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-              <div className="px-6 py-5 border-b border-[var(--color-border)] bg-gray-50/50">
-                <h2 className="font-sans text-base font-semibold text-[var(--color-text-primary)]">{allTabs.find(t => t.id === activeTab)?.label}</h2>
-                <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5">
+            <div className="bg-white rounded-lg border border-[var(--color-lims-border)] shadow-sm overflow-hidden animate-fade-in-up">
+              <div className="px-6 py-5 border-b border-[var(--color-lims-border)] bg-gray-50/50">
+                <h2 className="font-sans text-[15px] font-bold text-[var(--color-lims-text)]">{allTabs.find(t => t.id === activeTab)?.label}</h2>
+                <p className="text-[13px] text-[var(--color-lims-text-muted)] mt-0.5">
                   Configure platform settings.
                 </p>
               </div>
-              <div className="p-12 text-center text-[var(--color-text-muted)] flex flex-col items-center">
-                <Building2 className="h-12 w-12 text-[var(--color-border)] mb-4" />
-                <p className="font-medium">This settings module is under active development.</p>
-                <p className="text-sm mt-1">Check back later for updates.</p>
+              <div className="p-12 text-center flex flex-col items-center">
+                <Building2 className="h-12 w-12 text-gray-300 mb-4" />
+                <p className="font-bold text-[14px] text-[var(--color-lims-text)]">This settings module is under active development.</p>
+                <p className="text-[13px] text-[var(--color-lims-text-muted)] mt-1">Check back later for updates.</p>
               </div>
             </div>
           )}

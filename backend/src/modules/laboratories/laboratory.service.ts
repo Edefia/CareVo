@@ -26,20 +26,36 @@ export const laboratoryService = {
     return lab;
   },
 
-  async getLaboratories(page: number, limit: number, packageId?: string) {
+  async getLaboratories(page: number, limit: number, packageId?: string, testName?: string) {
     const { skip, limit: limitNum } = getPaginationOptions(page, limit);
 
     let query: any = {};
-    if (packageId) {
-      const services = await LabServiceModel.find({ packageId, approvalStatus: 'APPROVED', isActive: true });
+    let packagePrices: Record<string, number> = {};
+
+    if (packageId || testName) {
+      const filter: any = { approvalStatus: 'APPROVED' };
+      if (packageId) filter.packageId = packageId;
+      if (testName) filter.name = testName;
+
+      const services = await LabServiceModel.find(filter);
       const labIds = services.map(s => s.laboratoryId);
       query = { _id: { $in: labIds } };
+      
+      services.forEach(s => {
+        packagePrices[s.laboratoryId.toString()] = s.platformPrice;
+      });
     }
 
     const [laboratories, total] = await Promise.all([
-      LaboratoryModel.find(query).skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      LaboratoryModel.find(query).skip(skip).limit(limitNum).sort({ createdAt: -1 }).lean(),
       LaboratoryModel.countDocuments(query),
     ]);
+
+    if (packageId) {
+      laboratories.forEach((lab: any) => {
+        lab.packagePrice = packagePrices[lab._id.toString()];
+      });
+    }
 
     return createPaginatedResponse(laboratories, page, limitNum, total);
   },

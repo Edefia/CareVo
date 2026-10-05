@@ -3,6 +3,7 @@ import mongoose, { Schema, type Document, type Types } from 'mongoose';
 export interface IPatient extends Document {
   userId: Types.ObjectId;
   laboratoryIds: Types.ObjectId[];
+  mrn: string;
   dateOfBirth: Date | null;
   gender: string;
   bloodType: string;
@@ -24,6 +25,12 @@ export interface IPatient extends Document {
   updatedAt: Date;
 }
 
+function generateMRN(): string {
+  const digits = Math.floor(10000 + Math.random() * 90000).toString();
+  const year = new Date().getFullYear();
+  return `DIS-0${digits}/${year}`;
+}
+
 const patientSchema = new Schema<IPatient>(
   {
     userId: {
@@ -38,6 +45,12 @@ const patientSchema = new Schema<IPatient>(
         ref: 'Laboratory',
       },
     ],
+    mrn: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     dateOfBirth: {
       type: Date,
       default: null,
@@ -79,6 +92,20 @@ const patientSchema = new Schema<IPatient>(
     timestamps: true,
   }
 );
+
+// Auto-generate MRN on creation if not already set
+patientSchema.pre('save', async function () {
+  if (!this.mrn) {
+    let mrn = generateMRN();
+    // Ensure uniqueness
+    let exists = await mongoose.model('Patient').findOne({ mrn });
+    while (exists) {
+      mrn = generateMRN();
+      exists = await mongoose.model('Patient').findOne({ mrn });
+    }
+    this.mrn = mrn;
+  }
+});
 
 // Indexes
 patientSchema.index({ laboratoryIds: 1 });

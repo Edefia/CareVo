@@ -6,6 +6,11 @@ export interface IPackage extends Document {
   category: string;
   testsIncluded: string[];
   turnaroundTime?: string;
+  sampleType?: string;
+  fastingRequired?: boolean;
+  fastingHours?: string;
+  commonFor?: string;
+  color?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -34,6 +39,26 @@ const packageSchema = new Schema<IPackage>(
       },
     ],
     turnaroundTime: {
+      type: String,
+      trim: true,
+    },
+    sampleType: {
+      type: String,
+      trim: true,
+    },
+    fastingRequired: {
+      type: Boolean,
+      default: false,
+    },
+    fastingHours: {
+      type: String,
+      trim: true,
+    },
+    commonFor: {
+      type: String,
+      trim: true,
+    },
+    color: {
       type: String,
       trim: true,
     },

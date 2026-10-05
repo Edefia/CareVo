@@ -20,4 +20,14 @@ export const resultService = {
     const response = await apiClient.patch(`/results/${id}`, data);
     return response.data;
   },
+
+  submitForApproval: async (id: string, data?: Record<string, unknown>) => {
+    const response = await apiClient.post(`/results/${id}/submit`, data || {});
+    return response.data;
+  },
+
+  updateResultStatus: async (id: string, status: string) => {
+    const response = await apiClient.patch(`/results/${id}/status`, { status });
+    return response.data;
+  },
 };

@@ -48,7 +48,7 @@ export function ResultDetail() {
       : resultRecord.biomarkers?.some((b: any) => b.flag === 'LOW' || b.flag === 'ABNORMAL') 
         ? 'MODERATE' 
         : 'LOW',
-    interpreterName: interpreter.firstName ? `${interpreter.firstName} ${interpreter.lastName}` : "CareVo Clinical Team",
+    interpreterName: interpreter.firstName ? `${interpreter.firstName} ${interpreter.lastName}` : "CareBis Prime Clinical Team",
     interpretationSummary: interpretation.summary || interpretation.clinicalNotes || "No summary provided.",
     recommendations: interpretation.recommendations 
       ? interpretation.recommendations.split('\n').filter((r: string) => r.trim() !== '')

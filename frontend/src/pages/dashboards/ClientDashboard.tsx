@@ -1,9 +1,10 @@
+import { useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import {
   Heart, Droplets, Activity, Calendar, FileText, Bell,
   CheckCircle2, AlertTriangle, Info, ArrowRight, Shield,
   ClipboardList, FlaskConical, TrendingUp, Sparkles,
-  Stethoscope, ChevronRight
+  Stethoscope, ChevronRight, Search, Clock, X, TestTube
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { Button } from "@/components/ui/button"
@@ -71,16 +72,174 @@ function extractLatestBiomarker(
   return null
 }
 
+// ─── Individual Tests Catalog Component ─────────────────────────────────────
+
+function IndividualTestsCatalog({ packages }: { packages: any[] }) {
+  const [search, setSearch] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
+
+  const categories = [
+    { id: "ALL", label: "All Tests" },
+    { id: "General Health", label: "General Health" },
+    { id: "Chronic & Metabolic", label: "Chronic & Metabolic" },
+    { id: "Infectious Disease", label: "Infectious Disease" },
+    { id: "Sexual & Reproductive Health", label: "Sexual Health" },
+  ]
+
+  const filteredTests = useMemo(() => {
+    return packages.filter((test: any) => {
+      const q = search.toLowerCase().trim()
+      const matchesSearch = !q || 
+        test.name?.toLowerCase().includes(q) ||
+        test.description?.toLowerCase().includes(q) ||
+        test.commonFor?.toLowerCase().includes(q)
+
+      const matchesCategory = selectedCategory === "ALL" || test.category === selectedCategory
+
+      return matchesSearch && matchesCategory
+    })
+  }, [packages, search, selectedCategory])
+
+  return (
+    <div className="space-y-6">
+      {/* Section Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="font-serif text-[26px] md:text-[30px] font-semibold text-[var(--color-forest)]">
+            Available Diagnostic Tests
+          </h2>
+          <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">
+            Select a specific test to choose where to do it, compare partner lab prices, and book your appointment.
+          </p>
+        </div>
+        <div className="text-[13px] font-medium text-[var(--color-text-muted)]">
+          Showing <span className="font-bold text-[var(--color-forest)]">{filteredTests.length}</span> tests
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search test (e.g. HbA1c, FBC, Lipid, Malaria)..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-11 pl-10 pr-10 rounded-xl border border-[var(--color-border)] bg-white text-[14px] text-[var(--color-text-primary)] placeholder:text-gray-400 focus:border-[var(--color-forest)] focus:ring-1 focus:ring-[var(--color-forest)] outline-none shadow-xs"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-3.5 py-2 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all cursor-pointer ${
+                selectedCategory === cat.id
+                  ? "bg-[var(--color-forest)] text-white shadow-xs font-semibold"
+                  : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-gray-50"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tests Grid */}
+      {filteredTests.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredTests.map((test) => (
+            <div
+              key={test.id}
+              className="flex flex-col justify-between p-6 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white shadow-xs hover:border-[var(--color-forest)]/40 hover:shadow-md transition-all group"
+            >
+              <div>
+                {/* Top badges */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <span
+                    className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: `${test.color}15`, color: test.color }}
+                  >
+                    {test.category}
+                  </span>
+                  
+                  {test.fastingRequired ? (
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <AlertTriangle className="h-3 w-3" /> Fasting ({test.fastingHours})
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      No Fasting Required
+                    </span>
+                  )}
+                </div>
+
+                {/* Test Name */}
+                <h3 className="font-sans text-[17px] font-bold text-[var(--color-forest)] group-hover:text-[var(--color-lime-dark)] transition-colors mb-2">
+                  {test.name}
+                </h3>
+
+                {/* Description */}
+                <p className="font-sans text-[13px] text-[var(--color-text-secondary)] leading-relaxed mb-4">
+                  {test.description}
+                </p>
+
+                {/* Meta details */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[var(--color-text-muted)] mb-5">
+                  <span className="flex items-center gap-1">
+                    <TestTube className="h-3.5 w-3.5 text-gray-400" />
+                    {test.sampleType}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5 text-gray-400" />
+                    {test.turnaroundTime}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Action */}
+              <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-[12px] text-gray-500 font-medium truncate max-w-[50%] mr-2" title={test.commonFor}>
+                  {test.commonFor}
+                </span>
+                <Link to={`/client/bookings/new?package=${test._id || test.id || ''}&test=${encodeURIComponent(test.name)}`}>
+                  <Button className="h-[40px] px-5 bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-dark)] text-[13px] font-semibold gap-1.5 shadow-sm group-hover:bg-[var(--color-lime)] transition-colors shrink-0">
+                    Book This Test <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="p-12 text-center bg-white rounded-xl border border-[var(--color-border)]">
+          <TestTube className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+          <h4 className="text-[15px] font-bold text-gray-700 mb-1">No diagnostic tests match your search</h4>
+          <p className="text-[13px] text-gray-500 mb-4">Try searching with a different term or clear the filters.</p>
+          <Button variant="outline" size="sm" onClick={() => { setSearch(""); setSelectedCategory("ALL"); }}>
+            Reset Filters
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Onboarding View (First Visit) ──────────────────────────────────────────
 
 function OnboardingView({ userName, packages }: { userName: string, packages: any[] }) {
-  const iconMap: Record<string, any> = {
-    CARDIO: Heart,
-    RENAL: Droplets,
-    METABOLIC: Activity,
-    COMPREHENSIVE: Shield
-  }
-
   const steps = [
     {
       icon: ClipboardList,
@@ -115,14 +274,14 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
         <div className="relative z-10 max-w-[640px]">
           <div className="flex items-center gap-2 mb-[16px]">
             <Sparkles className="h-5 w-5 text-[var(--color-lime)]" />
-            <span className="text-[13px] font-semibold tracking-wide text-[var(--color-lime)] uppercase">Welcome to CareVo</span>
+            <span className="text-[13px] font-semibold tracking-wide text-[var(--color-lime)] uppercase">Welcome to CareBis Prime</span>
           </div>
           <h1 className="font-serif text-[32px] md:text-[40px] font-semibold leading-tight mb-[16px]">
             Hello, {userName}. <br />
             Let's start your health journey.
           </h1>
           <p className="font-sans text-[16px] md:text-[17px] text-white/80 leading-relaxed mb-[28px]">
-            CareVo screens for early signs of cardiovascular, kidney, and metabolic disease — the three leading causes of preventable illness. Book your first screening to get your personalised health baseline.
+            CareBis Prime screens for early signs of cardiovascular, kidney, and metabolic disease — the three leading causes of preventable illness. Book your first screening to get your personalised health baseline.
           </p>
           <Link to="/client/bookings/new">
             <Button className="h-[52px] px-[28px] text-[15px] bg-[var(--color-lime)] text-white hover:bg-[var(--color-lime-dark)] shadow-md font-semibold gap-2">
@@ -133,63 +292,13 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
         </div>
       </div>
 
-      {/* ── THE 3 HEALTH PILLARS ── */}
-      <div>
-        <div className="mb-[24px]">
-          <h2 className="font-serif text-[26px] font-semibold text-[var(--color-forest)]">Available Health Packages</h2>
-          <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">Health packages that form the foundation of preventive care.</p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-[20px]">
-          {packages?.map((pkg) => {
-            const Icon = iconMap[pkg.pillarIcon] || Heart
-            const color = pkg.color?.replace('text-[', '')?.replace(']', '') || '#DC2626'
-            const bgColor = pkg.bgColor?.replace('bg-[', '')?.replace(']/10', '') || 'rgba(220,38,38,0.06)'
-            
-            return (
-              <div key={pkg._id || pkg.id} className="flex flex-col rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white overflow-hidden shadow-sm hover:shadow-md transition-all group">
-                <div className="p-[28px] flex-1" style={{ backgroundColor: bgColor.includes('rgba') ? bgColor : `${bgColor}15` }}>
-                  <div className="flex items-center justify-between mb-[20px]">
-                    <div className="flex items-center gap-[12px]">
-                      <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full" style={{ backgroundColor: bgColor.includes('rgba') ? bgColor : `${bgColor}30` }}>
-                        <Icon className="h-[22px] w-[22px]" style={{ color }} />
-                      </div>
-                      <h3 className="font-sans text-[17px] font-bold text-[var(--color-forest)]">{pkg.name}</h3>
-                    </div>
-                  </div>
-                  <p className="font-sans text-[14px] text-[var(--color-text-secondary)] leading-relaxed mb-[20px]">
-                    {pkg.description}
-                  </p>
-                  <div className="space-y-[8px] mb-[16px]">
-                    <div className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Key Biomarkers</div>
-                    <div className="flex flex-wrap gap-[6px]">
-                      {(pkg.features || []).map((b: string) => (
-                        <span key={b} className="inline-flex items-center px-[10px] py-[4px] rounded-full text-[12px] font-medium bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)]">
-                          {b}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white border-t border-[var(--color-border)] px-[28px] py-[16px] flex justify-between items-center">
-                  <div className="font-serif text-[18px] font-bold text-[var(--color-forest)]">
-                    GH₵{(pkg.price / 100).toFixed(2)}
-                  </div>
-                  <Link to={`/client/bookings/new?package=${pkg._id || pkg.id}`}>
-                    <Button variant="ghost" className="h-[32px] px-3 text-[13px] text-[var(--color-forest)] gap-1">
-                      Select <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* ── INDIVIDUAL DIAGNOSTIC TESTS DIRECTORY ── */}
+      <IndividualTestsCatalog packages={packages} />
 
-      {/* ── HOW CAREVO WORKS ── */}
+      {/* ── HOW CAREBIS PRIME WORKS ── */}
       <div className="bg-[var(--color-surface-2)] rounded-[var(--radius-xl)] p-[32px] md:p-[40px] border border-[var(--color-border)]">
         <div className="mb-[32px] text-center">
-          <h2 className="font-serif text-[26px] font-semibold text-[var(--color-forest)]">How CareVo Works</h2>
+          <h2 className="font-serif text-[26px] font-semibold text-[var(--color-forest)]">How CareBis Prime Works</h2>
           <p className="font-sans text-[15px] text-[var(--color-text-secondary)] mt-1">Four simple steps to understand your health.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[24px]">
@@ -273,7 +382,7 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
 
 // ─── Returning User View (Has Results) ──────────────────────────────────────
 
-function ReturningUserView({ userName, results, bookings }: { userName: string; results: any[]; bookings: any[] }) {
+function ReturningUserView({ userName, results, bookings, packages }: { userName: string; results: any[]; bookings: any[]; packages: any[] }) {
   // Sort results by date descending
   const sortedResults = [...results].sort((a, b) =>
     new Date(b.collectionDate || b.createdAt).getTime() - new Date(a.collectionDate || a.createdAt).getTime()
@@ -546,7 +655,7 @@ function ReturningUserView({ userName, results, bookings }: { userName: string; 
             {[
               { icon: Calendar, label: "Book a Screening", to: "/client/bookings/new", color: "text-[var(--color-forest)]" },
               { icon: FileText, label: "View All Results", to: "/client/results", color: "text-[#0F76E0]" },
-              { icon: Shield, label: "My Referrals", to: "/client/referrals", color: "text-[#D97706]" },
+              { icon: Sparkles, label: "Patient Journey", to: "/client/journey", color: "text-[#D97706]" },
               { icon: Bell, label: "Billing & Payments", to: "/client/billing", color: "text-[#16A34A]" },
             ].map((action, i, arr) => (
               <Link key={action.label} to={action.to} className={`flex items-center gap-[16px] p-[20px] hover:bg-[var(--color-surface-2)] transition-colors ${i !== arr.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
@@ -559,6 +668,11 @@ function ReturningUserView({ userName, results, bookings }: { userName: string; 
             ))}
           </div>
         </div>
+      </div>
+
+      {/* ── BROWSE INDIVIDUAL TESTS ── */}
+      <div className="pt-6 border-t border-[var(--color-border)]">
+        <IndividualTestsCatalog packages={packages} />
       </div>
     </div>
   )
@@ -601,7 +715,7 @@ export function ClientDashboard() {
   }
 
   if (hasResults) {
-    return <ReturningUserView userName={userName} results={actualResults} bookings={actualBookings} />
+    return <ReturningUserView userName={userName} results={actualResults} bookings={actualBookings} packages={actualPackages} />
   }
 
   return <OnboardingView userName={userName} packages={actualPackages} />

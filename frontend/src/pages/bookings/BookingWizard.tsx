@@ -18,7 +18,8 @@ export function BookingWizard() {
   const [step, setStep] = useState(1)
   
   const { data: labsData } = useLaboratories()
-  const labs = labsData?.items || labsData || [
+  const extractedLabs = Array.isArray(labsData) ? labsData : (labsData?.data || labsData?.items)
+  const labs = Array.isArray(extractedLabs) ? extractedLabs : [
     { id: '1', name: 'AccuLab Diagnostics', location: { address: 'Accra, Greater Accra' }, rating: 4.8 },
     { id: '2', name: 'MediScan Ghana', location: { address: 'Kumasi, Ashanti' }, rating: 4.9 }
   ]

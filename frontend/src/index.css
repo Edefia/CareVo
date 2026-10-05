@@ -16,6 +16,17 @@
   --color-border:      #E2E8F0;   /* all borders */
   --color-border-dark: #CBD5E1;   /* stronger dividers */
 
+  /* LIMS Specific Brand & Layout */
+  --color-lims-accent: #6D4AE0;   /* Purple accent for LIMS buttons and highlights */
+  --color-lims-accent-hover: #5A3CC2;
+  --color-lims-surface: #FFFFFF;
+  --color-lims-bg: #F8F9FB;       /* Slightly cooler grey for LIMS bg */
+  --color-lims-border: #E5E7EB;   
+  --color-lims-rail: #FFFFFF;     /* Icon rail bg */
+  --color-lims-text: #111827;     /* High contrast text */
+  --color-lims-text-muted: #6B7280;
+  --color-lims-active-bg: #F3F0FF; /* Very light purple for active items */
+
   /* Text */
   --color-text-primary:   #0F172A;  /* deep navy slate */
   --color-text-secondary: #334155;  /* medium slate */
@@ -84,6 +95,17 @@
   --color-text-muted: var(--color-text-muted);
   --color-text-inverse: var(--color-text-inverse);
 
+  /* LIMS Theme map */
+  --color-lims-accent: var(--color-lims-accent);
+  --color-lims-accent-hover: var(--color-lims-accent-hover);
+  --color-lims-surface: var(--color-lims-surface);
+  --color-lims-bg: var(--color-lims-bg);
+  --color-lims-border: var(--color-lims-border);
+  --color-lims-rail: var(--color-lims-rail);
+  --color-lims-text: var(--color-lims-text);
+  --color-lims-text-muted: var(--color-lims-text-muted);
+  --color-lims-active-bg: var(--color-lims-active-bg);
+
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-danger: var(--color-danger);
@@ -139,6 +161,22 @@
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.5);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Thin scrollbar for LIMS dense tables/worklists */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--color-border-dark);
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
   }
 
   .animate-fade-in-up {

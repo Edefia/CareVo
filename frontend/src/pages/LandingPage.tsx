@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
   Activity,
@@ -7,9 +8,52 @@ import {
   FileText,
   Compass,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 
+const heroSlides = [
+  {
+    image: "/images/hero-doctor-consultation.jpg",
+    alt: "Doctor consulting with a patient during a health screening",
+    title: "Expert Doctor Consultations",
+    subtitle: "Personalized medical advice & preventive guidance",
+  },
+  {
+    image: "/images/lab-scientist.png",
+    alt: "Medical laboratory scientist analyzing screening samples under a microscope",
+    title: "Verified Partner Labs",
+    subtitle: "Accredited facilities providing precision diagnostics",
+  },
+  {
+    image: "/images/health-tracking.png",
+    alt: "Healthcare professional reviewing digital health tracking metrics on a tablet",
+    title: "Results in Plain Language",
+    subtitle: "No jargon. No confusion. Clear next steps.",
+  },
+]
+
 export function LandingPage() {
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+
+  useEffect(() => {
+    if (isPaused) return
+
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
+    }, 4500)
+
+    return () => clearInterval(timer)
+  }, [isPaused])
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
+  }
   return (
     <>
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -78,48 +122,85 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Right Column (45%) */}
-            <div className="w-full lg:w-[45%] relative h-[400px] sm:h-[560px] mt-12 lg:mt-0">
-              {/* Background Shape */}
-              <div className="absolute right-0 bottom-0 h-[480px] w-[80%] rounded-[var(--radius-xl)] bg-[var(--color-forest)] z-0 hidden lg:block" />
+            {/* Right Column (45%) - Full-size Smooth Cross-Fade Image Carousel */}
+            <div className="w-full lg:w-[45%] relative mt-12 lg:mt-0 flex justify-center lg:justify-end">
+              {/* Subtle Decorative Navy Backdrop */}
+              <div className="absolute right-0 bottom-0 h-full w-full translate-x-3 translate-y-3 rounded-[var(--radius-xl)] bg-[var(--color-forest)] opacity-15 -z-10 hidden sm:block" />
 
-              {/* Photo Card 1 (main, tall — left) */}
-              <div className="absolute left-0 top-0 h-[380px] w-[54%] overflow-hidden rounded-[var(--radius-xl)] shadow-[var(--shadow-card-hover)] z-[2]">
-                <img
-                  src="/images/hero-doctor-consultation.jpg"
-                  alt="Black African doctor consulting with a patient during a health screening"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+              {/* Main Carousel Frame covering the color space */}
+              <div
+                className="group relative w-full h-[420px] sm:h-[500px] lg:h-[540px] overflow-hidden rounded-[var(--radius-xl)] shadow-2xl bg-[var(--color-forest)] border border-slate-100"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+              >
+                {/* Images with Smooth Cross-Fade Transition */}
+                {heroSlides.map((slide, idx) => (
+                  <div
+                    key={slide.image}
+                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                      idx === currentSlide
+                        ? "opacity-100 pointer-events-auto"
+                        : "opacity-0 pointer-events-none"
+                    }`}
+                  >
+                    <img
+                      src={slide.image}
+                      alt={slide.alt}
+                      className="h-full w-full object-cover object-center"
+                    />
+                  </div>
+                ))}
 
-              {/* Photo Card 2 (right, upper) */}
-              <div className="absolute right-0 top-[28px] h-[220px] w-[42%] overflow-hidden rounded-[var(--radius-xl)] shadow-[var(--shadow-card-hover)] z-[2]">
-                <img
-                  src="/images/lab-scientist.png"
-                  alt="Medical laboratory scientist analyzing screening samples under a microscope"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+                {/* Bottom Shadow / Gradient for Text Legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-[5] pointer-events-none" />
 
-              {/* Photo Card 3 (right, lower) */}
-              <div className="absolute right-0 bottom-0 h-[200px] w-[42%] overflow-hidden rounded-[var(--radius-xl)] shadow-[var(--shadow-card-hover)] z-[2] hidden sm:block">
-                <img
-                  src="/images/health-tracking.png"
-                  alt="Healthcare professional reviewing health tracking metrics and digital results on a tablet"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+                {/* Previous / Next Arrow Buttons (Smooth appearance on hover) */}
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  aria-label="Previous slide"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-white/85 backdrop-blur-md text-[var(--color-forest)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white hover:scale-105 shadow-lg cursor-pointer"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
 
-              {/* Floating Info Card */}
-              <div className="absolute bottom-[80px] left-[33%] z-[3] rounded-[var(--radius-md)] bg-white px-[18px] py-[14px] shadow-[var(--shadow-card-hover)]">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle className="h-5 w-5 text-[var(--color-lime)]" />
-                  <span className="font-sans text-[13px] font-semibold text-[var(--color-forest)]">
-                    Results in plain language
-                  </span>
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  aria-label="Next slide"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-white/85 backdrop-blur-md text-[var(--color-forest)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white hover:scale-105 shadow-lg cursor-pointer"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+
+                {/* Floating Info Card */}
+                <div className="absolute bottom-5 left-5 z-10 rounded-[var(--radius-md)] bg-white/95 backdrop-blur-md px-[16px] py-[12px] sm:px-[18px] sm:py-[14px] shadow-[var(--shadow-card-hover)] border border-white/60 max-w-[calc(100%-110px)] transition-all duration-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-lime)] shrink-0" />
+                    <span className="font-sans text-[12px] sm:text-[13px] font-semibold text-[var(--color-forest)] line-clamp-1">
+                      {heroSlides[currentSlide].title}
+                    </span>
+                  </div>
+                  <div className="font-sans text-[11px] text-[var(--color-text-muted)] line-clamp-1">
+                    {heroSlides[currentSlide].subtitle}
+                  </div>
                 </div>
-                <div className="font-sans text-[11px] text-[var(--color-text-muted)]">
-                  No jargon. No confusion.
+
+                {/* Slide Indicators / Dots */}
+                <div className="absolute bottom-5 right-5 z-10 flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-md px-2.5 py-1.5 sm:px-3 sm:py-2">
+                  {heroSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setCurrentSlide(idx)}
+                      aria-label={`Go to slide ${idx + 1}`}
+                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        idx === currentSlide
+                          ? "w-6 bg-white shadow-sm"
+                          : "w-2 bg-white/50 hover:bg-white/80"
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>

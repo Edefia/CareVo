@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from "react-hot-toast"
 import { AuthLayout } from "./layouts/AuthLayout"
 import { DashboardLayout } from "./layouts/DashboardLayout"
+import { LabLayout } from "./layouts/LabLayout"
 import { useAuthStore } from "./store/auth"
 import { NotificationProvider } from "./contexts/NotificationContext"
 import { ErrorBoundary } from "./components/shared/ErrorBoundary"
@@ -27,6 +28,7 @@ import { SetupPasswordPage } from "./pages/auth/SetupPasswordPage"
 import { AdminDashboard } from "./pages/dashboards/AdminDashboard"
 import { LabDashboard } from "./pages/dashboards/LabDashboard"
 import { LabServices } from "./pages/dashboards/laboratory/LabServices"
+import { LabBookings } from "./pages/dashboards/laboratory/LabBookings"
 import { InterpreterDashboard } from "./pages/dashboards/InterpreterDashboard"
 import { ClientDashboard } from "./pages/dashboards/ClientDashboard"
 
@@ -36,7 +38,6 @@ import { PatientProfile } from "./pages/patients/PatientProfile"
 import { LabList } from "./pages/laboratories/LabList"
 import { LabProfile } from "./pages/laboratories/LabProfile"
 import { ResultsList } from "./pages/results/ResultsList"
-import { ResultsEntry } from "./pages/results/ResultsEntry"
 import { ResultDetail } from "./pages/results/ResultDetail"
 import { InterpretationsQueue } from "./pages/interpretations/InterpretationsQueue"
 import { InterpretationForm } from "./pages/interpretations/InterpretationForm"
@@ -52,7 +53,6 @@ import { PackageManagement } from "./pages/admin/PackageManagement"
 import { ClientResults } from "./pages/dashboards/client/ClientResults"
 import { ClientBookings } from "./pages/dashboards/client/ClientBookings"
 import { NewBooking } from "./pages/dashboards/client/NewBooking"
-import { ClientReferrals } from "./pages/dashboards/client/ClientReferrals"
 import { ClientBilling } from "./pages/dashboards/client/ClientBilling"
 import { PatientJourney } from "./pages/dashboards/client/PatientJourney"
 import { AdminHealthAdvocacy } from "./pages/advocacy/AdminHealthAdvocacy"
@@ -102,14 +102,12 @@ export default function App() {
               {/* Protected Dashboard Routes */}
               <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 
-                {/* Dashboards (4 Roles) */}
+                {/* Dashboards (3 Roles) */}
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/payments" element={<AdminPayments />} />
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/packages" element={<PackageManagement />} />
                 <Route path="/admin/advocacy" element={<AdminHealthAdvocacy />} />
-                <Route path="/lab/dashboard" element={<LabDashboard />} />
-                <Route path="/lab/services" element={<LabServices />} />
                 <Route path="/interpreter/dashboard" element={<InterpreterDashboard />} />
                 <Route path="/client/dashboard" element={<ClientDashboard />} />
 
@@ -120,7 +118,6 @@ export default function App() {
                 <Route path="/laboratories" element={<LabList />} />
                 <Route path="/laboratories/:id" element={<LabProfile />} />
                 <Route path="/results" element={<ResultsList />} />
-                <Route path="/lab/results/enter/:referralCode" element={<ResultsEntry />} />
                 
                 <Route path="/bookings" element={<BookingList />} />
                 <Route path="/bookings/new" element={<BookingWizard />} />
@@ -134,7 +131,6 @@ export default function App() {
                 <Route path="/client/results" element={<ClientResults />} />
                 <Route path="/client/bookings/new" element={<NewBooking />} />
                 <Route path="/client/bookings" element={<ClientBookings />} />
-                <Route path="/client/referrals" element={<ClientReferrals />} />
                 <Route path="/client/billing" element={<ClientBilling />} />
                 <Route path="/client/journey" element={<PatientJourney />} />
                 <Route path="/client/advocacy" element={<ClientHealthAdvocacy />} />
@@ -142,6 +138,24 @@ export default function App() {
                 <Route path="/notifications/broadcast" element={<BroadcastNotification />} />
                 
                 <Route path="/settings" element={<SettingsDashboard />} />
+              </Route>
+
+              {/* LIMS / Laboratory Routes */}
+              <Route element={<ProtectedRoute><LabLayout /></ProtectedRoute>}>
+                <Route path="/lab/dashboard" element={<LabDashboard />} />
+                <Route path="/lab/dashboard/:referralCode" element={<LabDashboard />} />
+                <Route path="/lab/services" element={<LabServices />} />
+                <Route path="/lab/bookings" element={<LabBookings />} />
+                <Route path="/lab/bookings/new" element={<NewBooking />} />
+                
+                {/* Padded wrapper for standard lab pages */}
+                <Route element={<div className="w-full h-full p-6 md:p-8 overflow-y-auto"><Outlet /></div>}>
+                  {/* When lab users navigate to shared resources, we keep them in the LabLayout */}
+                  <Route path="/lab/patients" element={<PatientList />} />
+                  <Route path="/lab/patients/:id" element={<PatientProfile />} />
+                  <Route path="/lab/notifications/broadcast" element={<BroadcastNotification />} />
+                  <Route path="/lab/settings" element={<SettingsDashboard />} />
+                </Route>
               </Route>
             </Routes>
           </ErrorBoundary>
@@ -151,3 +165,4 @@ export default function App() {
     </QueryClientProvider>
   )
 }
+
