@@ -49,7 +49,6 @@ async function runSeed() {
           'Blood Group and Rhesus Factor',
         ],
         turnaroundTime: '24 hours',
-        price: 35000, // 350.00 GHS in pesewas
       },
       {
         name: 'Infectious Disease Panel',
@@ -64,7 +63,6 @@ async function runSeed() {
           'Typhoid Test (Widal)',
         ],
         turnaroundTime: '24 hours',
-        price: 25000,
       },
       {
         name: 'Sexual & Reproductive Health Panel',
@@ -79,7 +77,6 @@ async function runSeed() {
           'Pregnancy Test',
         ],
         turnaroundTime: '24 hours',
-        price: 30000,
       },
       {
         name: 'Chronic Disease Risk Panel',
@@ -94,7 +91,6 @@ async function runSeed() {
           'Kidney Function Test',
         ],
         turnaroundTime: '24 hours',
-        price: 40000,
       }
     ]);
 

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+
 import { connectDatabase, disconnectDatabase } from '../config/db.js';
 import { PackageModel } from '../modules/packages/package.model.js';
 import { logger } from '../utils/logger.js';
