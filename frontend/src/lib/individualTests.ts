@@ -1,15 +1,14 @@
 export interface IndividualTest {
   id: string;
   name: string;
-  category: 'General Health' | 'Chronic & Metabolic' | 'Infectious Disease' | 'Sexual & Reproductive Health';
-  packageCategoryKeyword: string;
+  category: string;
   description: string;
-  sampleType: 'Blood (Venous)' | 'Blood (Fingerprick)' | 'Urine' | 'Swab' | 'Clinical Vitals';
+  sampleType: string;
   fastingRequired: boolean;
   fastingHours?: string;
   turnaroundTime: string;
   commonFor: string;
-  color: string;
+  color?: string;
   packageId?: string;
 }
 

@@ -105,11 +105,13 @@ export function NewBooking() {
       category: pkg.category || 'General Health',
       description: pkg.description || 'Comprehensive diagnostic test.',
       sampleType: pkg.sampleType || 'Blood (Venous)',
-      fastingRequired: pkg.testsIncluded?.some((t: string) => t.toLowerCase().includes('fasting')) || false,
+      fastingRequired: pkg.fastingRequired || pkg.testsIncluded?.some((t: string) => t.toLowerCase().includes('fasting')) || false,
+      fastingHours: pkg.fastingHours || '',
       turnaroundTime: pkg.turnaroundTime || '24-48 hours',
       packageId: pkg._id || pkg.id,
-      commonFor: pkg.testsIncluded?.length ? pkg.testsIncluded.join(", ") : "Routine checkup"
-    }))
+      commonFor: pkg.commonFor || (pkg.testsIncluded?.length ? pkg.testsIncluded.join(", ") : "Routine checkup"),
+      color: pkg.color
+    } as IndividualTest))
   }, [packages])
 
   const categoriesList = useMemo(() => {

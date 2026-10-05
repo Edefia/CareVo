@@ -2,7 +2,7 @@ import { useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import {
   Heart, Droplets, Activity, Calendar, FileText, Bell,
-  CheckCircle2, AlertTriangle, Info, ArrowRight, Shield,
+  CheckCircle2, AlertTriangle, Info, ArrowRight,
   ClipboardList, FlaskConical, TrendingUp, Sparkles,
   Stethoscope, ChevronRight, Search, Clock, X, TestTube
 } from "lucide-react"

@@ -12,12 +12,10 @@ import {
   Mail, 
   MapPin, 
   Calendar, 
-  Plus, 
   TestTube, 
   CheckCircle2, 
   MessageSquare, 
   Send,
-  ShieldCheck,
   Building2,
   ChevronRight
 } from "lucide-react"
