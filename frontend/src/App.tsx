@@ -14,7 +14,6 @@ import { LandingPage } from "./pages/LandingPage"
 import { AboutPage } from "./pages/AboutPage"
 import { ServicesPage } from "./pages/ServicesPage"
 import { TestPanelsPage } from "./pages/TestPanelsPage"
-import { FaqPage } from "./pages/FaqPage"
 import { BlogPage } from "./pages/BlogPage"
 import { ContactPage } from "./pages/ContactPage"
 import { LoginPage } from "./pages/auth/LoginPage"
@@ -86,7 +85,7 @@ export default function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/services" element={<ServicesPage />} />
                 <Route path="/test-panels" element={<TestPanelsPage />} />
-                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/faq" element={<Navigate to="/#faq" replace />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/contact" element={<ContactPage />} />
               </Route>

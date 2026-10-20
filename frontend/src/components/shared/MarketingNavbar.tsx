@@ -1,11 +1,27 @@
 import { Link, useLocation } from "react-router-dom"
 import { Menu, X } from "lucide-react"
 import { useState, useEffect } from "react"
+import { useAuthStore } from "@/store/auth"
+
+function getDashboardRoute(role?: string) {
+  switch (role) {
+    case "ADMIN":
+      return "/admin/dashboard"
+    case "LABORATORY":
+      return "/lab/dashboard"
+    case "INTERPRETER":
+      return "/interpreter/dashboard"
+    case "CLIENT":
+    default:
+      return "/client/dashboard"
+  }
+}
 
 export function MarketingNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [hasScrolled, setHasScrolled] = useState(false)
   const location = useLocation()
+  const { isAuthenticated, user } = useAuthStore()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,7 +42,7 @@ export function MarketingNavbar() {
     { label: "Test Panels", to: "/test-panels" },
     { label: "About", to: "/about" },
     { label: "Blog", to: "/blog" },
-    { label: "FAQ", to: "/faq" },
+    { label: "Contact", to: "/contact" },
   ]
 
   const isActive = (to: string) => {
@@ -68,16 +84,26 @@ export function MarketingNavbar() {
         </nav>
 
         {/* Right: Actions (Desktop) */}
-        <div className="hidden lg:flex items-center gap-[16px]">
+        <div className="hidden lg:flex items-center gap-[20px]">
+          {isAuthenticated ? (
+            <Link
+              to={getDashboardRoute(user?.role)}
+              className="text-[14px] font-semibold text-[var(--color-forest)] hover:text-[var(--color-lime-dark)] transition-colors"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="text-[14px] font-semibold text-[var(--color-forest)] hover:text-[var(--color-lime-dark)] transition-colors"
+            >
+              Log In
+            </Link>
+          )}
+
           <Link
-            to="/contact"
-            className="text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-forest)] transition-colors"
-          >
-            Contact
-          </Link>
-          <Link
-            to="/login"
-            className="inline-flex h-[40px] items-center justify-center rounded-full bg-[var(--color-lime)] px-[28px] text-[15px] font-semibold text-white transition-all duration-150 hover:bg-[var(--color-lime-dark)] hover:-translate-y-[1px]"
+            to={isAuthenticated ? "/client/bookings/new" : "/login"}
+            className="inline-flex h-[42px] items-center justify-center rounded-full bg-[var(--color-lime)] px-[24px] text-[14px] font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--color-lime-dark)] hover:-translate-y-[1px]"
           >
             Book a Screening
           </Link>
@@ -114,17 +140,27 @@ export function MarketingNavbar() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              to="/contact"
-              className="text-[17px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-forest)]"
-            >
-              Contact
-            </Link>
           </nav>
-          <div className="pt-4 border-t border-[var(--color-border)]">
+          <div className="pt-4 border-t border-[var(--color-border)] flex flex-col gap-3">
+            {isAuthenticated ? (
+              <Link
+                to={getDashboardRoute(user?.role)}
+                className="flex h-[46px] w-full items-center justify-center rounded-full border border-[var(--color-forest)] text-[15px] font-semibold text-[var(--color-forest)] transition-all hover:bg-gray-50"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="flex h-[46px] w-full items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[15px] font-semibold text-[var(--color-forest)] transition-all hover:bg-gray-100"
+              >
+                Log In
+              </Link>
+            )}
+
             <Link
-              to="/login"
-              className="flex h-[48px] w-full items-center justify-center rounded-full bg-[var(--color-lime)] text-[16px] font-semibold text-white transition-all duration-150 hover:bg-[var(--color-lime-dark)]"
+              to={isAuthenticated ? "/client/bookings/new" : "/login"}
+              className="flex h-[46px] w-full items-center justify-center rounded-full bg-[var(--color-lime)] text-[15px] font-semibold text-white transition-all duration-150 hover:bg-[var(--color-lime-dark)]"
             >
               Book a Screening
             </Link>
@@ -134,3 +170,4 @@ export function MarketingNavbar() {
     </header>
   )
 }
+

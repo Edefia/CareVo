@@ -10,6 +10,7 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react"
 
 const heroSlides = [
@@ -33,9 +34,58 @@ const heroSlides = [
   },
 ]
 
+const homeFaqItems = [
+  {
+    question: "Do I need a doctor's referral to book a screening?",
+    answer:
+      "No. You can book directly through CareBis Prime without a referral. Screening is preventive — you do not need to be sick to get tested.",
+  },
+  {
+    question: "How do I book a screening?",
+    answer:
+      "Simply choose your screening category on our website, pick a convenient time, and confirm your booking. We will connect you to a trusted partner lab near you.",
+  },
+  {
+    question: "Where do the tests take place?",
+    answer:
+      "All tests are carried out at our verified partner laboratories. You will receive the location details after booking.",
+  },
+  {
+    question: "How long does it take to get results?",
+    answer:
+      "Turnaround time depends on the specific tests, but most results are available within 24 to 72 hours. We will let you know what to expect when you book.",
+  },
+  {
+    question: "Will someone help me understand my results?",
+    answer:
+      "Yes. One of the most important things we do is help you make sense of your results. We translate medical language into plain English and guide you on what your next steps should be.",
+  },
+  {
+    question: "Are my results and personal information kept confidential?",
+    answer:
+      "Absolutely. Your health information is private and handled with full discretion at every step.",
+  },
+  {
+    question: "What if my results show something concerning?",
+    answer:
+      "We will guide you on the appropriate next steps, which may include seeing a doctor or specialist. We will help you understand what the result means and where to go from there — you will not be left to figure it out alone.",
+  },
+  {
+    question: "Can I book for someone else — a family member or colleague?",
+    answer:
+      "Yes. You can book a screening on behalf of a family member or colleague. Just provide their details during the booking process.",
+  },
+  {
+    question: "How often should I get screened?",
+    answer:
+      "For most healthy adults, a general health check once a year is a good baseline. Some screenings may be recommended more frequently depending on your lifestyle and risk factors. We can advise you on what is right for your situation.",
+  },
+]
+
 export function LandingPage() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0)
 
   useEffect(() => {
     if (isPaused) return
@@ -513,6 +563,79 @@ export function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          FREQUENTLY ASKED QUESTIONS (FAQ SECTION)
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section id="faq" className="scroll-mt-20 bg-white py-[96px] px-[24px] md:px-[80px] border-t border-[var(--color-border)]">
+        <div className="mx-auto max-w-[860px]">
+          {/* Section Header */}
+          <div className="text-center mb-[56px]">
+            <div className="mb-[16px] inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-[14px] py-[4px] font-sans text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-forest)]">
+              Frequently Asked Questions
+            </div>
+            <h2 className="font-serif text-[36px] md:text-[48px] leading-tight text-[var(--color-text-primary)] mb-4">
+              Everything You Need to Know
+            </h2>
+            <p className="font-sans text-[16px] md:text-[17px] text-[var(--color-text-secondary)] max-w-[560px] mx-auto">
+              Clear answers to help you prepare for your health screening with CareBis Prime.
+            </p>
+          </div>
+
+          {/* Accordion List */}
+          <div className="divide-y divide-[var(--color-border)] rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white shadow-xs p-2 sm:p-6">
+            {homeFaqItems.map((item, index) => {
+              const isOpen = openFaqIndex === index
+              return (
+                <div key={index} className="py-4 first:pt-2 last:pb-2">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between py-2 text-left cursor-pointer group"
+                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="font-sans text-[16px] sm:text-[17px] font-semibold text-[var(--color-forest)] group-hover:text-[var(--color-lime-dark)] transition-colors pr-4">
+                      {item.question}
+                    </span>
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                      isOpen ? "bg-[var(--color-surface-2)] text-[var(--color-forest)]" : "text-gray-400 group-hover:text-[var(--color-forest)]"
+                    }`}>
+                      <ChevronDown
+                        className={`h-5 w-5 transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </div>
+                  </button>
+                  {isOpen && (
+                    <div className="pt-2 pb-3 pr-8">
+                      <p className="font-sans text-[15px] sm:text-[16px] leading-[1.75] text-[var(--color-text-secondary)]">
+                        {item.answer}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Still Have Questions Box */}
+          <div className="mt-12 rounded-[var(--radius-lg)] bg-[var(--color-surface-2)] p-[32px] text-center border border-[var(--color-border)]">
+            <h3 className="font-serif text-[22px] font-semibold text-[var(--color-forest)] mb-2">
+              Have a question not listed here?
+            </h3>
+            <p className="font-sans text-[14px] text-[var(--color-text-secondary)] mb-5">
+              Our clinical care coordinators are here to assist you before and after booking.
+            </p>
+            <Link
+              to="/contact"
+              className="inline-flex h-[42px] items-center justify-center rounded-full bg-[var(--color-forest)] px-[28px] font-sans text-[14px] font-semibold text-white transition-all duration-150 hover:bg-[var(--color-forest-dark)] hover:-translate-y-[1px] shadow-sm"
+            >
+              Contact Us
+            </Link>
           </div>
         </div>
       </section>

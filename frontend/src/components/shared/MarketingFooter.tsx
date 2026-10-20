@@ -88,7 +88,7 @@ export function MarketingFooter() {
               </li>
               <li>
                 <Link
-                  to="/faq"
+                  to="/#faq"
                   className="hover:text-white transition-colors"
                 >
                   FAQ
