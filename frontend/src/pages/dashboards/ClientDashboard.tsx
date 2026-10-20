@@ -15,7 +15,7 @@ import { usePackages } from "@/hooks/usePackages"
 import { useHealthAccount } from "@/hooks/useHealthAccount"
 import { useFollowUpPendingCount } from "@/hooks/useFollowUps"
 import { CardCornerPattern } from "@/components/shared/CardCornerPattern"
-import { HeroLinePattern } from "@/components/shared/HeroLinePattern"
+import { HeroCornerHealthPattern } from "@/components/shared/HeroCornerHealthPattern"
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -442,8 +442,8 @@ function OnboardingView({ userName, packages, stats }: { userName: string; packa
         <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[var(--color-lime)]/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[var(--color-mint)]/10 rounded-full translate-y-1/2 -translate-x-1/3 blur-3xl"></div>
 
-        {/* Animated Light Line Design Pattern */}
-        <HeroLinePattern />
+        {/* Seamless Luminous Health Vital Pattern (Top-Right Corner) */}
+        <HeroCornerHealthPattern />
 
         <div className="relative z-10 max-w-[640px]">
           <div className="flex items-center gap-2 mb-[16px]">
