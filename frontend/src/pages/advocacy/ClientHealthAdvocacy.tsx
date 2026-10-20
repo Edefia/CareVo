@@ -26,19 +26,12 @@ export function ClientHealthAdvocacy() {
   return (
     <div className="space-y-[32px] md:space-y-[48px] max-w-[1200px] mx-auto pb-[96px] animate-in fade-in duration-500">
       
-      {/* HEADER */}
-      <div className="flex items-start gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mt-1 shrink-0 hover:bg-slate-200">
-          <ArrowLeft className="h-5 w-5 text-slate-600" />
+      {/* Back Navigation */}
+      <div>
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2 text-slate-600 bg-white shadow-xs border border-slate-200">
+          <ArrowLeft className="h-4 w-4" />
+          Back
         </Button>
-        <div>
-          <h1 className="font-serif text-[32px] md:text-[36px] font-semibold text-[var(--color-forest)] leading-tight mb-[8px]">
-            Health Education & Advocacy
-          </h1>
-          <p className="text-[16px] text-[var(--color-text-secondary)]">
-            Curated medical knowledge and preventive tips to keep you healthy.
-          </p>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

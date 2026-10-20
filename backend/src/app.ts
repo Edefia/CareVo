@@ -27,6 +27,8 @@ import { auditRoutes } from './modules/audit/audit.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
 import { packageRoutes } from './modules/packages/package.routes.js';
 import { categoryRoutes } from './modules/categories/category.routes.js';
+import { healthAccountRoutes } from './modules/health-account/health-account.routes.js';
+import { followUpRoutes } from './modules/follow-ups/follow-up.routes.js';
 
 export const app = express();
 
@@ -82,6 +84,8 @@ app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/packages', packageRoutes);
 app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/health-account', healthAccountRoutes);
+app.use('/api/v1/follow-ups', followUpRoutes);
 
 // --- 404 Handler ---
 app.use((req, res) => {

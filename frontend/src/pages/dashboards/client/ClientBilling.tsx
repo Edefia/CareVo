@@ -77,12 +77,6 @@ export function ClientBilling() {
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-forest)]">Billing & Invoices</h1>
-          <p className="text-muted-foreground mt-1">Manage your payments and view transaction history.</p>
-        </div>
-      </div>
 
       {sortedInvoices.length === 0 ? (
         <Card className="border-dashed shadow-none">

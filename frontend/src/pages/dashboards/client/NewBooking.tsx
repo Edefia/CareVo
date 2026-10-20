@@ -19,6 +19,7 @@ import { LoadingState } from "@/components/shared/LoadingState"
 import {
   type IndividualTest
 } from "@/lib/individualTests"
+import { CardCornerPattern } from "@/components/shared/CardCornerPattern"
 import toast from "react-hot-toast"
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -463,13 +464,16 @@ export function NewBooking() {
                       <div
                         key={test.id}
                         onClick={() => handleSelectTest(test)}
-                        className={`group relative flex flex-col justify-between rounded-[var(--radius-xl)] border-2 cursor-pointer transition-all duration-200 bg-white p-[20px] text-left ${
+                        className={`group relative overflow-hidden flex flex-col justify-between rounded-[var(--radius-xl)] border-2 cursor-pointer transition-all duration-200 bg-white p-[20px] text-left ${
                           isSelected
                             ? "border-[var(--color-forest)] shadow-md ring-2 ring-[var(--color-forest)]/15"
                             : "border-[var(--color-border)] hover:border-[var(--color-forest)]/40 hover:shadow-md"
                         }`}
                       >
-                        <div>
+                        {/* Decorative line pattern at top right */}
+                        <CardCornerPattern patternId={`nb-${test.id || test.name}`} color={catStyle.text || test.color} />
+
+                        <div className="relative z-10">
                           {/* Category Tag & Fasting Badge */}
                           <div className="flex items-center justify-between gap-2 mb-[12px] flex-wrap">
                             <span
@@ -522,7 +526,7 @@ export function NewBooking() {
                         </div>
 
                         {/* CTA button */}
-                        <div className="pt-[8px]">
+                        <div className="relative z-10 pt-[8px]">
                           <Button
                             size="sm"
                             className={`w-full h-[40px] text-[13px] font-medium gap-1.5 transition-all ${

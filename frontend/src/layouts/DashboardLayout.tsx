@@ -22,7 +22,9 @@ import {
   Settings,
   User as UserIcon,
   Send,
-  Sparkles,
+  Calendar,
+  HeartPulse,
+  ClipboardList,
   LogOut as LogOutIcon
 } from "lucide-react"
 import { NotificationPopover } from "@/components/shared/NotificationPopover"
@@ -459,11 +461,12 @@ function getNavGroupsForRole(role: string, pendingBookingsCount?: number, pendin
           title: "MAIN",
           items: [
             { href: "/client/dashboard", label: "Dashboard", icon: LayoutDashboard },
-            { href: "/client/bookings", label: "Book Screening", icon: CalendarCheck },
+            { href: "/client/health-account", label: "My Health Account", icon: HeartPulse },
             { href: "/client/results", label: "My Results", icon: FileText },
-            { href: "/client/journey", label: "Follow-Ups", icon: Sparkles },
-            { href: "/client/billing", label: "Payments", icon: Receipt },
-            { href: "/settings", label: "Profile", icon: UserIcon },
+            { href: "/client/follow-up", label: "Follow Up", icon: ClipboardList },
+            { href: "/client/bookings", label: "My Bookings", icon: Calendar },
+            { href: "/client/billing", label: "Billing", icon: Receipt },
+            { href: "/settings", label: "Settings", icon: Settings },
           ]
         }
       ]

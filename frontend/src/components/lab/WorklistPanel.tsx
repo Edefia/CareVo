@@ -11,15 +11,27 @@ export function WorklistPanel() {
   const bookings = bookingsData?.items || bookingsData || []
   
   const [searchQuery, setSearchQuery] = React.useState("")
+  const [filterType, setFilterType] = React.useState<"ALL" | "PENDING" | "URGENT">("ALL")
   
   const filteredBookings = React.useMemo(() => {
     if (!Array.isArray(bookings)) return []
     return bookings.filter((b: any) => {
       const name = b.patientId?.userId ? `${b.patientId.userId.firstName} ${b.patientId.userId.lastName}` : ""
-      return (b.referralCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch = (b.referralCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
              name.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      if (!matchesSearch) return false
+
+      if (filterType === "PENDING") {
+        return b.status === "PENDING"
+      }
+      if (filterType === "URGENT") {
+        const reason = (b.reason || "").toLowerCase()
+        return reason.includes("urgent") || reason.includes("follow-up") || b.locationType === "HOME"
+      }
+      return true
     })
-  }, [bookings, searchQuery])
+  }, [bookings, searchQuery, filterType])
 
   return (
     <div className="flex flex-col h-full bg-white border-r border-[var(--color-lims-border)] w-[360px] shrink-0 z-10 shadow-[2px_0_12px_rgba(0,0,0,0.02)]">
@@ -34,7 +46,11 @@ export function WorklistPanel() {
             </span>
           </h2>
           <div className="flex items-center gap-1">
-            <button className="h-7 w-7 flex items-center justify-center rounded bg-[var(--color-lims-bg)] text-[var(--color-lims-text-muted)] hover:text-[var(--color-lims-text)] hover:bg-[var(--color-lims-border)] transition-colors">
+            <button 
+              onClick={() => setFilterType(filterType === "ALL" ? "PENDING" : "ALL")}
+              className="h-7 w-7 flex items-center justify-center rounded bg-[var(--color-lims-bg)] text-[var(--color-lims-text-muted)] hover:text-[var(--color-lims-text)] hover:bg-[var(--color-lims-border)] transition-colors"
+              title="Toggle filter"
+            >
               <Filter className="w-4 h-4" />
             </button>
             <button 
@@ -61,14 +77,38 @@ export function WorklistPanel() {
         
         {/* Quick Filters */}
         <div className="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-hide pb-1">
-          <button className="whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold bg-[var(--color-lims-active-bg)] text-[var(--color-lims-accent)] border border-[var(--color-lims-accent)]/20 transition-colors">
+          <button 
+            onClick={() => setFilterType("ALL")}
+            className={cn(
+              "whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold transition-colors",
+              filterType === "ALL" 
+                ? "bg-[var(--color-lims-active-bg)] text-[var(--color-lims-accent)] border border-[var(--color-lims-accent)]/20" 
+                : "bg-white text-[var(--color-lims-text-muted)] border border-[var(--color-lims-border)] hover:bg-[var(--color-lims-bg)]"
+            )}
+          >
             All Active
           </button>
-          <button className="whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-[var(--color-lims-text-muted)] border border-[var(--color-lims-border)] hover:bg-[var(--color-lims-bg)] transition-colors">
-            Pending Approval
+          <button 
+            onClick={() => setFilterType("PENDING")}
+            className={cn(
+              "whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold transition-colors",
+              filterType === "PENDING" 
+                ? "bg-[var(--color-lims-active-bg)] text-[var(--color-lims-accent)] border border-[var(--color-lims-accent)]/20" 
+                : "bg-white text-[var(--color-lims-text-muted)] border border-[var(--color-lims-border)] hover:bg-[var(--color-lims-bg)]"
+            )}
+          >
+            Pending
           </button>
-          <button className="whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-[var(--color-lims-text-muted)] border border-[var(--color-lims-border)] hover:bg-[var(--color-lims-bg)] transition-colors">
-            Urgent
+          <button 
+            onClick={() => setFilterType("URGENT")}
+            className={cn(
+              "whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold transition-colors",
+              filterType === "URGENT" 
+                ? "bg-rose-50 text-rose-700 border border-rose-200" 
+                : "bg-white text-[var(--color-lims-text-muted)] border border-[var(--color-lims-border)] hover:bg-[var(--color-lims-bg)]"
+            )}
+          >
+            Urgent / Home
           </button>
         </div>
       </div>
@@ -111,9 +151,21 @@ export function WorklistPanel() {
                 </div>
                 
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[13px] font-medium text-[var(--color-lims-text-muted)] truncate max-w-[180px]">
-                    {client.packageId?.name || client.reason || "General"}
-                  </span>
+                  <div className="flex items-center gap-1.5 truncate max-w-[200px]">
+                    <span className="text-[13px] font-medium text-[var(--color-lims-text-muted)] truncate">
+                      {client.packageId?.name || client.reason || "General"}
+                    </span>
+                    {(client.reason?.toLowerCase().includes("follow-up") || client.reason?.toLowerCase().includes("further")) && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 px-1 py-0.5 rounded shrink-0">
+                        Follow-Up
+                      </span>
+                    )}
+                    {client.locationType === 'HOME' && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-1 py-0.5 rounded shrink-0">
+                        Home
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[11px] font-bold text-[var(--color-lims-accent)]">
                     {client.referralCode}
                   </span>

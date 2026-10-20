@@ -1,18 +1,44 @@
-import { Users, MapPin, Building2, TrendingUp, Activity, CalendarCheck, Loader2 } from "lucide-react"
+import { useState } from "react"
+import { 
+  Users, 
+  MapPin, 
+  Building2, 
+  TrendingUp, 
+  Activity, 
+  CalendarCheck, 
+  Loader2,
+  ClipboardList,
+  HeartPulse,
+  AlertTriangle,
+  UserCheck
+} from "lucide-react"
 
 import { StatCard } from "@/components/shared/StatCard"
 import { Button } from "@/components/ui/button"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { Link } from "react-router-dom"
 import { useDashboardMetrics, useRevenueChart, useBookingStats } from "@/hooks/useAnalytics"
+import { useAllFollowUps, useFollowUpOverviewStats, useUpdateFollowUpStatus } from "@/hooks/useFollowUps"
+import { useHealthAccountStats } from "@/hooks/useHealthAccount"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import toast from "react-hot-toast"
 
 export function AdminDashboard() {
-
+  const [followUpFilter, setFollowUpFilter] = useState<string>("ALL")
 
   const { data: metricsData, isLoading: metricsLoading } = useDashboardMetrics()
   const { data: revenueDataResult, isLoading: revenueLoading } = useRevenueChart()
   const { data: bookingStatsData, isLoading: bookingStatsLoading } = useBookingStats()
+
+  const { data: followUpStats } = useFollowUpOverviewStats()
+  const { data: followUpsData, isLoading: followUpsLoading } = useAllFollowUps(
+    followUpFilter !== "ALL" ? { status: followUpFilter } : undefined
+  )
+  const followUps = Array.isArray(followUpsData) ? followUpsData : []
+
+  const { data: healthAccountStats } = useHealthAccountStats()
+  const updateStatusMutation = useUpdateFollowUpStatus()
 
   const metrics = metricsData?.data || metricsData
   const revenueData = revenueDataResult?.data || revenueDataResult || []
@@ -23,42 +49,57 @@ export function AdminDashboard() {
   const recentUsers = metrics?.recentUsers || []
 
   const isLoading = metricsLoading || revenueLoading || bookingStatsLoading
-  
 
+  const handleStatusChange = async (followUpId: string, newStatus: string) => {
+    try {
+      await updateStatusMutation.mutateAsync({ id: followUpId, status: newStatus })
+      toast.success(`Follow-up status updated to ${newStatus.replace("_", " ")}.`)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update follow-up status.")
+    }
+  }
+
+  const getUrgencyBadge = (urgency: string) => {
+    switch (urgency) {
+      case "EMERGENCY":
+        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-700 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> EMERGENCY</span>
+      case "URGENT":
+        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-700">URGENT</span>
+      default:
+        return <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-700">ROUTINE</span>
+    }
+  }
 
   return (
     <div className="space-y-[32px] md:space-y-[48px] max-w-[1400px] mx-auto pb-[96px] animate-in fade-in duration-500">
       
-
-
-
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           OVERVIEW CARDS (KPIs)
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="grid gap-[24px] grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-[24px] grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {isLoading ? (
-          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-[140px] rounded-xl" />)
+          Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-[140px] rounded-xl" />)
         ) : (
           <>
             <StatCard
-              title="Total Platform Users"
+              title="Platform Users"
               value={metrics?.totalUsers?.toLocaleString() || "0"}
               icon={Users}
-              description={`${metrics?.totalPatients || 0} patients registered`}
+              description={`${metrics?.totalPatients || 0} registered`}
               className="border-t-4 border-t-blue-500"
             />
             <StatCard
               title="Total Screenings"
               value={metrics?.totalBookings?.toLocaleString() || "0"}
               icon={CalendarCheck}
-              description={`${metrics?.pendingBookings || 0} pending completion`}
+              description={`${metrics?.pendingBookings || 0} pending`}
               className="border-t-4 border-t-emerald-500"
             />
             <StatCard
-              title="Partner Laboratories"
+              title="Partner Labs"
               value={metrics?.totalLabs?.toString() || "0"}
               icon={MapPin}
-              description={`${metrics?.activeLabs || 0} active labs`}
+              description={`${metrics?.activeLabs || 0} active`}
               className="border-t-4 border-t-amber-500"
             />
             <StatCard
@@ -67,6 +108,20 @@ export function AdminDashboard() {
               icon={TrendingUp}
               description={`GHS ${(metrics?.pendingPaymentsAmount || 0).toLocaleString()} pending`}
               className="border-t-4 border-t-violet-500"
+            />
+            <StatCard
+              title="Clinical Follow-Ups"
+              value={(followUpStats?.total || 0).toString()}
+              icon={ClipboardList}
+              description={`${followUpStats?.pending || 0} pending ack, ${followUpStats?.emergency || 0} emergency`}
+              className="border-t-4 border-t-rose-500"
+            />
+            <StatCard
+              title="Health Accounts"
+              value={(healthAccountStats?.uniqueClients || 0).toString()}
+              icon={HeartPulse}
+              description={`${healthAccountStats?.totalEntries || 0} parameters tracked`}
+              className="border-t-4 border-t-teal-500"
             />
           </>
         )}
@@ -137,6 +192,132 @@ export function AdminDashboard() {
               </ResponsiveContainer>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          CONTINUITY OF CARE / CLINICAL FOLLOW-UPS SECTION
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-[var(--shadow-card)] overflow-hidden">
+        <div className="px-[24px] py-[20px] border-b border-[var(--color-border)] bg-[var(--color-surface-2)]/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="font-serif text-[20px] font-semibold text-[var(--color-forest)] flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-rose-500" />
+              Continuity of Care & Follow-Up Referrals
+              {followUps.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
+                  {followUps.length}
+                </span>
+              )}
+            </h2>
+            <p className="font-sans text-[14px] text-[var(--color-text-secondary)] mt-0.5">
+              System-wide monitor for patient continuity actions, referrals, and urgency escalations.
+            </p>
+          </div>
+          <div className="w-full sm:w-[200px]">
+            <Select value={followUpFilter} onValueChange={setFollowUpFilter}>
+              <SelectTrigger className="bg-white h-9">
+                <SelectValue placeholder="Status Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="PENDING">Pending Acknowledgment</SelectItem>
+                <SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
+                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="CLOSED">Closed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--color-border)] bg-gray-50/50">
+                <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Patient</th>
+                <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Referral & Test</th>
+                <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Interpreter</th>
+                <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Type / Urgency</th>
+                <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Status</th>
+                <th className="px-[24px] py-[14px] font-sans text-[12px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {followUpsLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-[24px] py-[40px] text-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-rose-500 mx-auto" />
+                  </td>
+                </tr>
+              ) : followUps.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-[24px] py-[48px] text-center text-muted-foreground text-sm">
+                    No follow-ups matching filter criteria.
+                  </td>
+                </tr>
+              ) : (
+                followUps.slice(0, 8).map((f: any) => {
+                  const client = f.clientId
+                  const clientName = client ? `${client.firstName} ${client.lastName}` : "Client"
+                  const interpreter = f.interpreterId
+                  const interpreterName = interpreter ? `Dr. ${interpreter.lastName || interpreter.firstName}` : "Interpreter"
+                  const result = f.resultId
+
+                  return (
+                    <tr key={f._id || f.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]/30 transition-colors">
+                      <td className="px-[24px] py-[16px]">
+                        <div className="font-semibold text-slate-900 text-sm">{clientName}</div>
+                        <div className="text-xs text-slate-400">{client?.email || client?.phone || "No contact"}</div>
+                      </td>
+                      <td className="px-[24px] py-[16px]">
+                        <div className="font-mono text-xs text-[var(--color-forest)] font-bold">{result?.referralCode || "N/A"}</div>
+                        <div className="text-xs text-slate-500">{result?.panelName || "Diagnostic Test"}</div>
+                      </td>
+                      <td className="px-[24px] py-[16px] text-sm text-slate-600 font-medium">
+                        {interpreterName}
+                      </td>
+                      <td className="px-[24px] py-[16px]">
+                        <div className="space-y-1">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            {f.type.replace("_", " ")}
+                          </span>
+                          <div>{getUrgencyBadge(f.urgency)}</div>
+                        </div>
+                      </td>
+                      <td className="px-[24px] py-[16px]">
+                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          f.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                          f.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                          f.status === 'ACKNOWLEDGED' ? 'bg-emerald-100 text-emerald-700' :
+                          f.status === 'CLOSED' ? 'bg-gray-100 text-gray-600' :
+                          'bg-amber-100 text-amber-700'
+                        }`}>
+                          {f.status === 'ACKNOWLEDGED' && <UserCheck className="h-3 w-3" />}
+                          {f.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-[24px] py-[16px] text-right">
+                        <Select
+                          value={f.status}
+                          onValueChange={(val) => handleStatusChange(f._id || f.id, val)}
+                        >
+                          <SelectTrigger className="h-8 w-[120px] ml-auto text-xs bg-white">
+                            <SelectValue placeholder="Update" />
+                          </SelectTrigger>
+                          <SelectContent align="end">
+                            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="CLOSED">Closed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

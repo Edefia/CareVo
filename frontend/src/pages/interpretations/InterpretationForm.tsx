@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { ArrowLeft, CheckCircle, Heart, Droplets, Activity, AlertCircle, XCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle, Heart, Droplets, Activity, AlertCircle, XCircle, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import toast from "react-hot-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useResultsStore } from "@/store/results"
+import { followUpService } from "@/api/services/followUps"
+import { apiClient } from "@/api/client"
 
 export function InterpretationForm() {
   const navigate = useNavigate()
@@ -16,6 +18,14 @@ export function InterpretationForm() {
 
   const [formData, setFormData] = useState<Record<string, { risk: string, notes: string }>>({})
   const [followUp, setFollowUp] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // ─── Follow-Up Creation State ─────────────────────────────────────────────
+  const [createFollowUp, setCreateFollowUp] = useState(false)
+  const [followUpType, setFollowUpType] = useState<"FURTHER_TESTING" | "MEDICATION_REFERRAL" | "CLINICIAN_APPOINTMENT" | "FACILITY_TRANSFER">("CLINICIAN_APPOINTMENT")
+  const [followUpUrgency, setFollowUpUrgency] = useState<"ROUTINE" | "URGENT" | "EMERGENCY">("ROUTINE")
+  const [followUpFacility, setFollowUpFacility] = useState("")
+  const [followUpNotes, setFollowUpNotes] = useState("")
 
   if (!result) {
     return (
@@ -35,14 +45,55 @@ export function InterpretationForm() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (createFollowUp && !followUpNotes.trim()) {
+      toast.error("Please provide instructions in the Notes for Client field.")
+      return
+    }
+
+    setIsSubmitting(true)
     try {
+      if (createFollowUp) {
+        let clientId = (result as any).clientId
+        let resultId = (result as any).resultId || (result as any)._id || result.id
+        const interpretationId = (result as any).interpretationId || (result as any)._id || result.id
+
+        if (!clientId) {
+          try {
+            const res = await apiClient.get('/results', { params: { search: result.referralCode } })
+            const found = res.data?.data?.items?.[0] || res.data?.items?.[0] || res.data?.[0]
+            if (found) {
+              resultId = found._id || found.id
+              clientId = found.patientId?.userId?._id || found.patientId?.userId || found.patientId?._id || found.patientId
+            }
+          } catch (e) {
+            console.warn('Could not look up backend result by referralCode', e)
+          }
+        }
+
+        if (clientId && resultId) {
+          await followUpService.createFollowUp({
+            clientId: String(clientId),
+            resultId: String(resultId),
+            interpretationId: String(interpretationId || resultId),
+            type: followUpType,
+            urgency: followUpUrgency,
+            facility: followUpFacility.trim() || null,
+            notes: followUpNotes.trim(),
+          })
+          toast.success("Follow-up care recommendation created.")
+        }
+      }
+
       publishInterpretation(result.referralCode, { assessments: formData, followUp })
       toast.success("Interpretation published successfully!")
       navigate('/interpreter/dashboard')
-    } catch {
-      toast.error("Failed to publish interpretation")
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || err?.message || "Failed to publish interpretation")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -210,13 +261,137 @@ export function InterpretationForm() {
                   onChange={(e) => setFollowUp(e.target.value)}
                 />
               </div>
+            </div>
 
-              <div className="mt-[32px] pt-[24px] border-t border-[var(--color-border)] flex justify-end">
-                <Button type="submit" className="h-[56px] px-[40px] text-[16px] gap-2 shadow-lg font-semibold bg-[#16A34A] hover:bg-[#15803d] transition-all hover:scale-[1.02] active:scale-95">
-                  <CheckCircle className="h-5 w-5" />
-                  Submit Interpretation
-                </Button>
+            {/* ── CREATE FOLLOW-UP TOGGLE CARD ── */}
+            <div className={`rounded-[var(--radius-xl)] border p-[24px] transition-all ${createFollowUp ? 'bg-amber-50/40 border-amber-300 shadow-sm' : 'glass-panel border-[var(--color-border)] shadow-sm'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${createFollowUp ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                    <ClipboardList className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-sans text-[16px] font-bold text-[var(--color-text-primary)]">
+                      Create Follow-Up
+                    </h3>
+                    <p className="text-[13px] text-[var(--color-text-secondary)]">
+                      Refer this client for further care, tests, or clinician appointment.
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={createFollowUp}
+                    onChange={(e) => setCreateFollowUp(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-lime)]"></div>
+                </label>
               </div>
+
+              {createFollowUp && (
+                <div className="mt-6 pt-6 border-t border-amber-200/60 space-y-5 animate-fade-in-up">
+                  {/* Follow-Up Type */}
+                  <div>
+                    <label className="block text-[14px] font-bold text-[var(--color-text-primary)] mb-2">
+                      Follow-Up Type <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      value={followUpType}
+                      onValueChange={(val: any) => setFollowUpType(val)}
+                    >
+                      <SelectTrigger className="w-full h-[48px] bg-white font-medium">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FURTHER_TESTING">Further Testing</SelectItem>
+                        <SelectItem value="MEDICATION_REFERRAL">Medication Referral</SelectItem>
+                        <SelectItem value="CLINICIAN_APPOINTMENT">Clinician Appointment</SelectItem>
+                        <SelectItem value="FACILITY_TRANSFER">Facility Transfer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Urgency Radio */}
+                  <div>
+                    <label className="block text-[14px] font-bold text-[var(--color-text-primary)] mb-2">
+                      Urgency <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: 'ROUTINE', label: 'Routine', color: 'text-green-700 border-green-300 bg-green-50' },
+                        { value: 'URGENT', label: 'Urgent', color: 'text-amber-700 border-amber-300 bg-amber-50' },
+                        { value: 'EMERGENCY', label: 'Emergency', color: 'text-red-700 border-red-300 bg-red-50' },
+                      ].map((item) => (
+                        <label
+                          key={item.value}
+                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer font-medium text-sm transition-all ${
+                            followUpUrgency === item.value
+                              ? `${item.color} font-bold ring-2 ring-offset-1 ring-current`
+                              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="followUpUrgency"
+                            value={item.value}
+                            checked={followUpUrgency === item.value}
+                            onChange={() => setFollowUpUrgency(item.value as any)}
+                            className="sr-only"
+                          />
+                          {item.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Recommended Facility / Clinician */}
+                  <div>
+                    <label className="block text-[14px] font-bold text-[var(--color-text-primary)] mb-1">
+                      Recommended Facility / Clinician <span className="text-xs font-normal text-gray-500">(Optional)</span>
+                    </label>
+                    <Input
+                      className="h-[48px] bg-white"
+                      placeholder="e.g. Korle-Bu Teaching Hospital, Dr. Ama Owusu"
+                      value={followUpFacility}
+                      onChange={(e) => setFollowUpFacility(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Notes for Client */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[14px] font-bold text-[var(--color-text-primary)]">
+                        Notes for Client <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-xs ${followUpNotes.length > 750 ? 'text-red-600 font-bold' : 'text-gray-400'}`}>
+                        {followUpNotes.length}/800
+                      </span>
+                    </div>
+                    <textarea
+                      required={createFollowUp}
+                      maxLength={800}
+                      rows={4}
+                      className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-[14px] resize-none focus:border-[var(--color-forest)] focus:ring-1 focus:ring-[var(--color-forest)] outline-none bg-white leading-relaxed"
+                      placeholder="Explain what the client needs to do and why..."
+                      value={followUpNotes}
+                      onChange={(e) => setFollowUpNotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-[16px] flex justify-end">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-[56px] px-[40px] text-[16px] gap-2 shadow-lg font-semibold bg-[#16A34A] hover:bg-[#15803d] transition-all hover:scale-[1.02] active:scale-95"
+              >
+                <CheckCircle className="h-5 w-5" />
+                {isSubmitting ? "Publishing..." : "Submit Interpretation"}
+              </Button>
             </div>
 
           </form>

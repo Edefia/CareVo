@@ -4,13 +4,18 @@ import {
   Heart, Droplets, Activity, Calendar, FileText, Bell,
   CheckCircle2, AlertTriangle, Info, ArrowRight,
   ClipboardList, FlaskConical, TrendingUp, Sparkles,
-  Stethoscope, ChevronRight, Search, Clock, X, TestTube
+  Stethoscope, ChevronRight, Search, Clock, X, TestTube,
+  HeartPulse
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { Button } from "@/components/ui/button"
 import { useResults } from "@/hooks/useResults"
 import { useBookings } from "@/hooks/useBookings"
 import { usePackages } from "@/hooks/usePackages"
+import { useHealthAccount } from "@/hooks/useHealthAccount"
+import { useFollowUpPendingCount } from "@/hooks/useFollowUps"
+import { CardCornerPattern } from "@/components/shared/CardCornerPattern"
+import { HeroLinePattern } from "@/components/shared/HeroLinePattern"
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -163,9 +168,12 @@ function IndividualTestsCatalog({ packages }: { packages: any[] }) {
           {filteredTests.map((test) => (
             <div
               key={test.id}
-              className="flex flex-col justify-between p-6 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white shadow-xs hover:border-[var(--color-forest)]/40 hover:shadow-md transition-all group"
+              className="relative overflow-hidden flex flex-col justify-between p-6 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white shadow-xs hover:border-[var(--color-forest)]/40 hover:shadow-md transition-all group"
             >
-              <div>
+              {/* Delicate line pattern at the top-right corner */}
+              <CardCornerPattern patternId={test.id || test.name} color={test.color} />
+
+              <div className="relative z-10">
                 {/* Top badges */}
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <span
@@ -210,7 +218,7 @@ function IndividualTestsCatalog({ packages }: { packages: any[] }) {
               </div>
 
               {/* Bottom Action */}
-              <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+              <div className="relative z-10 pt-4 border-t border-gray-100 flex items-center justify-between">
                 <span className="text-[12px] text-gray-500 font-medium truncate max-w-[50%] mr-2" title={test.commonFor}>
                   {test.commonFor}
                 </span>
@@ -237,9 +245,172 @@ function IndividualTestsCatalog({ packages }: { packages: any[] }) {
   )
 }
 
+// ─── Shared Dashboard Components ────────────────────────────────────────────
+
+interface DashboardStats {
+  totalBookings: number
+  totalResults: number
+  trackedParams: number
+  pendingFollowUps: number
+  hasUrgentFollowUp: boolean
+  hasEmergencyFollowUp: boolean
+}
+
+function FollowUpAlertBanner({
+  pendingFollowUps,
+  hasUrgentFollowUp,
+  hasEmergencyFollowUp,
+}: {
+  pendingFollowUps: number
+  hasUrgentFollowUp: boolean
+  hasEmergencyFollowUp: boolean
+}) {
+  if (pendingFollowUps <= 0) return null
+
+  const isEmergency = hasEmergencyFollowUp
+  const isUrgent = hasUrgentFollowUp
+
+  return (
+    <div
+      className={`rounded-[var(--radius-lg)] border-l-4 p-4 flex items-center justify-between gap-4 ${
+        isEmergency
+          ? 'bg-[#FEF2F2] border-l-[#DC2626]'
+          : isUrgent
+          ? 'bg-[#FEF9C3] border-l-[#D97706]'
+          : 'bg-[#FEF9C3] border-l-[#D97706]'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <AlertTriangle
+          className={`h-5 w-5 shrink-0 ${
+            isEmergency ? 'text-[#DC2626]' : 'text-[#D97706]'
+          }`}
+        />
+        <p
+          className={`text-sm font-medium ${
+            isEmergency ? 'text-red-800' : 'text-amber-800'
+          }`}
+        >
+          You have {pendingFollowUps} follow-up action{pendingFollowUps !== 1 ? 's' : ''} requiring your attention.
+        </p>
+      </div>
+      <Link to="/client/follow-up">
+        <Button
+          size="sm"
+          variant="outline"
+          className={`gap-1 text-xs font-semibold shrink-0 ${
+            isEmergency
+              ? 'border-red-300 text-red-700 hover:bg-red-50'
+              : 'border-amber-300 text-amber-700 hover:bg-amber-50'
+          }`}
+        >
+          View Follow-Ups
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Button>
+      </Link>
+    </div>
+  )
+}
+
+function DashboardStatsRow({ stats }: { stats: DashboardStats }) {
+  const { totalBookings, totalResults, trackedParams, pendingFollowUps, hasUrgentFollowUp, hasEmergencyFollowUp } = stats
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Bookings stat */}
+      <Link to="/client/bookings" className="group">
+        <div className="p-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white shadow-xs hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 rounded-xl bg-[var(--color-forest)]/10 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-[var(--color-forest)]" />
+            </div>
+          </div>
+          <p className="font-serif text-2xl font-bold text-slate-900">{totalBookings}</p>
+          <p className="text-xs text-slate-500 mt-0.5">total bookings</p>
+        </div>
+      </Link>
+
+      {/* Results stat */}
+      <Link to="/client/results" className="group">
+        <div className="p-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white shadow-xs hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-blue-600" />
+            </div>
+          </div>
+          <p className="font-serif text-2xl font-bold text-slate-900">{totalResults}</p>
+          <p className="text-xs text-slate-500 mt-0.5">lab results</p>
+        </div>
+      </Link>
+
+      {/* Health Account stat */}
+      <Link to="/client/health-account" className="group">
+        <div className="p-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white shadow-xs hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 rounded-xl bg-rose-100 flex items-center justify-center">
+              <HeartPulse className="h-5 w-5 text-rose-600" />
+            </div>
+          </div>
+          <p className="font-serif text-2xl font-bold text-slate-900">{trackedParams}</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {trackedParams > 0 ? 'parameters being tracked' : 'Start tracking →'}
+          </p>
+        </div>
+      </Link>
+
+      {/* Follow-Ups stat */}
+      <Link to="/client/follow-up" className="group">
+        <div className={`p-5 rounded-[var(--radius-lg)] border shadow-xs hover:shadow-md transition-shadow ${
+          pendingFollowUps > 0
+            ? hasEmergencyFollowUp
+              ? 'border-red-200 bg-red-50/50'
+              : hasUrgentFollowUp
+              ? 'border-amber-200 bg-amber-50/50'
+              : 'border-amber-200 bg-amber-50/50'
+            : 'border-[var(--color-border)] bg-white'
+        }`}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+              pendingFollowUps > 0
+                ? hasEmergencyFollowUp
+                  ? 'bg-red-100'
+                  : hasUrgentFollowUp
+                  ? 'bg-amber-100'
+                  : 'bg-amber-100'
+                : 'bg-green-100'
+            }`}>
+              <ClipboardList className={`h-5 w-5 ${
+                pendingFollowUps > 0
+                  ? hasEmergencyFollowUp
+                    ? 'text-red-600'
+                    : hasUrgentFollowUp
+                    ? 'text-amber-600'
+                    : 'text-amber-600'
+                  : 'text-green-600'
+              }`} />
+            </div>
+          </div>
+          <p className="font-serif text-2xl font-bold text-slate-900">{pendingFollowUps}</p>
+          <p className={`text-xs mt-0.5 ${
+            pendingFollowUps > 0
+              ? hasEmergencyFollowUp
+                ? 'text-red-700 font-medium'
+                : hasUrgentFollowUp
+                ? 'text-amber-700 font-medium'
+                : 'text-amber-700 font-medium'
+              : 'text-green-600 font-medium'
+          }`}>
+            {pendingFollowUps > 0 ? 'pending follow-up actions' : 'All clear ✓'}
+          </p>
+        </div>
+      </Link>
+    </div>
+  )
+}
+
 // ─── Onboarding View (First Visit) ──────────────────────────────────────────
 
-function OnboardingView({ userName, packages }: { userName: string, packages: any[] }) {
+function OnboardingView({ userName, packages, stats }: { userName: string; packages: any[]; stats: DashboardStats }) {
   const steps = [
     {
       icon: ClipboardList,
@@ -271,6 +442,9 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
         <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[var(--color-lime)]/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[var(--color-mint)]/10 rounded-full translate-y-1/2 -translate-x-1/3 blur-3xl"></div>
 
+        {/* Animated Light Line Design Pattern */}
+        <HeroLinePattern />
+
         <div className="relative z-10 max-w-[640px]">
           <div className="flex items-center gap-2 mb-[16px]">
             <Sparkles className="h-5 w-5 text-[var(--color-lime)]" />
@@ -291,6 +465,9 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
           </Link>
         </div>
       </div>
+
+      {/* ── QUICK STATS ROW ── */}
+      <DashboardStatsRow stats={stats} />
 
       {/* ── INDIVIDUAL DIAGNOSTIC TESTS DIRECTORY ── */}
       <IndividualTestsCatalog packages={packages} />
@@ -382,7 +559,19 @@ function OnboardingView({ userName, packages }: { userName: string, packages: an
 
 // ─── Returning User View (Has Results) ──────────────────────────────────────
 
-function ReturningUserView({ userName, results, bookings, packages }: { userName: string; results: any[]; bookings: any[]; packages: any[] }) {
+function ReturningUserView({
+  userName,
+  results,
+  bookings,
+  packages,
+  stats,
+}: {
+  userName: string
+  results: any[]
+  bookings: any[]
+  packages: any[]
+  stats: DashboardStats
+}) {
   // Sort results by date descending
   const sortedResults = [...results].sort((a, b) =>
     new Date(b.collectionDate || b.createdAt).getTime() - new Date(a.collectionDate || a.createdAt).getTime()
@@ -512,6 +701,9 @@ function ReturningUserView({ userName, results, bookings, packages }: { userName
           </Link>
         </div>
       )}
+
+      {/* ── QUICK STATS ROW ── */}
+      <DashboardStatsRow stats={stats} />
 
       {/* ── HEALTH SUMMARY CARDS (THE 3 PILLARS) ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
@@ -685,6 +877,8 @@ export function ClientDashboard() {
   const { data: resultsData, isLoading: resultsLoading } = useResults()
   const { data: bookingsData, isLoading: bookingsLoading } = useBookings()
   const { data: packagesResponse, isLoading: packagesLoading } = usePackages()
+  const { data: healthAccountData, isLoading: healthAccountLoading } = useHealthAccount()
+  const { data: pendingFollowUpsData, isLoading: followUpsLoading } = useFollowUpPendingCount()
 
   const userName = user?.firstName || 'Client'
 
@@ -702,8 +896,22 @@ export function ClientDashboard() {
 
   const hasResults = actualResults.length > 0
 
+  const trackedParams = Object.keys(healthAccountData || {}).length
+  const pendingFollowUps = pendingFollowUpsData?.pendingCount || 0
+  const hasUrgentFollowUp = !!pendingFollowUpsData?.hasUrgent
+  const hasEmergencyFollowUp = !!pendingFollowUpsData?.hasEmergency
+
+  const stats: DashboardStats = {
+    totalBookings: actualBookings.length,
+    totalResults: actualResults.length,
+    trackedParams,
+    pendingFollowUps,
+    hasUrgentFollowUp,
+    hasEmergencyFollowUp,
+  }
+
   // Loading state
-  if (resultsLoading || bookingsLoading || packagesLoading) {
+  if (resultsLoading || bookingsLoading || packagesLoading || healthAccountLoading || followUpsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -714,9 +922,30 @@ export function ClientDashboard() {
     )
   }
 
-  if (hasResults) {
-    return <ReturningUserView userName={userName} results={actualResults} bookings={actualBookings} packages={actualPackages} />
-  }
+  return (
+    <div className="space-y-[24px]">
+      {/* ── PENDING FOLLOW-UP ALERT BANNER (At the very top of dashboard content area) ── */}
+      <FollowUpAlertBanner
+        pendingFollowUps={stats.pendingFollowUps}
+        hasUrgentFollowUp={stats.hasUrgentFollowUp}
+        hasEmergencyFollowUp={stats.hasEmergencyFollowUp}
+      />
 
-  return <OnboardingView userName={userName} packages={actualPackages} />
+      {hasResults ? (
+        <ReturningUserView
+          userName={userName}
+          results={actualResults}
+          bookings={actualBookings}
+          packages={actualPackages}
+          stats={stats}
+        />
+      ) : (
+        <OnboardingView
+          userName={userName}
+          packages={actualPackages}
+          stats={stats}
+        />
+      )}
+    </div>
+  )
 }

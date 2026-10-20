@@ -1,73 +1,58 @@
-# React + TypeScript + Vite
+# CareBis Prime Health — Frontend Client Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Modern, responsive React 19 single-page application (SPA) providing clinical, administrative, laboratory, and patient portals for **CareBis Prime Health (CareVo)**.
 
-Currently, two official plugins are available:
+For the comprehensive, complete specification covering the entire platform architecture, clinical taxonomy, RBAC permissions, database schema, API routes, security compliance, and lifecycle phases, refer to the master documentation:
+👉 **[Master Project Documentation (README.md)](../README.md)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Quick Start (Frontend)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
+- Node.js `>=20.19.0`
+- npm `v10+`
 
-## Expanding the ESLint configuration
+### Setup & Development
+```bash
+# 1. Install dependencies
+npm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# 2. Configure local environment variables (.env.local)
+cp .env.example .env.local # or edit .env.local
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 3. Start development server with Hot Module Replacement (HMR)
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will be available at `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Production Build
+```bash
+npm run build
+npm run preview
 ```
+
+---
+
+## Frontend Architecture Overview
+
+- **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool**: [Vite 8](https://vitejs.dev/) with `@vitejs/plugin-react`
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) with custom CSS design tokens (`src/index.css`)
+- **Server State & Data Sync**: [TanStack Query v5](https://tanstack.com/query/latest)
+- **Client State**: [Zustand](https://github.com/pmndrs/zustand) (`authStore`, `resultsStore`)
+- **Routing**: [React Router DOM v7](https://reactrouter.com/)
+- **UI Primitives**: [Radix UI](https://www.radix-ui.com/) (Dialog, Dropdown Menu, Select, Popover)
+- **Charts & Visualizations**: [Recharts v3](https://recharts.org/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Toast Notifications**: [React Hot Toast](https://react-hot-toast.com/)
+
+---
+
+## Layout Structure
+
+1. **`MarketingLayout` (`src/layouts/MarketingLayout.tsx`)**: Public-facing pages (`/`, `/about`, `/services`, `/test-panels`, `/faq`, `/blog`, `/contact`).
+2. **`AuthLayout` (`src/layouts/AuthLayout.tsx`)**: Split-screen authentication views (`/login`, `/register`, `/mfa-challenge`, `/forgot-password`, `/reset-password`).
+3. **`DashboardLayout` (`src/layouts/DashboardLayout.tsx`)**: Unified dashboard framework with role-aware collapsible sidebar, smart breadcrumbs, and real-time Socket.io notifications.
+4. **`LabLayout` (`src/layouts/LabLayout.tsx`)**: High-density LIMS workstation with vertical icon rail and specialized lab top bar for accessioning and biomarker data entry.

@@ -58,6 +58,8 @@ import { PatientJourney } from "./pages/dashboards/client/PatientJourney"
 import { AdminHealthAdvocacy } from "./pages/advocacy/AdminHealthAdvocacy"
 import { ClientHealthAdvocacy } from "./pages/advocacy/ClientHealthAdvocacy"
 import { BroadcastNotification } from "./pages/notifications/BroadcastNotification"
+import { ClientHealthAccount } from "./pages/dashboards/client/ClientHealthAccount"
+import { ClientFollowUp } from "./pages/dashboards/client/ClientFollowUp"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -134,6 +136,8 @@ export default function App() {
                 <Route path="/client/billing" element={<ClientBilling />} />
                 <Route path="/client/journey" element={<PatientJourney />} />
                 <Route path="/client/advocacy" element={<ClientHealthAdvocacy />} />
+                <Route path="/client/health-account" element={<ClientHealthAccount />} />
+                <Route path="/client/follow-up" element={<ClientFollowUp />} />
                 
                 <Route path="/notifications/broadcast" element={<BroadcastNotification />} />
                 

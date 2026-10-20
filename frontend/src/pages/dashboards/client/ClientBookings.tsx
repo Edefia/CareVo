@@ -21,17 +21,6 @@ export function ClientBookings() {
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-[var(--color-forest)]">My Bookings</h1>
-          <p className="text-muted-foreground mt-1">Manage your upcoming appointments and screening history.</p>
-        </div>
-        <Button onClick={() => navigate('/client/bookings/new')} className="w-full sm:w-auto gap-2">
-          <Plus className="h-4 w-4" />
-          Book New Screening
-        </Button>
-      </div>
-
       {sortedBookings.length === 0 ? (
         <Card className="border-dashed shadow-none">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -48,8 +37,18 @@ export function ClientBookings() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:gap-6">
-          {sortedBookings.map((booking: any) => {
+        <div className="space-y-4">
+          <div className="flex justify-between items-center bg-white p-3.5 sm:px-5 rounded-xl border border-slate-200 shadow-xs">
+            <span className="text-sm font-semibold text-slate-700">
+              {sortedBookings.length} {sortedBookings.length === 1 ? 'Booking' : 'Bookings'}
+            </span>
+            <Button onClick={() => navigate('/client/bookings/new')} className="gap-2 text-sm h-9">
+              <Plus className="h-4 w-4" />
+              Book New Screening
+            </Button>
+          </div>
+          <div className="grid gap-4 md:gap-6">
+            {sortedBookings.map((booking: any) => {
             const isUpcoming = booking.status === "CONFIRMED" || booking.status === "PENDING"
             
             return (
@@ -130,6 +129,7 @@ export function ClientBookings() {
               </Card>
             )
           })}
+          </div>
         </div>
       )}
     </div>
