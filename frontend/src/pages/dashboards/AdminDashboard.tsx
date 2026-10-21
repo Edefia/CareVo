@@ -1,28 +1,19 @@
 import { useState } from "react"
 import { 
   Users, 
-  MapPin, 
   Building2, 
-  TrendingUp, 
-  Activity, 
-  CalendarCheck, 
   Loader2,
   ClipboardList,
-  HeartPulse,
   AlertTriangle,
   UserCheck,
-  Search,
   ChevronLeft,
   ChevronRight,
   BarChart3,
   DollarSign,
   Stethoscope,
   ArrowUpRight,
-  ArrowDownRight,
   Filter
 } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { Link } from "react-router-dom"
 import { useDashboardMetrics, useRevenueChart, useBookingStats } from "@/hooks/useAnalytics"
