@@ -53,7 +53,13 @@ export const staffService = {
     await notificationService.sendEmail(
       email.toLowerCase(),
       'CareBis Prime Staff Invitation',
-      `<p>You have been invited to join CareBis Prime as a ${role}. Click <a href="${env.FRONTEND_URL}/accept-invite?token=${token}">here</a> to accept your invitation.</p>`
+      'setupAccount',
+      {
+        name: email.split('@')[0],
+        email: email.toLowerCase(),
+        role,
+        setupUrl: `${env.FRONTEND_URL}/accept-invite?token=${token}`,
+      }
     );
   },
 

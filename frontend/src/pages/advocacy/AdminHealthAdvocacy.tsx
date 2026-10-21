@@ -20,21 +20,29 @@ export function AdminHealthAdvocacy() {
             Monitor disease trends and manage patient education content.
           </p>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-lg">
-          <Button 
-            variant={activeTab === 'trends' ? 'default' : 'ghost'} 
+        <div className="flex bg-slate-100 p-1.5 rounded-xl w-max gap-1 border border-slate-200/80">
+          <button 
+            type="button"
             onClick={() => setActiveTab('trends')}
-            className={activeTab === 'trends' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'trends'
+                ? 'bg-white text-[var(--color-forest)] font-semibold shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+            }`}
           >
             Disease Trends
-          </Button>
-          <Button 
-            variant={activeTab === 'content' ? 'default' : 'ghost'} 
+          </button>
+          <button 
+            type="button"
             onClick={() => setActiveTab('content')}
-            className={activeTab === 'content' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'content'
+                ? 'bg-white text-[var(--color-forest)] font-semibold shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+            }`}
           >
             Content Editor
-          </Button>
+          </button>
         </div>
       </div>
 

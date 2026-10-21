@@ -12,6 +12,7 @@ export interface Column<T> {
   header: string
   accessorKey?: keyof T | string
   cell?: (item: T) => React.ReactNode
+  className?: string
 }
 
 interface DataTableProps<T> {
@@ -19,6 +20,7 @@ interface DataTableProps<T> {
   data: T[]
   isLoading?: boolean
   emptyState?: React.ReactNode
+  rowClassName?: (item: T, rowIndex: number) => string | undefined
 }
 
 export function DataTable<T>({
@@ -26,6 +28,7 @@ export function DataTable<T>({
   data,
   isLoading,
   emptyState,
+  rowClassName,
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
@@ -70,7 +73,7 @@ export function DataTable<T>({
         <TableHeader>
           <TableRow>
             {columns.map((col, index) => (
-              <TableHead key={index}>{col.header}</TableHead>
+              <TableHead key={index} className={col.className}>{col.header}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -83,9 +86,12 @@ export function DataTable<T>({
             </TableRow>
           ) : (
             data.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
+              <TableRow 
+                key={rowIndex}
+                className={rowClassName ? rowClassName(row, rowIndex) : undefined}
+              >
                 {columns.map((col, colIndex) => (
-                  <TableCell key={colIndex}>
+                  <TableCell key={colIndex} className={col.className}>
                     {col.cell && typeof col.cell === "function"
                       ? col.cell(row as T)
                       : col.accessorKey

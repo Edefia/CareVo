@@ -235,6 +235,20 @@ export function NewBooking() {
     })
   }, [individualTests, selectedCategory, searchQuery])
 
+  // Scroll to top helper that handles both window and the DashboardLayout scrollable content area
+  const scrollToTop = () => {
+    window.scrollTo(0, 0)
+    const mainContainer = document.querySelector('main div.overflow-y-auto') || document.querySelector('.overflow-y-auto')
+    if (mainContainer) {
+      mainContainer.scrollTop = 0
+    }
+  }
+
+  // Ensure every step change immediately views from top of page
+  useEffect(() => {
+    scrollToTop()
+  }, [step])
+
   // ─── Actions ────────────────────────────────────────────────────────────
 
   const handleSelectTest = (test: IndividualTest) => {
@@ -244,7 +258,7 @@ export function NewBooking() {
     }
     // Proceed directly to Step 2 (Choose Laboratory)
     setStep(2)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollToTop()
   }
 
   const canProceed = (currentStep: number) => {
@@ -327,7 +341,7 @@ export function NewBooking() {
       handleSubmit()
     } else {
       setStep((s) => Math.min(6, s + 1))
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      scrollToTop()
     }
   }
 
@@ -336,7 +350,7 @@ export function NewBooking() {
       navigate(user?.role === 'LABORATORY' ? '/lab/dashboard' : '/client/dashboard')
     } else {
       setStep((s) => Math.max(1, s - 1))
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      scrollToTop()
     }
   }
 
@@ -351,7 +365,7 @@ export function NewBooking() {
 
       {/* ── MINIMAL PROGRESS HEADER ── */}
       {step < 6 && (
-        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[var(--color-border)] shadow-sm">
+        <div className="sticky top-0 z-40 bg-white border-b border-[var(--color-border)] shadow-xs">
           {/* Continuous Minimal Progress Line */}
           <div className="h-[3px] w-full bg-[var(--color-surface-2)]">
             <div 
@@ -360,10 +374,10 @@ export function NewBooking() {
             />
           </div>
           
-          <div className="px-[20px] py-[12px] mx-auto max-w-[1000px] flex items-center justify-between">
+          <div className="px-[24px] md:px-[32px] py-[12px] flex items-center justify-between">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 text-[13px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-forest)] transition-colors"
+              className="flex items-center gap-2 text-[13px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-forest)] transition-colors cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">
@@ -383,8 +397,8 @@ export function NewBooking() {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 py-[28px] md:py-[40px] px-[20px] sm:px-[24px]">
-        <div className="mx-auto max-w-[1000px]">
+      <div className="flex-1 py-[24px] md:py-[32px] px-[24px] md:px-[32px]">
+        <div className="mx-auto max-w-[1280px]">
 
           {/* ━━━ STEP 1: INDIVIDUAL TEST SELECTION ━━━ */}
           {step === 1 && (
@@ -529,10 +543,10 @@ export function NewBooking() {
                         <div className="relative z-10 pt-[8px]">
                           <Button
                             size="sm"
-                            className={`w-full h-[40px] text-[13px] font-medium gap-1.5 transition-all ${
+                            className={`w-full h-[40px] text-[13px] font-semibold gap-1.5 transition-all ${
                               isSelected
-                                ? "bg-[var(--color-forest)] text-white"
-                                : "bg-[var(--color-surface-2)] text-[var(--color-forest)] hover:bg-[var(--color-forest)] hover:text-white"
+                                ? "bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-mid)]"
+                                : "bg-[var(--color-surface-2)] text-[var(--color-forest)] hover:bg-[var(--color-lime)] hover:text-white"
                             }`}
                             onClick={(e) => {
                               e.stopPropagation()
@@ -541,7 +555,7 @@ export function NewBooking() {
                           >
                             {isSelected ? (
                               <>
-                                <Check className="h-4 w-4 text-[var(--color-lime)]" />
+                                <Check className="h-4 w-4 text-white" />
                                 Selected — Continue
                               </>
                             ) : (
@@ -613,7 +627,7 @@ export function NewBooking() {
                     variant="outline"
                     size="sm"
                     onClick={() => setStep(1)}
-                    className="self-start sm:self-center bg-white/10 hover:bg-white text-white hover:text-[var(--color-forest)] border-white/30 text-[13px] font-medium shrink-0"
+                    className="self-start sm:self-center bg-white/10 hover:bg-white text-white hover:text-[var(--color-forest)] border border-white/20 text-[13px] font-semibold shrink-0 transition-colors"
                   >
                     Change Test
                   </Button>
@@ -788,7 +802,7 @@ export function NewBooking() {
                                   size="sm"
                                   className={`h-[36px] px-[16px] text-[13px] font-semibold transition-all ${
                                     isLSelected
-                                      ? "bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-dark)]"
+                                      ? "bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-mid)]"
                                       : "text-[var(--color-forest)] border-[var(--color-forest)]/30 hover:bg-[var(--color-forest)] hover:text-white"
                                   }`}
                                   onClick={(e) => {
@@ -1024,7 +1038,7 @@ export function NewBooking() {
                       onChange={(e) =>
                         setPatientInfo({ ...patientInfo, emergencyContact: e.target.value })
                       }
-                      placeholder="Full name of next of kin"
+                      placeholder="Full name of emergency contact"
                       className="h-[48px] bg-[var(--color-surface-2)]/50 border-[var(--color-border)] focus:bg-white"
                     />
                   </div>
@@ -1205,19 +1219,19 @@ export function NewBooking() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-[10px] mt-[12px]">
+                      <div className="flex flex-wrap items-center gap-[8px] mt-[12px]">
                         {selectedTest?.category && (
-                          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          <span className="text-[12px] font-medium px-2.5 py-0.5 rounded bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">
                             {selectedTest.category}
                           </span>
                         )}
                         {selectedTest?.sampleType && (
-                          <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                          <span className="text-[12px] font-medium px-2.5 py-0.5 rounded bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">
                             Sample: {selectedTest.sampleType}
                           </span>
                         )}
-                        <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                        <span className="text-[12px] font-medium px-2.5 py-0.5 rounded bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] border border-[var(--color-border)] flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />
                           {selectedTest?.turnaroundTime || "24–48 hours"}
                         </span>
                       </div>
@@ -1277,9 +1291,9 @@ export function NewBooking() {
                       </div>
 
                       {requiresFasting && (
-                        <div className="p-[14px] rounded-[var(--radius-md)] bg-[#FFFBEB] border border-[#FDE68A] flex items-center gap-3">
-                          <AlertTriangle className="h-4 w-4 text-[#D97706] shrink-0" />
-                          <span className="text-[12px] text-[#92400E] font-medium">
+                        <div className="p-[12px] rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center gap-2.5">
+                          <AlertTriangle className="h-4 w-4 text-[var(--color-forest)] shrink-0" />
+                          <span className="text-[13px] text-[var(--color-text-secondary)] font-medium">
                             Clinical Requirement: Fasting ({selectedTest?.fastingHours || "8–12 hours"}) required before this appointment.
                           </span>
                         </div>
@@ -1304,32 +1318,44 @@ export function NewBooking() {
                 </div>
 
                 {/* Price Order Summary Sidebar */}
-                <div className="bg-[var(--color-forest)] rounded-[var(--radius-xl)] p-[28px] text-white shadow-lg self-start sticky top-[100px]">
-                  <div className="text-[12px] uppercase tracking-wider font-bold text-white/60 mb-[20px] flex items-center justify-between">
-                    <span>Order Summary</span>
-                    <Shield className="h-4 w-4 text-[var(--color-lime)]" />
+                <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border)] p-[24px] shadow-sm self-start sticky top-[100px]">
+                  <div className="text-[12px] uppercase tracking-wider font-bold text-[var(--color-forest)] mb-[18px] flex items-center justify-between border-b border-[var(--color-border)] pb-3">
+                    <span className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-[var(--color-lime)]" />
+                      Order Summary
+                    </span>
+                    <span className="text-[11px] font-semibold text-[var(--color-text-muted)] bg-[var(--color-surface-2)] px-2 py-0.5 rounded">
+                      Secure
+                    </span>
                   </div>
 
-                  <div className="space-y-[14px] mb-[24px]">
+                  <div className="space-y-[12px] mb-[20px]">
                     <div className="flex justify-between items-start text-[14px]">
-                      <span className="text-white/80 pr-2">
+                      <span className="text-[var(--color-text-secondary)] pr-2 font-medium">
                         {selectedTest?.name || selectedPkg?.name}
                       </span>
-                      <span className="font-semibold shrink-0">GH₵{getDisplayPrice()}</span>
+                      <span className="font-semibold text-[var(--color-text-primary)] shrink-0">
+                        GH₵{getDisplayPrice()}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-[13px]">
-                      <span className="text-white/60">Partner Lab Facility</span>
-                      <span className="text-white/80 text-[12px]">{selectedLabData?.name || "Selected Laboratory"}</span>
+                      <span className="text-[var(--color-text-muted)]">Partner Laboratory</span>
+                      <span className="text-[var(--color-text-secondary)] font-medium text-[12px] truncate max-w-[170px] text-right">
+                        {selectedLabData?.name || "Selected Laboratory"}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-[13px]">
-                      <span className="text-white/60">Platform Booking Fee</span>
-                      <span className="font-medium text-[var(--color-lime)]">Waived</span>
+                      <span className="text-[var(--color-text-muted)]">Platform Booking Fee</span>
+                      <span className="font-medium text-[var(--color-text-secondary)]">Waived</span>
                     </div>
                   </div>
 
-                  <div className="border-t border-white/20 pt-[16px] mb-[20px] flex justify-between items-center">
-                    <span className="text-[15px] text-white/80 font-medium">Total Amount</span>
-                    <span className="font-serif text-[30px] font-bold text-[var(--color-lime)]">
+                  <div className="border-t border-[var(--color-border)] pt-[16px] mb-[20px] flex justify-between items-center">
+                    <div>
+                      <span className="text-[13px] text-[var(--color-text-muted)] font-medium block">Total Amount</span>
+                      <span className="text-[11px] text-[var(--color-text-muted)]">Standard diagnostic fee</span>
+                    </div>
+                    <span className="font-serif text-[28px] font-bold text-[var(--color-forest)] tracking-tight">
                       GH₵{getDisplayPrice()}
                     </span>
                   </div>
@@ -1338,21 +1364,21 @@ export function NewBooking() {
                     <Button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="w-full h-[50px] bg-[var(--color-lime)] hover:bg-[var(--color-lime)]/90 text-[var(--color-forest)] font-bold text-[15px] shadow-md gap-2"
+                      className="w-full h-[48px] bg-[var(--color-lime)] hover:bg-[var(--color-lime-dark)] active:bg-[#153E70] text-white font-bold text-[15px] rounded-full shadow-sm transition-all gap-2 flex items-center justify-center cursor-pointer"
                     >
                       {isSubmitting ? (
                         <>
-                          <div className="h-4 w-4 border-2 border-[var(--color-forest)] border-t-transparent rounded-full animate-spin"></div>
+                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           Creating Booking...
                         </>
                       ) : (
                         <>
                           Confirm & Book Test
-                          <ArrowRight className="h-4 w-4" />
+                          <ArrowRight className="h-4 w-4 text-white" />
                         </>
                       )}
                     </Button>
-                    <p className="text-[11px] text-white/60 text-center leading-relaxed">
+                    <p className="text-[11px] text-[var(--color-text-muted)] text-center leading-relaxed">
                       Secured via Paystack. You will receive an invoice and referral code upon confirmation.
                     </p>
                   </div>
@@ -1401,7 +1427,7 @@ export function NewBooking() {
                       variant="secondary"
                       size="sm"
                       onClick={handleCopyCode}
-                      className="bg-white/15 hover:bg-white text-white hover:text-[var(--color-forest)] border border-white/20 text-[13px] font-medium gap-2"
+                      className="bg-white/15 hover:bg-white text-white hover:text-[var(--color-forest)] border border-white/30 text-[13px] font-semibold gap-2 transition-colors"
                     >
                       {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
                       {copied ? "Referral Code Copied!" : "Copy Referral Code"}
@@ -1411,10 +1437,10 @@ export function NewBooking() {
               )}
 
               {/* Primary Direct Payment CTA Banner */}
-              <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-500/30 rounded-[var(--radius-xl)] p-[24px] mb-[28px] text-left">
+              <div className="bg-[var(--color-surface-2)]/60 border border-[var(--color-border)] rounded-[var(--radius-xl)] p-[24px] mb-[28px] text-left">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[16px]">
                   <div>
-                    <div className="flex items-center gap-1.5 text-[#B45309] font-bold text-[13px] uppercase tracking-wider mb-1">
+                    <div className="flex items-center gap-1.5 text-[var(--color-forest)] font-bold text-[13px] uppercase tracking-wider mb-1">
                       <CreditCard className="h-4 w-4" />
                       Pending Payment (GH₵{getDisplayPrice()})
                     </div>
@@ -1427,10 +1453,10 @@ export function NewBooking() {
                   </div>
                   <Button
                     onClick={() => navigate('/client/billing')}
-                    className="h-[48px] px-[24px] bg-[var(--color-forest)] hover:bg-[var(--color-forest-dark)] text-white font-bold text-[14px] shrink-0 gap-2 shadow-md"
+                    className="h-[48px] px-[24px] bg-[var(--color-lime)] hover:bg-[var(--color-lime-dark)] active:bg-[#153E70] text-white font-bold text-[14px] shrink-0 gap-2 shadow-sm transition-colors"
                   >
                     Proceed to Payment
-                    <ArrowRight className="h-4 w-4 text-[var(--color-lime)]" />
+                    <ArrowRight className="h-4 w-4 text-white" />
                   </Button>
                 </div>
               </div>
@@ -1517,7 +1543,7 @@ export function NewBooking() {
               <div className="flex flex-col sm:flex-row gap-[12px] justify-center">
                 <Button
                   onClick={() => navigate('/client/billing')}
-                  className="h-[50px] px-[28px] text-[15px] font-bold bg-[var(--color-forest)] text-white shadow-md gap-2"
+                  className="h-[50px] px-[28px] text-[15px] font-bold bg-[var(--color-lime)] hover:bg-[var(--color-lime-dark)] active:bg-[#153E70] text-white shadow-sm gap-2 transition-colors"
                 >
                   <CreditCard className="h-4 w-4" />
                   Proceed to Payment
@@ -1525,7 +1551,7 @@ export function NewBooking() {
                 <Button
                   variant="outline"
                   onClick={() => navigate(user?.role === 'LABORATORY' ? '/lab/dashboard' : '/client/dashboard')}
-                  className="h-[50px] px-[24px] text-[15px] font-medium"
+                  className="h-[50px] px-[24px] text-[15px] font-semibold border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Go to {user?.role === 'LABORATORY' ? 'Lab Dashboard' : 'Client Dashboard'}
                 </Button>
@@ -1540,7 +1566,7 @@ export function NewBooking() {
                     setBookingResult(null)
                     setStep(1)
                   }}
-                  className="h-[50px] px-[20px] text-[14px] text-[var(--color-text-muted)] hover:text-[var(--color-forest)]"
+                  className="h-[50px] px-[20px] text-[14px] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-forest)] hover:bg-[var(--color-surface-2)] transition-colors"
                 >
                   Book Another Test
                 </Button>
@@ -1553,12 +1579,12 @@ export function NewBooking() {
 
       {/* ── FOOTER ACTIONS (Steps 1-4) ── */}
       {step < 5 && (
-        <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-[var(--color-border)] p-[16px] sm:p-[20px] z-40">
-          <div className="mx-auto max-w-[1000px] flex justify-between items-center">
+        <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-[var(--color-border)] px-[24px] md:px-[32px] py-[16px] z-40">
+          <div className="mx-auto max-w-[1280px] flex justify-between items-center">
             <Button
               variant="ghost"
               onClick={handleBack}
-              className="text-[14px] gap-1 text-[var(--color-text-secondary)] hover:text-[var(--color-forest)]"
+              className="text-[14px] font-medium gap-1 text-[var(--color-text-secondary)] hover:text-[var(--color-forest)] hover:bg-[var(--color-surface-2)] transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               {step === 1 ? "Back to Dashboard" : "Back"}
@@ -1573,7 +1599,7 @@ export function NewBooking() {
                   {selectedLab && (
                     <>
                       <span className="text-[var(--color-text-muted)]">•</span>
-                      <span className="font-serif font-bold text-[var(--color-forest)]">
+                      <span className="font-serif font-bold text-[var(--color-forest)] text-[15px]">
                         GH₵{getDisplayPrice()}
                       </span>
                     </>
@@ -1583,7 +1609,7 @@ export function NewBooking() {
 
               <Button
                 onClick={handleNext}
-                className="h-[46px] px-[28px] text-[14px] font-semibold gap-2 bg-[var(--color-forest)] hover:bg-[var(--color-forest-dark)] text-white shadow-sm"
+                className="h-[46px] px-[28px] text-[14px] font-bold gap-2 bg-[var(--color-lime)] hover:bg-[var(--color-lime-dark)] active:bg-[#153E70] text-white shadow-sm rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[var(--color-lime)] cursor-pointer"
                 disabled={!canProceed(step) || isSubmitting}
               >
                 {isSubmitting ? (
@@ -1593,7 +1619,7 @@ export function NewBooking() {
                   </>
                 ) : step === 4 ? (
                   <>
-                    Confirm & Book Test
+                    Review Booking
                     <ArrowRight className="h-4 w-4" />
                   </>
                 ) : (

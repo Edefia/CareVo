@@ -1,9 +1,30 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Search, Plus, Package as PackageIcon, Edit, Trash2, CheckCircle, XCircle, Loader2, FlaskConical, Clock, Building2, ShieldCheck, CheckSquare, XSquare, Tag, MessageSquare } from "lucide-react"
+import { 
+  Search, 
+  Plus, 
+  Package as PackageIcon, 
+  Edit, 
+  Trash2, 
+  CheckCircle, 
+  XCircle, 
+  Loader2, 
+  FlaskConical, 
+  Clock, 
+  Building2, 
+  ShieldCheck, 
+  CheckSquare, 
+  XSquare, 
+  Tag, 
+  MessageSquare,
+  ArrowUpDown,
+  Filter,
+  RotateCcw,
+  Sparkles
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/shared/DataTable"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
@@ -12,6 +33,7 @@ import { Label } from "@/components/ui/label"
 import { usePackages, useCreatePackage, useUpdatePackage, useDeletePackage } from "@/hooks/usePackages"
 import { useAdminLabServices, useUpdateLabServiceStatus } from "@/hooks/useLabServices"
 import { useCategories, useAllCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/useCategories"
+import { useLaboratories } from "@/hooks/useLaboratories"
 
 import toast from "react-hot-toast"
 
@@ -19,10 +41,31 @@ export function PackageManagement() {
   const [searchParams] = useSearchParams()
   const initialLabId = searchParams.get("labId")
   
-  const [activeTab, setActiveTab] = useState<'GLOBAL' | 'LAB_SERVICES' | 'CATEGORIES'>(initialLabId ? 'LAB_SERVICES' : 'GLOBAL')
-  const [selectedLabId] = useState<string>(initialLabId || "all")
+  // Default to LAB_SERVICES so admin immediately sees new laboratory requests
+  const [activeTab, setActiveTab] = useState<'LAB_SERVICES' | 'GLOBAL' | 'CATEGORIES'>('LAB_SERVICES')
+  const [selectedLabId, setSelectedLabId] = useState<string>(initialLabId || "all")
   
-  const [searchTerm, setSearchTerm] = useState("")
+  // Filtering & Sorting for Lab Services
+  const [labSearch, setLabSearch] = useState("")
+  const [labStatusFilter, setLabStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL')
+  const [labCategoryFilter, setLabCategoryFilter] = useState<string>('all')
+  const [labSort, setLabSort] = useState<
+    'pending-first' | 'newest' | 'oldest' | 'name-asc' | 'name-desc' | 'lab-asc' | 'price-asc' | 'price-desc'
+  >('pending-first')
+
+  // Filtering & Sorting for Global Packages
+  const [pkgSearch, setPkgSearch] = useState("")
+  const [pkgCategoryFilter, setPkgCategoryFilter] = useState<string>('all')
+  const [pkgStatusFilter, setPkgStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL')
+  const [pkgSort, setPkgSort] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest' | 'tests-desc' | 'tests-asc'>('name-asc')
+
+  // Filtering & Sorting for Categories
+  const [catSearch, setCatSearch] = useState("")
+  const [catAppliesToFilter, setCatAppliesToFilter] = useState<'ALL' | 'PACKAGES' | 'LAB_SERVICES'>('ALL')
+  const [catStatusFilter, setCatStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL')
+  const [catSort, setCatSort] = useState<'name-asc' | 'name-desc' | 'newest'>('name-asc')
+
+  // Global Package modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPackage, setEditingPackage] = useState<any>(null)
   
@@ -91,22 +134,233 @@ export function PackageManagement() {
   const allCategoriesData = allCategoriesResponse?.data || allCategoriesResponse
   const allCategories = Array.isArray(allCategoriesData) ? allCategoriesData : []
 
+  // Laboratories for lab dropdown filter
+  const { data: laboratoriesData } = useLaboratories({ limit: 100 })
+  const laboratories = useMemo(() => {
+    const list = laboratoriesData?.items || laboratoriesData?.data || (Array.isArray(laboratoriesData) ? laboratoriesData : [])
+    return Array.isArray(list) ? list : []
+  }, [laboratoriesData])
+
+  // Packages list
   const packagesData = packagesResponse?.data || packagesResponse
-  const packages = packagesData?.data || packagesData || []
-  const filteredPackages = Array.isArray(packages) ? packages.filter((p: any) => 
-    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : []
+  const packages = useMemo(() => {
+    const list = packagesData?.data || packagesData || []
+    return Array.isArray(list) ? list : []
+  }, [packagesData])
 
   // Lab Services
-  const { data: labServicesData, isLoading: labServicesLoading } = useAdminLabServices(selectedLabId !== "all" ? { laboratoryId: selectedLabId } : undefined)
+  const { data: labServicesData, isLoading: labServicesLoading } = useAdminLabServices(
+    selectedLabId !== "all" ? { laboratoryId: selectedLabId, limit: 200 } : { limit: 200 }
+  )
   const updateServiceStatus = useUpdateLabServiceStatus()
-  const labServices = labServicesData?.items || labServicesData?.data || labServicesData || []
-  
-  const filteredLabServices = Array.isArray(labServices) ? labServices.filter((s: any) => 
-    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.laboratoryId?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : []
+  const labServices = useMemo(() => {
+    const list = labServicesData?.items || labServicesData?.data || labServicesData || []
+    return Array.isArray(list) ? list : []
+  }, [labServicesData])
+
+  // Lab services counts
+  const pendingLabCount = useMemo(() => labServices.filter((s: any) => s.approvalStatus === 'PENDING').length, [labServices])
+  const approvedLabCount = useMemo(() => labServices.filter((s: any) => s.approvalStatus === 'APPROVED').length, [labServices])
+  const rejectedLabCount = useMemo(() => labServices.filter((s: any) => s.approvalStatus === 'REJECTED').length, [labServices])
+
+  // Categories available among lab services
+  const availableLabCategories = useMemo(() => {
+    const set = new Set<string>()
+    labServices.forEach((s: any) => {
+      if (s.category) set.add(s.category)
+    })
+    return Array.from(set).sort()
+  }, [labServices])
+
+  // Filtered & Sorted Lab Services
+  const processedLabServices = useMemo(() => {
+    let result = [...labServices]
+
+    // Search filter
+    if (labSearch.trim()) {
+      const q = labSearch.toLowerCase()
+      result = result.filter((s: any) =>
+        s.name?.toLowerCase().includes(q) ||
+        s.laboratoryId?.name?.toLowerCase().includes(q) ||
+        s.laboratoryId?.code?.toLowerCase().includes(q) ||
+        s.category?.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q)
+      )
+    }
+
+    // Status filter
+    if (labStatusFilter !== 'ALL') {
+      result = result.filter((s: any) => s.approvalStatus === labStatusFilter)
+    }
+
+    // Category filter
+    if (labCategoryFilter !== 'all') {
+      result = result.filter((s: any) => s.category === labCategoryFilter)
+    }
+
+    // Sorting
+    const getCreatedTime = (s: any) => s.createdAt ? new Date(s.createdAt).getTime() : 0
+
+    result.sort((a: any, b: any) => {
+      switch (labSort) {
+        case 'pending-first': {
+          // Priority 1: PENDING first
+          const aPending = a.approvalStatus === 'PENDING' ? 1 : 0
+          const bPending = b.approvalStatus === 'PENDING' ? 1 : 0
+          if (aPending !== bPending) {
+            return bPending - aPending // pending at top
+          }
+          // Priority 2: Newest created/submitted first
+          return getCreatedTime(b) - getCreatedTime(a)
+        }
+        case 'newest':
+          return getCreatedTime(b) - getCreatedTime(a)
+        case 'oldest':
+          return getCreatedTime(a) - getCreatedTime(b)
+        case 'name-asc':
+          return (a.name || '').localeCompare(b.name || '')
+        case 'name-desc':
+          return (b.name || '').localeCompare(a.name || '')
+        case 'lab-asc':
+          return (a.laboratoryId?.name || '').localeCompare(b.laboratoryId?.name || '')
+        case 'price-asc':
+          return (a.platformPrice ?? a.labPrice ?? 0) - (b.platformPrice ?? b.labPrice ?? 0)
+        case 'price-desc':
+          return (b.platformPrice ?? b.labPrice ?? 0) - (a.platformPrice ?? a.labPrice ?? 0)
+        default:
+          return 0
+      }
+    })
+
+    return result
+  }, [labServices, labSearch, labStatusFilter, labCategoryFilter, labSort])
+
+  const hasActiveLabFilters = labSearch.trim() !== "" || labStatusFilter !== 'ALL' || selectedLabId !== "all" || labCategoryFilter !== 'all' || labSort !== 'pending-first'
+
+  const resetLabFilters = () => {
+    setLabSearch("")
+    setLabStatusFilter('ALL')
+    setSelectedLabId("all")
+    setLabCategoryFilter('all')
+    setLabSort('pending-first')
+  }
+
+  // Filtered & Sorted Packages
+  const processedPackages = useMemo(() => {
+    let result = [...packages]
+
+    // Search
+    if (pkgSearch.trim()) {
+      const q = pkgSearch.toLowerCase()
+      result = result.filter((p: any) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        (Array.isArray(p.testsIncluded) && p.testsIncluded.some((t: string) => t.toLowerCase().includes(q)))
+      )
+    }
+
+    // Category
+    if (pkgCategoryFilter !== 'all') {
+      result = result.filter((p: any) => p.category === pkgCategoryFilter)
+    }
+
+    // Status
+    if (pkgStatusFilter !== 'ALL') {
+      result = result.filter((p: any) => pkgStatusFilter === 'ACTIVE' ? p.isActive : !p.isActive)
+    }
+
+    // Sorting
+    const getCreatedTime = (p: any) => p.createdAt ? new Date(p.createdAt).getTime() : 0
+
+    result.sort((a: any, b: any) => {
+      switch (pkgSort) {
+        case 'name-asc':
+          return (a.name || '').localeCompare(b.name || '')
+        case 'name-desc':
+          return (b.name || '').localeCompare(a.name || '')
+        case 'newest':
+          return getCreatedTime(b) - getCreatedTime(a)
+        case 'oldest':
+          return getCreatedTime(a) - getCreatedTime(b)
+        case 'tests-desc': {
+          const aCount = Array.isArray(a.testsIncluded) ? a.testsIncluded.length : 0
+          const bCount = Array.isArray(b.testsIncluded) ? b.testsIncluded.length : 0
+          return bCount - aCount
+        }
+        case 'tests-asc': {
+          const aCount = Array.isArray(a.testsIncluded) ? a.testsIncluded.length : 0
+          const bCount = Array.isArray(b.testsIncluded) ? b.testsIncluded.length : 0
+          return aCount - bCount
+        }
+        default:
+          return 0
+      }
+    })
+
+    return result
+  }, [packages, pkgSearch, pkgCategoryFilter, pkgStatusFilter, pkgSort])
+
+  const hasActivePkgFilters = pkgSearch.trim() !== "" || pkgCategoryFilter !== 'all' || pkgStatusFilter !== 'ALL' || pkgSort !== 'name-asc'
+
+  const resetPkgFilters = () => {
+    setPkgSearch("")
+    setPkgCategoryFilter('all')
+    setPkgStatusFilter('ALL')
+    setPkgSort('name-asc')
+  }
+
+  // Filtered & Sorted Categories
+  const processedCategories = useMemo(() => {
+    let result = [...allCategories]
+
+    // Search
+    if (catSearch.trim()) {
+      const q = catSearch.toLowerCase()
+      result = result.filter((c: any) =>
+        c.name?.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q)
+      )
+    }
+
+    // Applies To
+    if (catAppliesToFilter !== 'ALL') {
+      result = result.filter((c: any) => Array.isArray(c.appliesTo) && c.appliesTo.includes(catAppliesToFilter))
+    }
+
+    // Status
+    if (catStatusFilter !== 'ALL') {
+      result = result.filter((c: any) => catStatusFilter === 'ACTIVE' ? c.isActive : !c.isActive)
+    }
+
+    // Sorting
+    result.sort((a: any, b: any) => {
+      switch (catSort) {
+        case 'name-asc':
+          return (a.name || '').localeCompare(b.name || '')
+        case 'name-desc':
+          return (b.name || '').localeCompare(a.name || '')
+        case 'newest': {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        }
+        default:
+          return 0
+      }
+    })
+
+    return result
+  }, [allCategories, catSearch, catAppliesToFilter, catStatusFilter, catSort])
+
+  const hasActiveCatFilters = catSearch.trim() !== "" || catAppliesToFilter !== 'ALL' || catStatusFilter !== 'ALL' || catSort !== 'name-asc'
+
+  const resetCatFilters = () => {
+    setCatSearch("")
+    setCatAppliesToFilter('ALL')
+    setCatStatusFilter('ALL')
+    setCatSort('name-asc')
+  }
 
   // --- Handlers for Global Packages ---
   const handleOpenModal = (pkg: any = null) => {
@@ -261,21 +515,82 @@ export function PackageManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Package & Service Management</h2>
-          <p className="text-muted-foreground">Manage global health packages, review laboratory-submitted services, and configure categories.</p>
+    <div className="space-y-4">
+      {/* Top Header: Tabs & Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        {/* Swapped Tab Navigation: Lab Service Queue first, then Global Packages, then Categories */}
+        <div className="flex bg-slate-100 p-1 rounded-xl w-max flex-wrap gap-1 border border-slate-200/80 shadow-xs">
+          <button 
+            type="button"
+            onClick={() => setActiveTab('LAB_SERVICES')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'LAB_SERVICES'
+                ? 'bg-white text-[var(--color-forest)] font-semibold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <FlaskConical className="w-4 h-4 text-emerald-600" /> 
+            <span>Lab Service Queue</span>
+            {pendingLabCount > 0 ? (
+              <span className="ml-1 flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full bg-red-600 text-white text-[11px] font-bold shadow-xs animate-pulse">
+                {pendingLabCount}
+              </span>
+            ) : (
+              <span className="ml-1 text-xs text-slate-400 font-normal">
+                ({labServices.length})
+              </span>
+            )}
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => setActiveTab('GLOBAL')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'GLOBAL'
+                ? 'bg-white text-[var(--color-forest)] font-semibold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <PackageIcon className="w-4 h-4 text-blue-600" /> 
+            <span>Global Packages</span>
+            <span className="ml-1 text-xs text-slate-400 font-normal">
+              ({packages.length})
+            </span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => setActiveTab('CATEGORIES')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'CATEGORIES'
+                ? 'bg-white text-[var(--color-forest)] font-semibold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <Tag className="w-4 h-4 text-purple-600" /> 
+            <span>Categories</span>
+            <span className="ml-1 text-xs text-slate-400 font-normal">
+              ({allCategories.length})
+            </span>
+          </button>
         </div>
-        <div className="mt-4 md:mt-0">
+
+        {/* Action / Quick notification buttons */}
+        <div className="flex items-center gap-2">
+          {activeTab === 'LAB_SERVICES' && pendingLabCount > 0 && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>{pendingLabCount} new request{pendingLabCount > 1 ? 's' : ''} awaiting review</span>
+            </div>
+          )}
           {activeTab === 'GLOBAL' && (
-            <Button className="flex items-center gap-2" onClick={() => handleOpenModal()}>
+            <Button className="flex items-center gap-2 bg-[var(--color-forest)] hover:bg-[var(--color-forest)]/90 text-white shadow-xs" onClick={() => handleOpenModal()}>
               <Plus className="h-4 w-4" />
               Create Package
             </Button>
           )}
           {activeTab === 'CATEGORIES' && (
-            <Button className="flex items-center gap-2" onClick={() => handleOpenCategoryModal()}>
+            <Button className="flex items-center gap-2 bg-[var(--color-forest)] hover:bg-[var(--color-forest)]/90 text-white shadow-xs" onClick={() => handleOpenCategoryModal()}>
               <Plus className="h-4 w-4" />
               Add Category
             </Button>
@@ -283,252 +598,667 @@ export function PackageManagement() {
         </div>
       </div>
 
-      <div className="flex bg-slate-100 p-1 rounded-lg w-max flex-wrap">
-        <Button 
-          variant={activeTab === 'GLOBAL' ? 'default' : 'ghost'} 
-          onClick={() => setActiveTab('GLOBAL')}
-          className={activeTab === 'GLOBAL' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}
-        >
-          <PackageIcon className="w-4 h-4 mr-2" /> Global Packages
-        </Button>
-        <Button 
-          variant={activeTab === 'LAB_SERVICES' ? 'default' : 'ghost'} 
-          onClick={() => setActiveTab('LAB_SERVICES')}
-          className={activeTab === 'LAB_SERVICES' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}
-        >
-          <FlaskConical className="w-4 h-4 mr-2" /> Lab Service Queue
-          {labServices.filter((s: any) => s.approvalStatus === 'PENDING').length > 0 && (
-            <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-red-600 text-[11px] font-bold">
-              {labServices.filter((s: any) => s.approvalStatus === 'PENDING').length}
-            </span>
-          )}
-        </Button>
-        <Button 
-          variant={activeTab === 'CATEGORIES' ? 'default' : 'ghost'} 
-          onClick={() => setActiveTab('CATEGORIES')}
-          className={activeTab === 'CATEGORIES' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}
-        >
-          <Tag className="w-4 h-4 mr-2" /> Categories
-        </Button>
-      </div>
+      <Card className="shadow-xs border-slate-200">
+        <CardContent className="p-0">
+          {/* TAB 1: LAB SERVICES QUEUE */}
+          {activeTab === 'LAB_SERVICES' && (
+            <div>
+              {/* Filter and Sort Toolbar */}
+              <div className="p-4 border-b border-slate-200/80 bg-slate-50/70 space-y-3">
+                {/* Status Grouping Pills */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                      <Filter className="w-3.5 h-3.5" /> Status:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setLabStatusFilter('ALL')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        labStatusFilter === 'ALL'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      All ({labServices.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLabStatusFilter('PENDING')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                        labStatusFilter === 'PENDING'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pendingLabCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>}
+                      Pending ({pendingLabCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLabStatusFilter('APPROVED')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        labStatusFilter === 'APPROVED'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Approved ({approvedLabCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLabStatusFilter('REJECTED')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        labStatusFilter === 'REJECTED'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Rejected ({rejectedLabCount})
+                    </button>
+                  </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle>
-              {activeTab === 'GLOBAL' ? 'All Health Packages' : activeTab === 'LAB_SERVICES' ? 'Laboratory Submitted Services' : 'Service Categories'}
-            </CardTitle>
-            {activeTab !== 'CATEGORIES' && (
-              <div className="flex items-center gap-2">
-                <div className="relative w-full md:w-80">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder={activeTab === 'GLOBAL' ? "Search packages by name..." : "Search services or labs..."}
-                    className="pl-8" 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">
+                      Showing <strong className="text-slate-800">{processedLabServices.length}</strong> of {labServices.length}
+                    </span>
+                    {hasActiveLabFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetLabFilters}
+                        className="text-xs text-slate-600 hover:text-slate-900 h-7 px-2 flex items-center gap-1"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Reset
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search, Lab, Category & Sort Controls */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                    <Input 
+                      placeholder="Search service, lab or code..."
+                      className="pl-8 text-xs h-9 bg-white" 
+                      value={labSearch}
+                      onChange={(e) => setLabSearch(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Laboratory Filter */}
+                  <div>
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1.5 text-xs text-slate-700 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={selectedLabId}
+                      onChange={(e) => setSelectedLabId(e.target.value)}
+                    >
+                      <option value="all">All Laboratories ({laboratories.length})</option>
+                      {laboratories.map((lab: any) => (
+                        <option key={lab._id} value={lab._id}>
+                          {lab.name} {lab.code ? `(${lab.code})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Category Filter */}
+                  <div>
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1.5 text-xs text-slate-700 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={labCategoryFilter}
+                      onChange={(e) => setLabCategoryFilter(e.target.value)}
+                    >
+                      <option value="all">All Categories ({availableLabCategories.length})</option>
+                      {availableLabCategories.map((cat: string) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sort Selector: Defaults to New Requests First */}
+                  <div className="relative">
+                    <ArrowUpDown className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-white pl-8 pr-3 py-1.5 text-xs font-medium text-slate-800 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={labSort}
+                      onChange={(e) => setLabSort(e.target.value as any)}
+                    >
+                      <option value="pending-first">New Requests (Pending First)</option>
+                      <option value="newest">Newest Submitted First</option>
+                      <option value="oldest">Oldest Submitted First</option>
+                      <option value="name-asc">Service Name (A to Z)</option>
+                      <option value="name-desc">Service Name (Z to A)</option>
+                      <option value="lab-asc">Laboratory Name (A to Z)</option>
+                      <option value="price-desc">Platform Price (High to Low)</option>
+                      <option value="price-asc">Platform Price (Low to High)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {activeTab === 'GLOBAL' ? (
-            pkgsLoading ? (
-              <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
-            ) : (
-              <DataTable 
-                columns={[
-                  { 
-                    header: "Package Name", 
-                    cell: (row) => (
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
-                          <PackageIcon className="h-5 w-5" />
+
+              {/* Data Table */}
+              {labServicesLoading ? (
+                <div className="p-16 flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                  <span className="text-xs text-slate-500">Loading lab services queue...</span>
+                </div>
+              ) : (
+                <DataTable 
+                  columns={[
+                    { 
+                      header: "Laboratory", 
+                      cell: (row) => (
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                            <Building2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="font-semibold text-slate-900 block leading-tight">
+                              {row.laboratoryId?.name || 'Unknown Lab'}
+                            </span>
+                            {row.laboratoryId?.code && (
+                              <span className="text-[11px] text-slate-400 font-mono">
+                                {row.laboratoryId.code}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold">{row.name}</div>
-                          <div className="text-xs text-muted-foreground truncate max-w-[200px]">{row.description}</div>
+                      ) 
+                    },
+                    { 
+                      header: "Service Details", 
+                      className: "min-w-[280px]",
+                      cell: (row) => (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            {row.approvalStatus === 'PENDING' && (
+                              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 inline-block ring-2 ring-amber-200/60" title="Awaiting Review" />
+                            )}
+                            <span className="font-semibold text-slate-900 text-sm whitespace-nowrap leading-tight">{row.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500 whitespace-nowrap leading-none">
+                            <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap shrink-0">
+                              {row.category}
+                            </span>
+                            {row.createdAt && (
+                              <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                • Submitted {new Date(row.createdAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ) 
-                  },
-                  { 
-                    header: "Category", 
-                    cell: (row) => <span className="text-sm font-medium">{row.category || '—'}</span>
-                  },
-                  { 
-                    header: "Tests Included", 
-                    cell: (row) => <span className="text-sm text-muted-foreground">{Array.isArray(row.testsIncluded) ? row.testsIncluded.length : 0} tests</span>
-                  },
-                  { 
-                    header: "Turnaround Time", 
-                    cell: (row) => <span className="text-sm">{row.turnaroundTime || 'N/A'}</span>
-                  },
-                  { 
-                    header: "Status", 
-                    cell: (row) => <StatusBadge status={row.isActive ? "ACTIVE" : "INACTIVE"} />
-                  },
-                  { 
-                    header: "Actions", 
-                    cell: (row) => (
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="hover:bg-blue-50 hover:text-blue-700" onClick={() => handleOpenModal(row)} title="Edit Package">
-                          <Edit className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="hover:bg-amber-50 hover:text-amber-700" onClick={() => handleToggleStatus(row)} title={row.isActive ? "Deactivate" : "Activate"}>
-                          {row.isActive ? <XCircle className="h-4 w-4 text-amber-600" /> : <CheckCircle className="h-4 w-4 text-emerald-600" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(row._id)} title="Delete Package" disabled={deleteMutation.isPending}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    )
-                  },
-                ]}
-                data={filteredPackages}
-              />
-            )
-          ) : activeTab === 'LAB_SERVICES' ? (
-            // LAB SERVICES TAB
-            labServicesLoading ? (
-              <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
-            ) : (
-              <DataTable 
-                columns={[
-                  { 
-                    header: "Laboratory", 
-                    cell: (row) => (
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-slate-400" />
-                        <span className="font-semibold text-slate-900">{row.laboratoryId?.name || 'Unknown Lab'}</span>
-                      </div>
-                    ) 
-                  },
-                  { 
-                    header: "Service Details", 
-                    cell: (row) => (
-                      <div>
-                        <div className="font-medium text-slate-800">{row.name}</div>
-                        <div className="text-[12px] text-slate-500">{row.category}</div>
-                      </div>
-                    ) 
-                  },
-                  { 
-                    header: "Lab Price", 
-                    cell: (row) => <span className="font-bold text-slate-600">GHS {row.labPrice?.toFixed(2)}</span>
-                  },
-                  { 
-                    header: "Platform Price", 
-                    cell: (row) => <span className="font-bold text-emerald-600">GHS {row.platformPrice?.toFixed(2)}</span>
-                  },
-                  { 
-                    header: "Turnaround", 
-                    cell: (row) => <span className="text-sm">{row.turnaroundTime}</span>
-                  },
-                  { 
-                    header: "Approval", 
-                    cell: (row) => {
-                      if (row.approvalStatus === 'APPROVED') return <span className="px-2 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-md text-[11px] font-bold uppercase flex items-center gap-1 w-max"><ShieldCheck className="w-3 h-3" /> Approved</span>
-                      if (row.approvalStatus === 'REJECTED') return <span className="px-2 py-1 bg-red-100 text-red-700 border border-red-200 rounded-md text-[11px] font-bold uppercase flex items-center gap-1 w-max"><XCircle className="w-3 h-3" /> Rejected</span>
-                      return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-md text-[11px] font-bold uppercase flex items-center gap-1 w-max"><Clock className="w-3 h-3" /> Pending Review</span>
-                    }
-                  },
-                  { 
-                    header: "Actions", 
-                    cell: (row) => (
-                      <div className="flex items-center gap-2">
-                        {row.approvalStatus === 'PENDING' && (
-                          <>
-                            <Button variant="outline" size="sm" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800" onClick={() => handleOpenApprovalDialog(row, 'APPROVED')} disabled={updateServiceStatus.isPending}>
-                              <CheckSquare className="w-3 h-3 mr-1" /> Approve
-                            </Button>
-                            <Button variant="outline" size="sm" className="h-7 text-xs border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => handleOpenApprovalDialog(row, 'REJECTED')} disabled={updateServiceStatus.isPending}>
-                              <XSquare className="w-3 h-3 mr-1" /> Reject
-                            </Button>
-                          </>
-                        )}
-                        {row.approvalStatus === 'APPROVED' && (
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleOpenApprovalDialog(row, 'REJECTED')} disabled={updateServiceStatus.isPending}>
-                            Revoke
-                          </Button>
-                        )}
-                        {row.approvalStatus === 'REJECTED' && (
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700" onClick={() => handleOpenApprovalDialog(row, 'APPROVED')} disabled={updateServiceStatus.isPending}>
-                            Approve
-                          </Button>
-                        )}
-                        {row.adminComment && (
-                          <span title={row.adminComment} className="text-slate-400 cursor-help">
-                            <MessageSquare className="w-4 h-4" />
+                      ) 
+                    },
+                    { 
+                      header: "Lab Price", 
+                      cell: (row) => <span className="font-semibold text-slate-600 whitespace-nowrap">GHS {row.labPrice?.toFixed(2)}</span>
+                    },
+                    { 
+                      header: "Platform Price", 
+                      cell: (row) => <span className="font-bold text-emerald-700 whitespace-nowrap">GHS {row.platformPrice?.toFixed(2)}</span>
+                    },
+                    { 
+                      header: "Turnaround", 
+                      cell: (row) => <span className="text-sm text-slate-700 whitespace-nowrap">{row.turnaroundTime || '—'}</span>
+                    },
+                    { 
+                      header: "Approval", 
+                      cell: (row) => {
+                        if (row.approvalStatus === 'APPROVED') {
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 w-max leading-tight">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600" /> Approved
+                            </span>
+                          )
+                        }
+                        if (row.approvalStatus === 'REJECTED') {
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-red-50 text-red-700 border border-red-200/80 w-max leading-tight">
+                              <XCircle className="w-3 h-3 text-red-600" /> Rejected
+                            </span>
+                          )
+                        }
+                        return (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200/80 w-max leading-tight">
+                            <Clock className="w-3 h-3 text-amber-600" /> Pending
                           </span>
-                        )}
-                      </div>
-                    )
-                  },
-                ]}
-                data={filteredLabServices}
-              />
-            )
-          ) : (
-            // CATEGORIES TAB
-            categoriesLoading ? (
-              <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>
-            ) : allCategories.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground">
-                <Tag className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p className="font-medium text-lg text-gray-600">No categories yet</p>
-                <p className="text-sm text-gray-400 mt-1">Create your first category to organize packages and lab services.</p>
+                        )
+                      }
+                    },
+                    { 
+                      header: "Actions", 
+                      cell: (row) => (
+                        <div className="flex items-center gap-1.5">
+                          {row.approvalStatus === 'PENDING' && (
+                            <>
+                              <button 
+                                type="button"
+                                className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                                onClick={() => handleOpenApprovalDialog(row, 'APPROVED')} 
+                                disabled={updateServiceStatus.isPending}
+                              >
+                                <CheckSquare className="w-3.5 h-3.5 mr-1" /> Approve
+                              </button>
+                              <button 
+                                type="button"
+                                className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md border border-red-300 bg-red-50 text-red-700 hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                                onClick={() => handleOpenApprovalDialog(row, 'REJECTED')} 
+                                disabled={updateServiceStatus.isPending}
+                              >
+                                <XSquare className="w-3.5 h-3.5 mr-1" /> Reject
+                              </button>
+                            </>
+                          )}
+                          {row.approvalStatus === 'APPROVED' && (
+                            <button 
+                              type="button"
+                              className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50 cursor-pointer border border-transparent hover:border-red-200"
+                              onClick={() => handleOpenApprovalDialog(row, 'REJECTED')} 
+                              disabled={updateServiceStatus.isPending}
+                            >
+                              Revoke
+                            </button>
+                          )}
+                          {row.approvalStatus === 'REJECTED' && (
+                            <button 
+                              type="button"
+                              className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-colors disabled:opacity-50 cursor-pointer border border-transparent hover:border-emerald-200"
+                              onClick={() => handleOpenApprovalDialog(row, 'APPROVED')} 
+                              disabled={updateServiceStatus.isPending}
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {row.adminComment && (
+                            <span title={`Admin Comment: ${row.adminComment}`} className="text-slate-400 hover:text-slate-600 cursor-help p-1">
+                              <MessageSquare className="w-4 h-4" />
+                            </span>
+                          )}
+                        </div>
+                      )
+                    },
+                  ]}
+                  data={processedLabServices}
+                  rowClassName={(row) => row.approvalStatus === 'PENDING' ? 'bg-amber-50/35 hover:bg-amber-50/60' : undefined}
+                  emptyState={
+                    <div className="p-12 text-center text-muted-foreground">
+                      <FlaskConical className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                      <p className="font-semibold text-slate-700">No lab services found</p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        {hasActiveLabFilters ? "Try clearing or adjusting your search and filter criteria." : "No laboratory services have been submitted yet."}
+                      </p>
+                      {hasActiveLabFilters && (
+                        <Button variant="outline" size="sm" onClick={resetLabFilters} className="mt-4 text-xs">
+                          Clear Filters
+                        </Button>
+                      )}
+                    </div>
+                  }
+                />
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: GLOBAL HEALTH PACKAGES */}
+          {activeTab === 'GLOBAL' && (
+            <div>
+              {/* Filter and Sort Toolbar for Packages */}
+              <div className="p-4 border-b border-slate-200/80 bg-slate-50/70 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* Status Grouping Pills */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                      <Filter className="w-3.5 h-3.5" /> Status:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPkgStatusFilter('ALL')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        pkgStatusFilter === 'ALL'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      All ({packages.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPkgStatusFilter('ACTIVE')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        pkgStatusFilter === 'ACTIVE'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Active ({packages.filter((p: any) => p.isActive).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPkgStatusFilter('INACTIVE')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        pkgStatusFilter === 'INACTIVE'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Inactive ({packages.filter((p: any) => !p.isActive).length})
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">
+                      Showing <strong className="text-slate-800">{processedPackages.length}</strong> of {packages.length}
+                    </span>
+                    {hasActivePkgFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetPkgFilters}
+                        className="text-xs text-slate-600 hover:text-slate-900 h-7 px-2 flex items-center gap-1"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Reset
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search, Category & Sort */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                    <Input 
+                      placeholder="Search packages or tests..."
+                      className="pl-8 text-xs h-9 bg-white" 
+                      value={pkgSearch}
+                      onChange={(e) => setPkgSearch(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1.5 text-xs text-slate-700 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={pkgCategoryFilter}
+                      onChange={(e) => setPkgCategoryFilter(e.target.value)}
+                    >
+                      <option value="all">All Categories ({categories.length})</option>
+                      {categories.map((cat: any) => (
+                        <option key={cat._id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="relative">
+                    <ArrowUpDown className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-white pl-8 pr-3 py-1.5 text-xs font-medium text-slate-800 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={pkgSort}
+                      onChange={(e) => setPkgSort(e.target.value as any)}
+                    >
+                      <option value="name-asc">Package Name (A to Z)</option>
+                      <option value="name-desc">Package Name (Z to A)</option>
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                      <option value="tests-desc">Most Tests Included</option>
+                      <option value="tests-asc">Fewest Tests Included</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <DataTable
-                columns={[
-                  {
-                    header: "Category Name",
-                    cell: (row) => (
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-600 shrink-0">
-                          <Tag className="h-4 w-4" />
+
+              {/* Data Table */}
+              {pkgsLoading ? (
+                <div className="p-16 flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                  <span className="text-xs text-slate-500">Loading global packages...</span>
+                </div>
+              ) : (
+                <DataTable 
+                  columns={[
+                    { 
+                      header: "Package Name", 
+                      cell: (row) => (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0 border border-blue-100">
+                            <PackageIcon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900">{row.name}</div>
+                            <div className="text-xs text-muted-foreground truncate max-w-[220px]">{row.description}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-slate-900">{row.name}</div>
-                          {row.description && <div className="text-xs text-muted-foreground truncate max-w-[250px]">{row.description}</div>}
+                      ) 
+                    },
+                    { 
+                      header: "Category", 
+                      cell: (row) => (
+                        <span className="text-xs font-medium px-2 py-0.5 bg-slate-100 rounded text-slate-700">
+                          {row.category || '—'}
+                        </span>
+                      )
+                    },
+                    { 
+                      header: "Tests Included", 
+                      cell: (row) => (
+                        <span className="text-sm font-medium text-slate-700">
+                          {Array.isArray(row.testsIncluded) ? row.testsIncluded.length : 0} tests
+                        </span>
+                      )
+                    },
+                    { 
+                      header: "Turnaround Time", 
+                      cell: (row) => <span className="text-sm text-slate-600">{row.turnaroundTime || 'N/A'}</span>
+                    },
+                    { 
+                      header: "Status", 
+                      cell: (row) => <StatusBadge status={row.isActive ? "ACTIVE" : "INACTIVE"} />
+                    },
+                    { 
+                      header: "Actions", 
+                      cell: (row) => (
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="hover:bg-blue-50 hover:text-blue-700 h-8 w-8" onClick={() => handleOpenModal(row)} title="Edit Package">
+                            <Edit className="h-4 w-4 text-blue-600" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="hover:bg-amber-50 hover:text-amber-700 h-8 w-8" onClick={() => handleToggleStatus(row)} title={row.isActive ? "Deactivate" : "Activate"}>
+                            {row.isActive ? <XCircle className="h-4 w-4 text-amber-600" /> : <CheckCircle className="h-4 w-4 text-emerald-600" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-700 h-8 w-8" onClick={() => handleDelete(row._id)} title="Delete Package" disabled={deleteMutation.isPending}>
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
                         </div>
-                      </div>
-                    )
-                  },
-                  {
-                    header: "Applies To",
-                    cell: (row) => (
-                      <div className="flex flex-wrap gap-1">
-                        {(row.appliesTo || []).map((a: string) => (
-                          <span key={a} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-medium">{a.replace('_', ' ')}</span>
-                        ))}
-                      </div>
-                    )
-                  },
-                  {
-                    header: "Status",
-                    cell: (row) => <StatusBadge status={row.isActive ? "ACTIVE" : "INACTIVE"} />
-                  },
-                  {
-                    header: "Actions",
-                    cell: (row) => (
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="hover:bg-blue-50" onClick={() => handleOpenCategoryModal(row)}>
-                          <Edit className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="hover:bg-red-50" onClick={() => handleDeleteCategory(row._id)}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    )
-                  },
-                ]}
-                data={allCategories}
-              />
-            )
+                      )
+                    },
+                  ]}
+                  data={processedPackages}
+                  emptyState={
+                    <div className="p-12 text-center text-muted-foreground">
+                      <PackageIcon className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                      <p className="font-semibold text-slate-700">No packages found</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {hasActivePkgFilters ? "Try adjusting your filters or search terms." : "Create your first global package using the button above."}
+                      </p>
+                    </div>
+                  }
+                />
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: CATEGORIES */}
+          {activeTab === 'CATEGORIES' && (
+            <div>
+              {/* Filter and Sort Toolbar for Categories */}
+              <div className="p-4 border-b border-slate-200/80 bg-slate-50/70 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* Status Grouping */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                      <Filter className="w-3.5 h-3.5" /> Status:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCatStatusFilter('ALL')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        catStatusFilter === 'ALL'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      All ({allCategories.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCatStatusFilter('ACTIVE')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        catStatusFilter === 'ACTIVE'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Active ({allCategories.filter((c: any) => c.isActive).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCatStatusFilter('INACTIVE')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                        catStatusFilter === 'INACTIVE'
+                          ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Inactive ({allCategories.filter((c: any) => !c.isActive).length})
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">
+                      Showing <strong className="text-slate-800">{processedCategories.length}</strong> of {allCategories.length}
+                    </span>
+                    {hasActiveCatFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetCatFilters}
+                        className="text-xs text-slate-600 hover:text-slate-900 h-7 px-2 flex items-center gap-1"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Reset
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search, Applies To & Sort */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                    <Input 
+                      placeholder="Search categories..."
+                      className="pl-8 text-xs h-9 bg-white" 
+                      value={catSearch}
+                      onChange={(e) => setCatSearch(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1.5 text-xs text-slate-700 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={catAppliesToFilter}
+                      onChange={(e) => setCatAppliesToFilter(e.target.value as any)}
+                    >
+                      <option value="ALL">All Applications</option>
+                      <option value="PACKAGES">Global Packages Only</option>
+                      <option value="LAB_SERVICES">Lab Services Only</option>
+                    </select>
+                  </div>
+
+                  <div className="relative">
+                    <ArrowUpDown className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-white pl-8 pr-3 py-1.5 text-xs font-medium text-slate-800 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={catSort}
+                      onChange={(e) => setCatSort(e.target.value as any)}
+                    >
+                      <option value="name-asc">Category Name (A to Z)</option>
+                      <option value="name-desc">Category Name (Z to A)</option>
+                      <option value="newest">Newest First</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Table */}
+              {categoriesLoading ? (
+                <div className="p-16 flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                  <span className="text-xs text-slate-500">Loading categories...</span>
+                </div>
+              ) : (
+                <DataTable
+                  columns={[
+                    {
+                      header: "Category Name",
+                      cell: (row) => (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 text-purple-600 shrink-0 border border-purple-100">
+                            <Tag className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900">{row.name}</div>
+                            {row.description && <div className="text-xs text-muted-foreground truncate max-w-[250px]">{row.description}</div>}
+                          </div>
+                        </div>
+                      )
+                    },
+                    {
+                      header: "Applies To",
+                      cell: (row) => (
+                        <div className="flex flex-wrap gap-1">
+                          {(row.appliesTo || []).map((a: string) => (
+                            <span key={a} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-medium">
+                              {a.replace('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )
+                    },
+                    {
+                      header: "Status",
+                      cell: (row) => <StatusBadge status={row.isActive ? "ACTIVE" : "INACTIVE"} />
+                    },
+                    {
+                      header: "Actions",
+                      cell: (row) => (
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="hover:bg-blue-50 h-8 w-8" onClick={() => handleOpenCategoryModal(row)}>
+                            <Edit className="h-4 w-4 text-blue-600" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="hover:bg-red-50 h-8 w-8" onClick={() => handleDeleteCategory(row._id)}>
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      )
+                    },
+                  ]}
+                  data={processedCategories}
+                  emptyState={
+                    <div className="p-12 text-center text-muted-foreground">
+                      <Tag className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                      <p className="font-semibold text-slate-700">No categories found</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {hasActiveCatFilters ? "Try adjusting your search or filters." : "Create your first category using the button above."}
+                      </p>
+                    </div>
+                  }
+                />
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

@@ -25,7 +25,8 @@ import {
   Calendar,
   HeartPulse,
   ClipboardList,
-  LogOut as LogOutIcon
+  LogOut as LogOutIcon,
+  RefreshCw
 } from "lucide-react"
 import { NotificationPopover } from "@/components/shared/NotificationPopover"
 import {
@@ -44,6 +45,7 @@ export function DashboardLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const isFullBleedPage = location.pathname.includes('/bookings/new')
   
   const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(true)
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
@@ -331,7 +333,17 @@ export function DashboardLayout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-[16px]">
+          <div className="flex items-center gap-[12px]">
+            {/* Refresh Button */}
+            <button 
+              onClick={() => window.location.reload()}
+              title="Refresh Page"
+              aria-label="Refresh Page"
+              className="flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+            >
+              <RefreshCw className="h-[17px] w-[17px]" />
+            </button>
+
             {/* Notifications */}
             <NotificationPopover />
 
@@ -384,8 +396,8 @@ export function DashboardLayout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-[24px] md:p-[32px]">
-          <div className="mx-auto w-full max-w-[1280px]">
+        <div className={cn("flex-1 overflow-y-auto", !isFullBleedPage && "p-[24px] md:p-[32px]")}>
+          <div className={cn("w-full", !isFullBleedPage && "mx-auto max-w-[1280px]")}>
             <Outlet />
           </div>
         </div>

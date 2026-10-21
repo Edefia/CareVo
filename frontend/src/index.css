@@ -4,6 +4,7 @@
   /* Brand - Logo Blue Palette */
   --color-forest:      #042F64;   /* deep navy blue — primary dark (from logo 'C' & 'CareBis') */
   --color-forest-mid:  #14427D;   /* mid navy blue — hover states, interactive depth */
+  --color-forest-dark: #021C3D;   /* deeper navy blue — active / hover states */
   --color-mint:        #4988CF;   /* sky/cerulean accent (from logo 'r' diagonal) */
   --color-lime:        #2867B6;   /* royal blue (from logo 'a', 'e', 'Prime') — CTA buttons, active states */
   --color-lime-dark:   #1C5292;   /* royal blue hover state */

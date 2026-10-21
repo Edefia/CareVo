@@ -14,13 +14,13 @@ const buttonVariants = cva(
         secondary:
           "bg-transparent border-[1.5px] border-[var(--color-forest)] text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-forest)] hover:text-white",
         ghost:
-          "bg-transparent text-[var(--color-text-secondary)] rounded-[var(--radius-md)] hover:bg-[var(--color-surface-2)]",
+          "bg-transparent text-[var(--color-text-secondary)] rounded-[var(--radius-md)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)]",
         danger:
           "bg-[var(--color-danger)] text-white font-semibold rounded-full hover:bg-[#B91C1C]",
         dark:
           "bg-white text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-off-white)]",
         icon:
-          "bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] rounded-[var(--radius-md)] hover:bg-[var(--color-border)]",
+          "bg-[var(--color-surface-2)] text-[var(--color-text-secondary)] rounded-[var(--radius-md)] hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]",
         outline: // keeping outline as fallback mapping to secondary
           "bg-transparent border-[1.5px] border-[var(--color-forest)] text-[var(--color-forest)] font-semibold rounded-full hover:bg-[var(--color-forest)] hover:text-white",
       },

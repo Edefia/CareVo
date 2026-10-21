@@ -16,8 +16,10 @@ const BRAND = {
   textSecondary: '#334155',
   textMuted: '#64748B',
   border: '#E2E8F0',
-  logo: 'https://care-bis-prime.vercel.app/logo.png',
-  url: 'https://care-bis-prime.vercel.app',
+  logo: process.env.EMAIL_LOGO_URL || 'https://care-bis-prime.vercel.app/logo.jpeg',
+  url: process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')
+    ? process.env.FRONTEND_URL
+    : 'https://care-bis-prime.vercel.app',
 };
 
 function escapeHtml(value: string): string {
@@ -60,13 +62,23 @@ function baseLayout(content: string, preheader?: string): string {
       <td align="center" style="padding:40px 16px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
           
-          <!-- Header -->
+          <!-- Header / Brand Logo -->
           <tr>
-            <td style="padding:24px 32px;text-align:center;">
-              <div style="display:inline-flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;background:${BRAND.color};border-radius:8px;display:inline-block;"></div>
-                <span style="font-size:22px;font-weight:700;color:${BRAND.color};letter-spacing:-0.5px;">${BRAND.name}</span>
-              </div>
+            <td align="center" style="padding:20px 24px 24px;text-align:center;">
+              <a href="${BRAND.url}" target="_blank" style="text-decoration:none;display:inline-block;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block;background:#FFFFFF;border:1px solid ${BRAND.border};border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin:0 auto;">
+                  <tr>
+                    <td align="center" style="padding:10px 22px;text-align:center;">
+                      <img
+                        src="${BRAND.logo}"
+                        alt="${BRAND.name}"
+                        width="128"
+                        style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;width:128px;max-width:128px;height:auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:18px;font-weight:700;color:${BRAND.color};letter-spacing:-0.5px;"
+                      />
+                    </td>
+                  </tr>
+                </table>
+              </a>
             </td>
           </tr>
 

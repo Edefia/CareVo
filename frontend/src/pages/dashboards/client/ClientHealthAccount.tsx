@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   HeartPulse, TrendingUp, Calendar, TestTube,
-  AlertTriangle, CheckCircle2, Info
+  AlertTriangle, CheckCircle2, Info, ChevronUp, ChevronDown
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
