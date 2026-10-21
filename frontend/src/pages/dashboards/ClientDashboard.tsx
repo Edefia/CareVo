@@ -223,7 +223,7 @@ function IndividualTestsCatalog({ packages }: { packages: any[] }) {
                   {test.commonFor}
                 </span>
                 <Link to={`/client/bookings/new?package=${test._id || test.id || ''}&test=${encodeURIComponent(test.name)}`}>
-                  <Button className="h-[40px] px-5 bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-dark)] text-[13px] font-semibold gap-1.5 shadow-sm group-hover:bg-[var(--color-lime)] transition-colors shrink-0">
+                  <Button className="h-[40px] px-5 bg-[var(--color-forest)] text-white hover:bg-[var(--color-forest-mid)] hover:text-white text-[13px] font-semibold gap-1.5 shadow-sm transition-colors shrink-0">
                     Book This Test <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </Link>

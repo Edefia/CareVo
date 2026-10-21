@@ -5,17 +5,29 @@
 
 const BRAND = {
   name: 'CareBis Prime',
-  color: '#1B3A2D',       // Forest green
-  accent: '#10B981',       // Emerald
-  bg: '#F8FAF9',
+  color: '#042F64',        // Deep navy — primary brand
+  accent: '#2867B6',       // Royal blue — CTAs / accents
+  success: '#16A34A',      // Emerald — approvals
+  warning: '#D97706',      // Amber — caution
+  danger: '#DC2626',       // Red — rejections
+  bg: '#F8FAFC',
   cardBg: '#FFFFFF',
-  textPrimary: '#1E293B',
-  textSecondary: '#64748B',
-  textMuted: '#94A3B8',
+  textPrimary: '#0F172A',
+  textSecondary: '#334155',
+  textMuted: '#64748B',
   border: '#E2E8F0',
   logo: 'https://care-bis-prime.vercel.app/logo.png',
   url: 'https://care-bis-prime.vercel.app',
 };
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function baseLayout(content: string, preheader?: string): string {
   return `<!DOCTYPE html>
@@ -31,7 +43,7 @@ function baseLayout(content: string, preheader?: string): string {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: ${BRAND.bg}; color: ${BRAND.textPrimary}; }
     .btn { display: inline-block; padding: 14px 32px; background: ${BRAND.color}; color: #ffffff !important; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 14px; letter-spacing: 0.3px; }
-    .btn:hover { background: #264D3B; }
+    .btn:hover { background: #14427D; }
     .btn-outline { display: inline-block; padding: 12px 28px; background: transparent; color: ${BRAND.color} !important; text-decoration: none; border: 2px solid ${BRAND.color}; border-radius: 10px; font-weight: 600; font-size: 14px; }
     .otp-box { display: inline-block; background: ${BRAND.bg}; border: 2px solid ${BRAND.border}; border-radius: 12px; padding: 16px 28px; font-size: 32px; font-weight: 700; letter-spacing: 12px; color: ${BRAND.color}; font-family: 'Courier New', monospace; }
     .badge-approved { display: inline-block; background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -112,17 +124,64 @@ function infoTable(rows: { label: string; value: string }[]): string {
   </table>`;
 }
 
-function commentBlock(comment: string): string {
-  return `<div style="background:#F1F5F9;border-left:4px solid ${BRAND.color};border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0;">
+function commentBlock(comment: string, accentColor = BRAND.color): string {
+  return `<div style="background:#F1F5F9;border-left:4px solid ${accentColor};border-radius:0 8px 8px 0;padding:16px 20px;margin:20px 0;">
     <p style="font-size:12px;font-weight:600;color:${BRAND.textSecondary};margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Admin Comment</p>
-    <p style="font-size:14px;color:${BRAND.textPrimary};line-height:1.6;margin:0;">${comment}</p>
+    <p style="font-size:14px;color:${BRAND.textPrimary};line-height:1.6;margin:0;white-space:pre-wrap;">${escapeHtml(comment)}</p>
   </div>`;
 }
 
-function ctaButton(text: string, url: string): string {
-  return `<div style="text-align:center;margin:28px 0;">
-    <a href="${url}" class="btn" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:14px;">${text}</a>
+function ctaButton(text: string, url: string, bgColor = BRAND.color): string {
+  return `<div style="text-align:center;margin:28px 0 8px;">
+    <a href="${url}" class="btn" style="display:inline-block;padding:14px 32px;background:${bgColor};color:#ffffff;text-decoration:none;border-radius:999px;font-weight:600;font-size:14px;">${text}</a>
   </div>`;
+}
+
+function statusBanner(opts: {
+  tone: 'success' | 'warning' | 'danger';
+  title: string;
+  subtitle: string;
+}): string {
+  const tones = {
+    success: { bg: '#ECFDF5', border: '#A7F3D0', iconBg: '#16A34A', icon: '✓' },
+    warning: { bg: '#FFFBEB', border: '#FDE68A', iconBg: '#D97706', icon: '!' },
+    danger: { bg: '#FEF2F2', border: '#FECACA', iconBg: '#DC2626', icon: '✕' },
+  } as const;
+  const t = tones[opts.tone];
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;background:${t.bg};border:1px solid ${t.border};border-radius:14px;">
+    <tr>
+      <td style="padding:20px 22px;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="vertical-align:middle;padding-right:14px;">
+              <div style="width:40px;height:40px;border-radius:999px;background:${t.iconBg};color:#ffffff;font-size:18px;font-weight:700;line-height:40px;text-align:center;">${t.icon}</div>
+            </td>
+            <td style="vertical-align:middle;">
+              <p style="margin:0 0 4px;font-size:16px;font-weight:700;color:${BRAND.textPrimary};">${opts.title}</p>
+              <p style="margin:0;font-size:13px;color:${BRAND.textSecondary};line-height:1.5;">${opts.subtitle}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>`;
+}
+
+function serviceSummaryCard(opts: {
+  serviceName: string;
+  labName: string;
+  meta: string;
+}): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:${BRAND.bg};border:1px solid ${BRAND.border};border-radius:12px;">
+    <tr>
+      <td style="padding:18px 20px;">
+        <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${BRAND.textMuted};">Service under review</p>
+        <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:${BRAND.color};">${escapeHtml(opts.serviceName)}</p>
+        <p style="margin:0;font-size:13px;color:${BRAND.textSecondary};">${escapeHtml(opts.labName)} · ${escapeHtml(opts.meta)}</p>
+      </td>
+    </tr>
+  </table>`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -171,48 +230,114 @@ export const emailTemplates = {
   },
 
   // ─── 4. LAB SERVICE APPROVED ───
-  labServiceApproved(data: { labName: string; serviceName: string; category: string; labPrice: string; platformPrice: string; adminComment?: string }) {
+  labServiceApproved(data: {
+    labName: string;
+    serviceName: string;
+    category: string;
+    labPrice: string;
+    platformPrice: string;
+    turnaroundTime?: string;
+    adminComment?: string;
+  }) {
+    const safeLab = escapeHtml(data.labName);
+    const safeService = escapeHtml(data.serviceName);
+    const safeCategory = escapeHtml(data.category || 'General');
+    const turnaround = data.turnaroundTime ? escapeHtml(data.turnaroundTime) : undefined;
+
     return baseLayout(`
-      ${heading('Service Approved!', '✅')}
-      ${subtext(`Great news, <strong>${data.labName}</strong>! Your submitted service has been approved by the platform admin and is now live for bookings.`)}
+      ${statusBanner({
+        tone: 'success',
+        title: 'Service approved',
+        subtitle: 'Your listing is now live and available for client bookings on CareBis Prime.',
+      })}
+      ${heading('Congratulations, ' + safeLab)}
+      ${subtext(`Your submitted service <strong>${safeService}</strong> has been reviewed and approved by the CareBis Prime admin team.`)}
+      ${serviceSummaryCard({
+        serviceName: data.serviceName,
+        labName: data.labName,
+        meta: `GHS ${data.platformPrice}${data.turnaroundTime ? ` · ${data.turnaroundTime}` : ''}`,
+      })}
       ${infoTable([
-        { label: 'Service', value: data.serviceName },
-        { label: 'Category', value: data.category },
-        { label: 'Your Price', value: `GHS ${data.labPrice}` },
-        { label: 'Platform Price', value: `GHS ${data.platformPrice}` },
+        { label: 'Service', value: safeService },
+        { label: 'Category', value: safeCategory },
+        { label: 'Your Price', value: `GHS ${escapeHtml(data.labPrice)}` },
+        { label: 'Listed Price', value: `GHS ${escapeHtml(data.platformPrice)}` },
+        ...(turnaround ? [{ label: 'Turnaround', value: turnaround }] : []),
+        { label: 'Status', value: '<span class="badge-approved">APPROVED</span>' },
       ])}
-      ${data.adminComment ? commentBlock(data.adminComment) : ''}
-      ${ctaButton('View My Services', `${BRAND.url}/lab/services`)}
-    `, `Your service "${data.serviceName}" has been approved`);
+      ${data.adminComment ? commentBlock(data.adminComment, BRAND.success) : ''}
+      ${ctaButton('Open Service Catalog', `${BRAND.url}/lab/services`, BRAND.success)}
+      <p style="text-align:center;font-size:12px;color:${BRAND.textMuted};margin:0;">Clients can now discover and book this service from your laboratory.</p>
+    `, `Approved: ${data.serviceName} is now live on CareBis Prime`);
   },
 
   // ─── 5. LAB SERVICE REJECTED ───
-  labServiceRejected(data: { labName: string; serviceName: string; category: string; adminComment?: string }) {
+  labServiceRejected(data: {
+    labName: string;
+    serviceName: string;
+    category: string;
+    adminComment?: string;
+  }) {
+    const safeLab = escapeHtml(data.labName);
+    const safeService = escapeHtml(data.serviceName);
+    const safeCategory = escapeHtml(data.category || 'General');
+
     return baseLayout(`
-      ${heading('Service Review Update', '⚠️')}
-      ${subtext(`Hi <strong>${data.labName}</strong>, your submitted service was not approved at this time. Please review the feedback below and make any necessary changes before resubmitting.`)}
+      ${statusBanner({
+        tone: 'warning',
+        title: 'Changes requested',
+        subtitle: 'Your service was not approved yet. Review the feedback and resubmit when ready.',
+      })}
+      ${heading('Service review update')}
+      ${subtext(`Hi <strong>${safeLab}</strong>, we reviewed <strong>${safeService}</strong> and need a few updates before it can go live.`)}
+      ${serviceSummaryCard({
+        serviceName: data.serviceName,
+        labName: data.labName,
+        meta: data.category || 'General',
+      })}
       ${infoTable([
-        { label: 'Service', value: data.serviceName },
-        { label: 'Category', value: data.category },
+        { label: 'Service', value: safeService },
+        { label: 'Category', value: safeCategory },
         { label: 'Status', value: '<span class="badge-rejected">REJECTED</span>' },
       ])}
-      ${data.adminComment ? commentBlock(data.adminComment) : ''}
-      ${ctaButton('Edit & Resubmit', `${BRAND.url}/lab/services`)}
-    `, `Your service "${data.serviceName}" requires changes`);
+      ${data.adminComment
+        ? commentBlock(data.adminComment, BRAND.warning)
+        : `<p style="font-size:14px;color:${BRAND.textSecondary};line-height:1.6;">No written comment was provided. Please review pricing, category, and turnaround details, then resubmit.</p>`}
+      ${ctaButton('Edit & Resubmit', `${BRAND.url}/lab/services`, BRAND.accent)}
+    `, `Action needed: ${data.serviceName} was not approved`);
   },
 
   // ─── 6. LAB SERVICE REVOKED ───
-  labServiceRevoked(data: { labName: string; serviceName: string; adminComment?: string }) {
+  labServiceRevoked(data: {
+    labName: string;
+    serviceName: string;
+    category?: string;
+    adminComment?: string;
+  }) {
+    const safeLab = escapeHtml(data.labName);
+    const safeService = escapeHtml(data.serviceName);
+
     return baseLayout(`
-      ${heading('Service Revoked', '🚫')}
-      ${subtext(`Hi <strong>${data.labName}</strong>, your previously approved service has been revoked by the platform admin. It is no longer visible to clients.`)}
+      ${statusBanner({
+        tone: 'danger',
+        title: 'Service revoked',
+        subtitle: 'This listing is no longer visible to clients on CareBis Prime.',
+      })}
+      ${heading('Service access updated')}
+      ${subtext(`Hi <strong>${safeLab}</strong>, your previously approved service <strong>${safeService}</strong> has been revoked by the platform admin.`)}
+      ${serviceSummaryCard({
+        serviceName: data.serviceName,
+        labName: data.labName,
+        meta: data.category || 'No longer bookable',
+      })}
       ${infoTable([
-        { label: 'Service', value: data.serviceName },
+        { label: 'Service', value: safeService },
         { label: 'Status', value: '<span class="badge-rejected">REVOKED</span>' },
       ])}
-      ${data.adminComment ? commentBlock(data.adminComment) : ''}
-      ${ctaButton('View My Services', `${BRAND.url}/lab/services`)}
-    `, `Your service "${data.serviceName}" has been revoked`);
+      ${data.adminComment ? commentBlock(data.adminComment, BRAND.danger) : ''}
+      ${ctaButton('View My Services', `${BRAND.url}/lab/services`, BRAND.color)}
+      <p style="text-align:center;font-size:12px;color:${BRAND.textMuted};margin:0;">If you believe this was a mistake, reply to this email or contact CareBis Prime support.</p>
+    `, `Revoked: ${data.serviceName} is no longer live`);
   },
 
   // ─── 7. NEW GLOBAL PACKAGE → ALL LABS ───

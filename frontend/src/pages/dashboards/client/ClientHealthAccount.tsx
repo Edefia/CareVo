@@ -1,18 +1,15 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
-  HeartPulse, TrendingUp, Trash2, Calendar, TestTube,
-  ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Info
+  HeartPulse, TrendingUp, Calendar, TestTube,
+  AlertTriangle, CheckCircle2, Info
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useHealthAccount, useExportHistory, useRemoveParameter } from "@/hooks/useHealthAccount"
 import { LoadingState } from "@/components/shared/LoadingState"
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle
-} from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, ReferenceArea
@@ -184,33 +181,24 @@ function ParameterTrendCard({
         </CardContent>
       </Card>
 
-      {/* Remove Confirmation Dialog */}
-      <Dialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove Parameter Tracking</DialogTitle>
-            <DialogDescription>
-              This will remove all tracked data for <strong>{latest?.parameterName || parameterKey}</strong> from
-              your Health Account. Your original test results will not be affected.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRemoveDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                onRemove(parameterKey)
-                setShowRemoveDialog(false)
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Remove
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={showRemoveDialog}
+        onOpenChange={setShowRemoveDialog}
+        title="Remove Parameter Tracking"
+        description={
+          <>
+            This will remove all tracked data for{" "}
+            <strong className="text-[var(--color-text-primary)]">
+              {latest?.parameterName || parameterKey}
+            </strong>{" "}
+            from your Health Account. Your original test results will not be affected.
+          </>
+        }
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => onRemove(parameterKey)}
+      />
     </>
   )
 }

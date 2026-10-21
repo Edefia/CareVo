@@ -34,6 +34,78 @@ const heroSlides = [
   },
 ]
 
+const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"] as const
+
+function getCurrentWeekDays() {
+  const today = new Date()
+  const dayOfWeek = today.getDay() // 0 = Sunday
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(today)
+  monday.setHours(0, 0, 0, 0)
+  monday.setDate(today.getDate() + mondayOffset)
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    return {
+      day: date.getDate(),
+      isToday:
+        date.getFullYear() === today.getFullYear() &&
+        date.getMonth() === today.getMonth() &&
+        date.getDate() === today.getDate(),
+    }
+  })
+}
+
+function formatTimeLabel(date: Date) {
+  let hours = date.getHours()
+  const minutes = date.getMinutes()
+  const period = hours >= 12 ? "PM" : "AM"
+  hours = hours % 12 || 12
+  const mins = minutes.toString().padStart(2, "0")
+  return `${hours}:${mins} ${period}`
+}
+
+/** Four half-hour slots spanning current time ± 2 hours. */
+function getAvailableTimesAroundNow() {
+  const now = new Date()
+  const offsetsMinutes = [-120, -40, 40, 120]
+
+  const slots = offsetsMinutes.map((offset) => {
+    const slot = new Date(now.getTime() + offset * 60 * 1000)
+    // Snap to nearest half hour for clean labels
+    const totalMinutes = slot.getHours() * 60 + slot.getMinutes()
+    const snapped = Math.round(totalMinutes / 30) * 30
+    slot.setHours(Math.floor(snapped / 60), snapped % 60, 0, 0)
+    return slot
+  })
+
+  // Deduplicate if snapping collapsed any slots
+  const unique: Date[] = []
+  for (const slot of slots) {
+    const label = formatTimeLabel(slot)
+    if (!unique.some((s) => formatTimeLabel(s) === label)) {
+      unique.push(slot)
+    }
+  }
+
+  // Prefer the slot closest to now as the highlighted one
+  let selectedIndex = 0
+  let bestDiff = Infinity
+  unique.forEach((slot, i) => {
+    const diff = Math.abs(slot.getTime() - now.getTime())
+    if (diff < bestDiff) {
+      bestDiff = diff
+      selectedIndex = i
+    }
+  })
+
+  return unique.map((slot, i) => ({
+    label: formatTimeLabel(slot),
+    selected: i === selectedIndex,
+  }))
+}
+
 const homeFaqItems = [
   {
     question: "Do I need a doctor's referral to book a screening?",
@@ -104,6 +176,10 @@ export function LandingPage() {
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
   }
+
+  const weekDays = getCurrentWeekDays()
+  const availableTimes = getAvailableTimesAroundNow()
+
   return (
     <>
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -344,19 +420,19 @@ export function LandingPage() {
                     <div className="mb-4">
                       <div className="font-sans text-[13px] font-semibold text-[var(--color-text-primary)] mb-2">Select Date</div>
                       <div className="grid grid-cols-7 gap-2 text-center">
-                        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+                        {WEEKDAY_LABELS.map((d, i) => (
                           <div key={i} className="font-sans text-[11px] font-medium text-[var(--color-text-muted)]">{d}</div>
                         ))}
-                        {[14, 15, 16, 17, 18, 19, 20].map((d) => (
+                        {weekDays.map(({ day, isToday }) => (
                           <div
-                            key={d}
+                            key={day}
                             className={`h-8 flex items-center justify-center rounded-[var(--radius-sm)] font-sans text-[13px] ${
-                              d === 17
+                              isToday
                                 ? "bg-[var(--color-lime)] font-bold text-white"
                                 : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-2)]"
                             }`}
                           >
-                            {d}
+                            {day}
                           </div>
                         ))}
                       </div>
@@ -364,16 +440,16 @@ export function LandingPage() {
                     {/* Time slots */}
                     <div className="font-sans text-[13px] font-semibold text-[var(--color-text-primary)] mb-2">Available Times</div>
                     <div className="grid grid-cols-2 gap-2">
-                      {["9:00 AM", "10:30 AM", "1:00 PM", "3:30 PM"].map((t, i) => (
+                      {availableTimes.map(({ label, selected }) => (
                         <div
-                          key={t}
+                          key={label}
                           className={`h-9 flex items-center justify-center rounded-[var(--radius-md)] font-sans text-[12px] font-medium border ${
-                            i === 1
+                            selected
                               ? "bg-[var(--color-lime)] border-[var(--color-lime)] text-white font-bold"
                               : "border-[var(--color-border)] text-[var(--color-text-secondary)]"
                           }`}
                         >
-                          {t}
+                          {label}
                         </div>
                       ))}
                     </div>

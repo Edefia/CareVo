@@ -146,52 +146,155 @@ export const laboratoryService = {
     }
 
     const previousStatus = service.approvalStatus;
+    // Capture lab details before save in case populate is cleared
+    const lab = service.laboratoryId as unknown as {
+      _id: { toString(): string };
+      name?: string;
+      contactEmail?: string;
+    } | null;
+    const laboratoryId = lab?._id?.toString() || String(service.laboratoryId);
+    const labName = lab?.name || 'Laboratory Partner';
+    const labContactEmail = lab?.contactEmail?.toLowerCase().trim();
+
     Object.assign(service, updateData);
     const savedService = await service.save();
 
-    // --- Send Notification ---
-    const lab = service.laboratoryId as any;
-    if (lab?.contactEmail && updateData.approvalStatus && updateData.approvalStatus !== previousStatus) {
-      try {
-        const { notificationService } = await import('../notifications/notification.service.js');
-        const status = updateData.approvalStatus;
+    const nextStatus = updateData.approvalStatus;
+    if (!nextStatus || nextStatus === previousStatus) {
+      return savedService;
+    }
 
-        if (status === 'APPROVED') {
-          await notificationService.sendEmail(
-            lab.contactEmail,
-            `Service Approved: ${service.name}`,
-            'labServiceApproved',
-            {
-              labName: lab.name,
-              serviceName: service.name,
-              category: service.category,
-              labPrice: service.labPrice.toFixed(2),
-              platformPrice: service.platformPrice.toFixed(2),
-              adminComment: updateData.adminComment || undefined,
-            }
-          );
-        } else if (status === 'REJECTED') {
-          const wasApproved = previousStatus === 'APPROVED';
-          const templateKey = wasApproved ? 'labServiceRevoked' : 'labServiceRejected';
-          const subject = wasApproved ? `Service Revoked: ${service.name}` : `Service Review: ${service.name}`;
+    try {
+      const { notificationService } = await import('../notifications/notification.service.js');
+      const { NotificationModel } = await import('../notifications/notification.model.js');
+      const { UserModel } = await import('../auth/auth.model.js');
+      const { logger } = await import('../../utils/logger.js');
+      const { getIO } = await import('../../config/socket.js');
 
-          await notificationService.sendEmail(
-            lab.contactEmail,
-            subject,
-            templateKey,
-            {
-              labName: lab.name,
-              serviceName: service.name,
-              category: service.category,
-              adminComment: updateData.adminComment || undefined,
-            }
-          );
-        }
-      } catch (emailErr) {
-        // Log but don't block the status update
-        const { logger } = await import('../../utils/logger.js');
-        logger.error('Failed to send lab service notification email', { error: (emailErr as Error).message });
+      const labUsers = await UserModel.find({
+        laboratoryId,
+        role: 'LABORATORY',
+        isActive: true,
+      }).select('_id email firstName lastName');
+
+      const recipientEmails = new Set<string>();
+      if (labContactEmail) recipientEmails.add(labContactEmail);
+      for (const user of labUsers) {
+        if (user.email) recipientEmails.add(user.email.toLowerCase().trim());
       }
+
+      const isApproved = nextStatus === 'APPROVED';
+      const wasApproved = previousStatus === 'APPROVED';
+      const isRevoke = nextStatus === 'REJECTED' && wasApproved;
+
+      let templateKey: 'labServiceApproved' | 'labServiceRejected' | 'labServiceRevoked';
+      let subject: string;
+      let inAppTitle: string;
+      let inAppMessage: string;
+      let templateData: Record<string, unknown>;
+
+      if (isApproved) {
+        templateKey = 'labServiceApproved';
+        subject = `Service Approved: ${service.name}`;
+        inAppTitle = 'Service approved';
+        inAppMessage = `"${service.name}" is now live and available for bookings.`;
+        templateData = {
+          labName,
+          serviceName: service.name,
+          category: service.category,
+          labPrice: Number(service.labPrice).toFixed(2),
+          platformPrice: Number(service.platformPrice).toFixed(2),
+          turnaroundTime: service.turnaroundTime,
+          adminComment: updateData.adminComment || undefined,
+        };
+      } else if (isRevoke) {
+        templateKey = 'labServiceRevoked';
+        subject = `Service Revoked: ${service.name}`;
+        inAppTitle = 'Service revoked';
+        inAppMessage = `"${service.name}" has been revoked and is no longer visible to clients.`;
+        templateData = {
+          labName,
+          serviceName: service.name,
+          category: service.category,
+          adminComment: updateData.adminComment || undefined,
+        };
+      } else {
+        templateKey = 'labServiceRejected';
+        subject = `Service Review Update: ${service.name}`;
+        inAppTitle = 'Service needs changes';
+        inAppMessage = `"${service.name}" was not approved. Please review the admin feedback and resubmit.`;
+        templateData = {
+          labName,
+          serviceName: service.name,
+          category: service.category,
+          adminComment: updateData.adminComment || undefined,
+        };
+      }
+
+      if (recipientEmails.size === 0) {
+        logger.warn('No lab email recipients found for service status notification', {
+          serviceId: id,
+          laboratoryId,
+          status: nextStatus,
+        });
+      } else {
+        await Promise.all(
+          Array.from(recipientEmails).map((email) =>
+            notificationService.sendEmail(email, subject, templateKey, templateData)
+          )
+        );
+        logger.info('Lab service status emails sent', {
+          serviceId: id,
+          laboratoryId,
+          status: nextStatus,
+          recipients: Array.from(recipientEmails),
+        });
+      }
+
+      // In-app notifications for laboratory portal users
+      if (labUsers.length > 0) {
+        const notificationType = isApproved
+          ? 'SERVICE_APPROVED'
+          : isRevoke
+            ? 'SERVICE_REVOKED'
+            : 'SERVICE_REJECTED';
+
+        await NotificationModel.insertMany(
+          labUsers.map((user) => ({
+            recipientId: user._id,
+            title: inAppTitle,
+            message: inAppMessage,
+            type: notificationType,
+            metadata: {
+              serviceId: service._id.toString(),
+              serviceName: service.name,
+              approvalStatus: nextStatus,
+              adminComment: updateData.adminComment || null,
+            },
+          }))
+        );
+
+        try {
+          const io = getIO();
+          for (const user of labUsers) {
+            io.to(`user:${user._id.toString()}`).emit('new_notification', {
+              title: inAppTitle,
+              message: inAppMessage,
+              type: notificationType,
+              createdAt: new Date(),
+              isRead: false,
+            });
+          }
+        } catch {
+          // Socket may be unavailable in some environments
+        }
+      }
+    } catch (notifyErr) {
+      const { logger } = await import('../../utils/logger.js');
+      logger.error('Failed to send lab service status notifications', {
+        serviceId: id,
+        error: (notifyErr as Error).message,
+      });
     }
 
     return savedService;

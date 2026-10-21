@@ -6,6 +6,7 @@ import { useCategories } from "@/hooks/useCategories"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import toast from "react-hot-toast"
 import { Check, DownloadCloud, X } from "lucide-react"
 
@@ -45,6 +46,10 @@ export function LabServices() {
   // Bulk Import State
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false)
   const [bulkSelections, setBulkSelections] = useState<Record<string, { price: string, turnaroundTime: string, selected: boolean }>>({})
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string | null }>({
+    open: false,
+    id: null,
+  })
 
   // Form state
   const [formData, setFormData] = useState({
@@ -115,19 +120,25 @@ export function LabServices() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this service?")) {
-      try {
-        await deleteService.mutateAsync(id)
-        toast.success("Service deleted")
-        if (selectedService?._id === id) {
-          setSelectedService(null)
-        }
-      } catch (err) {
-        toast.error("Failed to delete service")
+  const handleDeleteRequest = (id: string) => {
+    setDeleteDialog({ open: true, id })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.id) return
+    const id = deleteDialog.id
+    try {
+      await deleteService.mutateAsync(id)
+      toast.success("Service deleted")
+      if (selectedService?._id === id) {
+        setSelectedService(null)
       }
+    } catch (err) {
+      toast.error("Failed to delete service")
+      throw err
     }
   }
+
 
   const handleBulkSubmit = async () => {
     const selectedKeys = Object.keys(bulkSelections).filter(k => bulkSelections[k].selected)
@@ -306,7 +317,7 @@ export function LabServices() {
                   variant="ghost" 
                   size="sm" 
                   className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 text-[12px]"
-                  onClick={() => handleDelete(selectedService._id)}
+                  onClick={() => handleDeleteRequest(selectedService._id)}
                 >
                   <Trash2 className="h-4 w-4 mr-1.5" /> Remove
                 </Button>
@@ -582,6 +593,17 @@ export function LabServices() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog((prev) => ({ ...prev, open }))}
+        title="Delete Service"
+        description="Are you sure you want to delete this service? This removes it from your catalog and cannot be undone."
+        confirmText="Delete Service"
+        cancelText="Keep Service"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

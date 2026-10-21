@@ -197,7 +197,13 @@ export function PackageManagement() {
           adminComment: approvalDialog.comment || undefined,
         }
       })
-      toast.success(`Lab service ${approvalDialog.status.toLowerCase()} successfully`)
+      const actionLabel =
+        approvalDialog.status === 'APPROVED'
+          ? 'approved'
+          : approvalDialog.service?.approvalStatus === 'APPROVED'
+            ? 'revoked'
+            : 'rejected'
+      toast.success(`Service ${actionLabel}. The laboratory has been notified by email.`)
       setApprovalDialog({ isOpen: false, service: null, status: 'APPROVED', comment: '' })
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to update service status")
@@ -593,21 +599,44 @@ export function PackageManagement() {
 
       {/* Approval Comment Dialog */}
       <Dialog open={approvalDialog.isOpen} onOpenChange={(open) => setApprovalDialog(prev => ({ ...prev, isOpen: open }))}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="sm:max-w-[480px] gap-0 overflow-hidden rounded-[var(--radius-lg)] border-[var(--color-border)] p-0">
+          <div className="px-6 pt-6 pb-2">
+            <div
+              className={`mb-4 flex h-12 w-12 items-center justify-center rounded-full border ${
+                approvalDialog.status === 'APPROVED'
+                  ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                  : 'bg-red-50 border-red-100 text-red-600'
+              }`}
+            >
               {approvalDialog.status === 'APPROVED' ? (
-                <><CheckSquare className="h-5 w-5 text-emerald-600" /> Approve Service</>
+                <CheckSquare className="h-6 w-6" />
               ) : (
-                <><XSquare className="h-5 w-5 text-red-600" /> {approvalDialog.service?.approvalStatus === 'APPROVED' ? 'Revoke' : 'Reject'} Service</>
+                <XSquare className="h-6 w-6" />
               )}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+            </div>
+            <DialogHeader className="space-y-2 text-left">
+              <DialogTitle className="font-serif text-[22px] font-semibold text-[var(--color-text-primary)]">
+                {approvalDialog.status === 'APPROVED'
+                  ? 'Approve Service'
+                  : approvalDialog.service?.approvalStatus === 'APPROVED'
+                    ? 'Revoke Service'
+                    : 'Reject Service'}
+              </DialogTitle>
+              <p className="font-sans text-[14px] text-[var(--color-text-secondary)] leading-relaxed">
+                {approvalDialog.status === 'APPROVED'
+                  ? 'Confirm approval to go live. The laboratory will receive an email with your comment.'
+                  : 'The laboratory will be emailed with your decision and any comment you leave below.'}
+              </p>
+            </DialogHeader>
+          </div>
+          <div className="space-y-4 px-6 py-4">
             {approvalDialog.service && (
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                <div className="font-medium text-slate-800">{approvalDialog.service.name}</div>
-                <div className="text-sm text-slate-500">{approvalDialog.service.laboratoryId?.name} • GHS {approvalDialog.service.labPrice?.toFixed(2)}</div>
+              <div className="p-4 rounded-[var(--radius-md)] bg-[var(--color-surface-2)] border border-[var(--color-border)]">
+                <div className="font-sans text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Service</div>
+                <div className="font-sans text-[16px] font-semibold text-[var(--color-forest)]">{approvalDialog.service.name}</div>
+                <div className="font-sans text-[13px] text-[var(--color-text-secondary)] mt-1">
+                  {approvalDialog.service.laboratoryId?.name} · GHS {approvalDialog.service.labPrice?.toFixed(2)}
+                </div>
               </div>
             )}
             <div className="space-y-2">
@@ -616,23 +645,35 @@ export function PackageManagement() {
                 id="adminComment"
                 value={approvalDialog.comment}
                 onChange={(e) => setApprovalDialog(prev => ({ ...prev, comment: e.target.value }))}
-                placeholder={approvalDialog.status === 'APPROVED' 
-                  ? "e.g. Approved. Pricing looks good. Welcome aboard!" 
+                placeholder={approvalDialog.status === 'APPROVED'
+                  ? "e.g. Approved. Pricing looks good. Welcome aboard!"
                   : "e.g. Please revise your pricing to be competitive with market rates."}
-                className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex min-h-[100px] w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm placeholder:text-[var(--color-text-muted)] focus-visible:outline-none focus-visible:border-[var(--color-forest)] focus-visible:ring-[3px] focus-visible:ring-[rgba(4,47,100,0.12)]"
               />
-              <p className="text-xs text-muted-foreground">This comment will be sent to the laboratory via email and visible in their dashboard.</p>
+              <p className="text-[12px] text-[var(--color-text-muted)]">
+                This comment is included in the laboratory email and shown in their service dashboard.
+              </p>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setApprovalDialog(prev => ({ ...prev, isOpen: false }))}>Cancel</Button>
-            <Button 
-              onClick={handleSubmitApproval} 
+          <DialogFooter className="border-t border-[var(--color-border)] bg-[var(--color-off-white)] px-6 py-4 sm:space-x-2">
+            <Button variant="outline" onClick={() => setApprovalDialog(prev => ({ ...prev, isOpen: false }))}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitApproval}
               disabled={updateServiceStatus.isPending}
-              className={approvalDialog.status === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
+              className={
+                approvalDialog.status === 'APPROVED'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }
             >
               {updateServiceStatus.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {approvalDialog.status === 'APPROVED' ? 'Confirm Approval' : 'Confirm Rejection'}
+              {approvalDialog.status === 'APPROVED'
+                ? 'Confirm Approval'
+                : approvalDialog.service?.approvalStatus === 'APPROVED'
+                  ? 'Confirm Revoke'
+                  : 'Confirm Rejection'}
             </Button>
           </DialogFooter>
         </DialogContent>
